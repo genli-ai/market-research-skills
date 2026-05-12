@@ -19,7 +19,7 @@ A collection of Claude Skills for **market research / equity research / industry
 This repo ships with `.claude-plugin/marketplace.json` — it is itself a marketplace. In Claude Code:
 
 ```text
-/plugin marketplace add reagan475614947/market-research-skills
+/plugin marketplace add https://github.com/reagan475614947/market-research-skills.git
 /plugin install market-research-skills@market-research-skills
 ```
 
@@ -165,7 +165,7 @@ The `releases/` folder is `.gitignored` — the repo does not store binary artif
 本 repo 自带 `.claude-plugin/marketplace.json`，本身就是一个 marketplace。在 Claude Code 里：
 
 ```text
-/plugin marketplace add reagan475614947/market-research-skills
+/plugin marketplace add https://github.com/reagan475614947/market-research-skills.git
 /plugin install market-research-skills@market-research-skills
 ```
 
