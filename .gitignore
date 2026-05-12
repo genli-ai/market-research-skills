@@ -1,0 +1,29 @@
+# macOS
+.DS_Store
+
+# Packaged artifacts (regeneratable via scripts/pack.sh; ship via GitHub Release)
+# 打包产物（可由 scripts/pack.sh 重新生成，发 Release 时再附）
+releases/
+*.zip
+*.skill
+
+# Editors / 编辑器
+.vscode/
+.idea/
+*.swp
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Local cache / downloaded source files (avoid committing large binaries)
+# 本地缓存 / 下载的核实原文（避免大文件入库）
+downloads/
+*.pdf
+*.xlsx
+*.csv
+!skills/**/references/**/*.pdf
+!skills/**/references/**/*.xlsx
+!skills/**/references/**/*.csv
