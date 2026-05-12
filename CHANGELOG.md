@@ -6,6 +6,17 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-05-12
+
+### Changed
+
+- `verifying`: replaced the "three-layer search depth" rule with a "give-up criterion" — trace until either a whitelisted source is found or obvious paths are exhausted; no fixed depth budget. Transcript review showed the layer-count scaffolding was never actually used by the model in real verification work.
+- `verifying`: compressed English `SKILL.md` frontmatter `description` from ~1.4K to under 1024 characters so the skill can be installed on Claude AI Chat. Chinese description in `SKILL.zh.md` trimmed in parallel.
+- `verifying`: removed the `Search layer hit` line from the `[Verified]` output template and the `layer-by-layer` wording from the `[Cannot Verify]` template.
+- `verifying`: rewrote all output templates to be concise (3-5 lines for the common case) and switched to emoji labels (`✅ ⚠ ❌ 🔎 ⚖ 🔒`). The mandatory 12-field block is gone.
+- `verifying`: changed metadata handling from "must list all six fields" to "surface only when divergent." A `⚠` line is printed when any of the six dimensions (time point, definition, unit, coverage, revision status, data type) differs from the user's claim or is non-obvious; silent omission of a divergence remains a red line (equivalent to silent definition swap).
+- `verifying`: removed the `Identified as: <scenario>` line from outputs — internal classification is still used to pick the right sub-flow, but the label adds no value to the reader.
+
 ## [0.1.0] - 2026-05-12
 
 ### Added
@@ -39,6 +50,17 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
 ## [未发布]
+
+## [0.2.0] - 2026-05-12
+
+### 变更
+
+- `verifying`：把「三层搜索深度」规则替换为「放弃判定标准」——持续溯源直到找到白名单内一手来源、或主流路径试完仍未命中；不设固定的层数预算。复盘历史调用记录发现，"层数计数"的脚手架在真实核实工作里从未被模型实际采用
+- `verifying`：把英文 `SKILL.md` 的 frontmatter `description` 从约 1.4K 压缩到 1024 字符以内，让 Claude AI Chat 可以加载该 skill。中文版 `SKILL.zh.md` 的 description 同步精简
+- `verifying`：从 `[已核实]` 输出模板里删除「搜索层数」一行，从 `[无法核实]` 模板里删除「逐层列出三层」的措辞
+- `verifying`：所有输出模板改写为精简形式（常见场景 3-5 行），标签改用 emoji（`✅ ⚠ ❌ 🔎 ⚖ 🔒`）。原本固定的 12 字段块取消
+- `verifying`：元数据处理从「必填六项」改为「差异时才暴露」。六个维度（时点 / 口径 / 单位 / 范围 / 修订状态 / 数据类型）任一与用户陈述 diverge 时单写一行 `⚠`；diverge 而不写仍是红线（等同于隐式口径偷换）
+- `verifying`：去掉输出里的「识别为 X 类」一行——内部仍做场景分类来选子流程，但标签对读者无价值
 
 ## [0.1.0] - 2026-05-12
 

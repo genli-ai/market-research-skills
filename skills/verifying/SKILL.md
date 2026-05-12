@@ -1,6 +1,6 @@
 ---
 name: verifying
-description: Use when verifying a piece of information (fact, number, quote, event, official statement) against authoritative primary sources, or when cross-checking a number via one-level metric decomposition. Typical triggers — "verify X", "is this true", "find the original source", "where is this number from", "check / reconcile X", "two sources disagree", "is it true X never did Y". Covers five scenarios: (1) basic truthfulness check, (2) completeness — avoiding out-of-context quoting, (3) one-level reasoning verification (Z = P × Q decomposition + reconciliation), (4) negative-statement (unfalsifiable) handling, (5) multi-source conflict side-by-side output. Dig into whitelisted primary sources (user-supplied files, official websites & authoritative databases, aggregator databases, authoritative industry sources); for any cited report / chart / dataset the original must be downloaded and read locally to count as verified — if download is blocked, hand the link to the user for manual download; if nothing can be found, plainly state "cannot verify" rather than guessing, patching, or citing secondary paraphrases. Every verified output must carry six metadata fields: time point, definition / scope, unit, coverage, revision status, and data type (actual / forecast / projection / target / estimate). Always reply in the same language as the user's question (Chinese in → Chinese out; English in → English out).
+description: Use when verifying information (fact, number, quote, event, statement) against authoritative primary sources, or cross-checking a number via one-level metric decomposition (Z = P × Q). Triggers: "verify X", "is this true", "find the original source", "where is this number from", "two sources disagree", "is it true X never did Y". Covers five scenarios: (1) basic truthfulness check, (2) completeness / out-of-context quoting, (3) one-level reasoning verification, (4) negative-statement handling, (5) multi-source conflict side-by-side output. Dig into whitelisted primary sources only (user-supplied files, official websites & databases, authoritative industry sources); cited reports / charts / datasets must be downloaded and read locally to count as verified — if download is blocked, hand the link to the user. If nothing can be found, plainly state "cannot verify" rather than guessing, patching, or citing secondary paraphrases. Always reply in the user's question language.
 ---
 
 # Information Verification Skill
@@ -41,13 +41,13 @@ This check happens **before** scenario routing — if it triggers, none of the r
 
 ## Scenario routing
 
-Before starting verification, the AI auto-classifies the statement into one of the five scenarios above and states "Identified as: <scenario>" in the final output. If a statement spans multiple scenarios, use the dominant path and address the others as supplements.
+Internally classify the statement into one of the five scenarios to pick the right sub-flow (one-level reasoning / negative / multi-source conflict use their own emoji label). Do NOT print the scenario label as a separate line — it does not help the user. If a statement spans multiple scenarios, use the dominant path and address the others as supplements.
 
 ## Response language
 
 Always reply in the same language as the user's question (Chinese in → Chinese out; English in → English out; mixed → follow the dominant language of the question).
 
-This rule applies to narrative text, output-format labels, AND metadata field names. When replying in Chinese, translate the labels and fields accordingly — for example: `[Verified]` → `[已核实]`, `[Partially Verified]` → `[部分核实]`, `[Cannot Verify]` → `[无法核实]`, `[One-level reasoning verification]` → `[一层推理核实]`, `[Needs user assistance to download]` → `[需要用户协助下载]`, `[Counter-example found — statement refuted]` → `[反例已找到——陈述被推翻]`, `[No public counter-example found]` → `[未发现公开反例]`, `[Multi-source conflict]` → `[多源冲突]`; metadata fields `Time point / Definition / Unit / Coverage / Revision status / Data type` → `时点 / 口径 / 单位 / 范围 / 修订状态 / 数据类型`.
+Emoji labels (`✅ ⚠ ❌ 🔎 ⚖ 🔒`) are language-neutral and stay the same in both languages. Translate the prose that follows the emoji — e.g. `✅ Verified.` → `✅ 已核实。`. Metadata field names, when surfaced, translate too: `Time point / Definition / Unit / Coverage / Revision status / Data type` → `时点 / 口径 / 单位 / 范围 / 修订状态 / 数据类型`.
 
 Internal logic, whitelist, and rule structure are language-neutral — do not change them.
 
@@ -173,15 +173,14 @@ Aggregator databases (acceptable as a trusted source — cite the source; no nee
 
 Reports from international institutions / IBs / consulting are mostly in English. For local data and policy developments in China, the Middle East, Africa, etc., Chinese (or local-language) primary materials are often more accurate. Policy documents (e.g. Saudi Vision 2030) often have official Arabic + English versions — cross-reference when needed. Switch language based on the region / institution the statement involves.
 
-## Search-depth rule
+## Give-up criterion
 
-At most three layers deep.
+Keep tracing sources until either:
 
-- **Layer 1**: search directly around the statement's key nouns and numbers; go directly to the official sites of any institutions named in the statement.
-- **Layer 2**: if Layer 1 misses, vary keywords, switch language (CN / EN / Arabic / etc.), and trace the source cited by the statement (e.g. if the media paraphrases Report X, go directly to find Report X itself).
-- **Layer 3**: if Layer 2 still misses, dig down to the original institutional file, database field, official announcement, or first-hand press release.
+- **(a)** a whitelisted primary source is located and (where applicable) downloaded and read in full — produce a `✅ Verified` output;
+- **(b)** the obvious paths have been exhausted (direct keyword search → keyword and language variants → tracing the source cited in the statement back to its issuing institution) — produce a `❌ Cannot verify` output plainly. Do not guess, infer, or substitute with secondary sources.
 
-If all three layers fail to locate a whitelisted source, plainly tell the user "cannot verify." Do not guess, infer, or substitute with secondary sources.
+There is no fixed depth budget. Stop when leads are genuinely exhausted, not at an arbitrary count.
 
 ## Download-the-original rule
 
@@ -216,11 +215,10 @@ If the user's reading does not match what the chart actually shows, explicitly c
 If automated download is blocked (403, paywall, Cloudflare, login required, geo-restriction, JS-rendered text not retrievable, etc.), **pause verification** and output in the format below, handing the link to the user:
 
 ```
-[Needs user assistance to download]
-
-Located original source: <full official link>
-Block reason: <paywall / login wall / anti-scrape / geo-restriction / other>
-Action requested: please download the file and tell me its location, or paste the original text into the conversation so I can continue verification.
+🔒 Needs user help to download.
+Source: <full official link>
+Blocked by: <paywall / login wall / anti-scrape / geo-restriction>
+Please: download and tell me the local path, or paste the relevant section into the chat.
 ```
 
 Once the user provides it, return to step 3 (read in full) and judge. **Only when the user also cannot obtain it** should a downgrade be taken — in that case, explicitly flag "did not obtain full text; verification is based on snippet only with reduced confidence." Do not pretend it is fully verified.
@@ -248,23 +246,10 @@ Steps:
 Output format:
 
 ```
-[One-level reasoning verification]
-
-Identified as: One-level reasoning verification
-Decomposition: Z = f(P, Q)
-
-P: <value>
-  Source: <institution + full link>
-  Definition / time point / unit / coverage / revision status / data type: <...>
-
-Q: <value>
-  Source: <institution + full link>
-  Definition / time point / unit / coverage / revision status / data type: <...>
-
-Computed Z' = <result>
-Statement Z = <user-asserted value>
-Reconciliation: <broadly consistent / notable deviation / severe mismatch>
-Attribution: <if inconsistent, name the sub-metric most likely responsible; flag whether definitions / time points / coverage of P and Q align>
+🔎 One-level reasoning. Z = f(P, Q) → Z' = <computed value>; statement Z = <user value>; <broadly consistent / notable deviation / severe mismatch>.
+P = <value>, source: <institution + link>
+Q = <value>, source: <institution + link>
+[⚠ Attribution: <only when inconsistent — name the likely problem sub-metric and flag any P/Q definition / time-point / coverage mismatch>]
 ```
 
 ## Negative-statement handling
@@ -273,101 +258,76 @@ When the statement contains negation markers like "never," "has not," "no," "not
 
 > This is a negative statement. Negatives are essentially unfalsifiable by search — failing to find a counter-example is NOT proof of truth. I will try to find a counter-example: if one is found, the statement is refuted; if none is found, I cannot apply a "Verified" label and can only state "no public counter-example found."
 
-Then run the "search for counter-example" path under the same whitelist and three-layer search rules. Output labels are adjusted:
+Then run the "search for counter-example" path under the same whitelist and give-up criterion. Output labels are adjusted:
 
-- `[Counter-example found — statement refuted]`: list the counter-example with primary source.
-- `[No public counter-example found]`: explicitly state "not found ≠ proven true"; list the keywords and sites searched.
+- `❌ Statement refuted. <counter-example + primary source>` — explicit refutation.
+- `⚠ No public counter-example found.` — "not found ≠ proven true"; list 2-3 keywords/sites tried.
 
 ## Multi-source conflict sub-flow
 
 When two whitelisted sources disagree on the same number, **do not force a pick**. Output side-by-side:
 
 ```
-[Multi-source conflict]
-
-Identified as: Multi-source conflict
-Statement: <original text>
-
-Source A: <institution + full link>
-  Value: <X>
-  Time point / definition / unit / coverage / revision status / data type: <...>
-
-Source B: <institution + full link>
-  Value: <Y>
-  Time point / definition / unit / coverage / revision status / data type: <...>
-
-Difference attribution (possible reasons):
-  - Definition difference: <...>
-  - Time-point difference: <...>
-  - Revision status: <initial vs. revised vs. final>
-  - Coverage difference (geography / business segment / whether item X is included): <...>
-
-Recommendation: <let the user pick which to trust based on context, or ask the user to specify the definition required>
+⚖ Multi-source conflict on <statement>.
+A: <X> — <institution + link>
+B: <Y> — <institution + link>
+Difference: <the 1-2 most material reasons — definition / time point / revision status / coverage>
+Suggest: <user picks based on context, or specifies which definition they need>
 ```
 
-## Mandatory metadata fields
+## Metadata: surface only when divergent
 
-Every "Verified" output must explicitly carry the six fields below. If a field is unknown, explicitly write "not disclosed" or "not applicable" — do not silently omit.
+Internally check the six dimensions below for every verification. **Do NOT print them by default** — when they match the user's stated question, listing them adds noise without insight.
 
-| Field | Meaning |
+**Print a `⚠` line ONLY when one of them diverges from the user's statement or is non-obvious enough to mislead.** Examples that warrant a `⚠`:
+
+- User asked "Saudi 2023 GDP" but the figure found is **non-oil GDP** → flag `Definition` divergence
+- User asked about "Q4 2024" but the data is **preliminary, not final** → flag `Revision status`
+- The number is a **target / forecast**, not an actual → flag `Data type`
+- Currency / FY-vs-CY / consolidated-vs-parent / coverage mismatches → flag accordingly
+
+| Dimension | When it matters |
 |---|---|
-| **Time point** | The time the statement refers to (which year / quarter / as-of-date) |
-| **Definition / scope** | Statistical scope or calculation method (nominal vs. real GDP, whether HK/Macao/Taiwan is included, consolidated vs. parent-only, etc.) |
-| **Unit** | Including currency and quantity unit (CNY 100M vs. USD million, RMB vs. USD, FY vs. CY) |
-| **Coverage** | Geographic / business coverage (global vs. domestic; whole group vs. one segment) |
-| **Revision status** | Initial / revised / final (e.g. preliminary GDP vs. final figure; original annual report vs. subsequent revision) |
-| **Data type** | actual / forecast / projection / target / estimate |
+| **Time point** | When the year / quarter / as-of-date in the source ≠ what the user implied |
+| **Definition / scope** | When statistical scope or method differs (nominal vs. real, included items, etc.) |
+| **Unit** | When currency / quantity unit could be confused (CNY 100M vs. USD million, FY vs. CY) |
+| **Coverage** | When geographic or business coverage is narrower / broader than implied |
+| **Revision status** | Initial / revised / final, when the user might confuse vintages |
+| **Data type** | actual / forecast / projection / target / estimate — flag whenever it is anything other than `actual` |
+
+This is the binding rule that replaces "silent definition swap." The point is to surface divergence, not to mechanically list six fields.
 
 ## Output formats
 
-For successful verification, output in the formats below.
+Keep outputs tight. Three to five lines is the target for the common case; add a `⚠` line only when something actually diverges (see the metadata section).
 
-### [Verified]
-
-```
-[Verified]
-
-Identified as: <one of the five scenarios>
-Original source: <institution name + full official link>
-Local file: <local path of downloaded file, e.g. ./IMF Saudi Arabia 2024 Article IV.pdf>
-Publication date: <YYYY-MM-DD>
-Locator: <page / section / table number / figure number inside the file>
-Excerpt: <verbatim quote supporting the statement>
-
-Metadata:
-  Time point: <...>
-  Definition / scope: <...>
-  Unit: <...>
-  Coverage: <...>
-  Revision status: <...>
-  Data type: <actual / forecast / projection / target / estimate>
-
-Search layer hit: <layer 1 / 2 / 3>
-```
-
-### [Partially Verified]
+### ✅ Verified
 
 ```
-[Partially Verified]
-
-Identified as: <...>
-Verified sub-claims: <each sub-claim with whitelisted source + six metadata fields>
-Unverified sub-claims: <each sub-claim that no whitelisted source supports>
-Recommended action: <ask user for the original source, or rewrite as "to be verified," or drop the sub-claim>
+✅ Verified. <one-sentence conclusion in plain language>.
+Source: <institution + report name> (<YYYY-MM>, <page / table / figure locator>) → <local path if downloaded>
+Quote: "<verbatim excerpt supporting the claim>"
+[⚠ <single line, only when a metadata dimension diverges from the user's statement — e.g. "this is the non-oil GDP definition, not headline GDP">]
 ```
 
-### [Cannot Verify]
+### ⚠ Partially Verified
 
 ```
-[Cannot Verify]
-
-Identified as: <...>
-Path explored: <layer-by-layer list of keywords tried, sites visited, leads followed>
-Reason for miss: <likely reason — e.g. the institution does not publicly disclose, original source is a non-whitelisted paraphrase, definition mismatch, etc.>
-Recommendation: <ask the user for the original source, soften the statement, or drop it>
+⚠ Partially verified.
+Verified: <sub-claim> — <source>
+Unverified: <sub-claim>
+Suggest: <ask user for source / rewrite as "to be verified" / drop>
 ```
 
-"One-level reasoning verification," "Counter-example found / No public counter-example found," "Multi-source conflict," and "Needs user assistance to download" use the formats specified in their respective sub-flows.
+### ❌ Cannot Verify
+
+```
+❌ Cannot verify. <one-sentence likely reason>.
+Tried: <2-3 most relevant keywords / sites / leads>
+Suggest: <ask user for the original source / soften the claim / drop it>
+```
+
+The four sub-flow outputs — `🔎 One-level reasoning`, `❌ Statement refuted` / `⚠ No public counter-example found`, `⚖ Multi-source conflict`, `🔒 Needs user help to download` — use the formats specified in their own sections above.
 
 ## Red lines
 
@@ -378,7 +338,7 @@ Recommendation: <ask the user for the original source, soften the statement, or 
 - **Three-state discipline**: clearly distinguish "fact" (whitelisted source with original text) / "estimate" (methodology + parameter inference) / "inference" (no direct source — only plausible guess). The latter two cannot enter the "Verified" output.
 - **Snippet ≠ verification**: for statements involving reports / charts / data, the original must be downloaded and read in full before claiming verified. Claiming "verified" based on SERP snippets, web fragments, or secondary paraphrases crosses the line.
 - **No conflating personal and institutional positions**: a scholar's personal working paper or personal view ≠ the official position of their institution.
-- **No skipping the download-blocked prompt**: when automated download fails, the `[Needs user assistance to download]` block must be output to hand the link to the user — do not silently skip or fabricate.
+- **No skipping the download-blocked prompt**: when automated download fails, the `🔒 Needs user help to download` block must be output to hand the link to the user — do not silently skip or fabricate.
 - **No beyond-one-level reasoning**: this skill only supports one level of metric decomposition (Z = P × Q). If a sub-metric still requires further decomposition (multi-level reasoning), tell the user this is out of scope and suggest step-by-step verification or human follow-up.
-- **No omitting metadata**: the six metadata fields cannot be omitted from a "Verified" output — missing values must explicitly state "not disclosed" or "not applicable."
+- **Surface divergence**: when any metadata dimension (time point / definition / unit / coverage / revision status / data type) differs from the user's stated claim, you MUST flag it on a `⚠` line. Silent omission of a divergence is equivalent to silent definition swap.
 - **No verifying refused topics**: politics / military / religion / entertainment celebrity gossip / other inherently controversial topics are out of scope. Reply with exactly "Out of scope. (超出能力范围)" and stop — no partial verification, no workaround suggestions, no explanation beyond that one line.

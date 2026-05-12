@@ -20,9 +20,9 @@ Full rules and output formats: see [SKILL.md](SKILL.md). A Chinese reference of 
 
 - **Scope exclusions**: refused topics include politics, military, religion, entertainment celebrity gossip, and other inherently controversial subjects. The skill replies "Out of scope" and stops — no verification is attempted.
 - **Whitelisted sources**: user-supplied files → official websites & authoritative databases (IMF / World Bank / IEA / FRED / etc.) → authoritative industry sources (NBER, think tanks, investment bank research, mainstream financial media) → aggregator databases (Statista / Wind / CEIC / SWFI / Refinitiv).
-- **Three-layer search depth**: dig at most three layers; if still nothing fits, plainly say "cannot verify."
+- **Give-up criterion**: keep tracing until either a whitelisted source is located, or the obvious paths are exhausted — then plainly say "cannot verify." No fixed depth budget.
 - **Download originals locally**: any cited report / chart / dataset must be downloaded and fully read before a verdict. If download is blocked, hand the link to the user and ask for help.
-- **Six mandatory metadata fields**: time point, definition / scope, unit, coverage, revision status, data type (actual · forecast · projection · target · estimate).
+- **Metadata surface only on divergence**: the six dimensions (time point · definition · unit · coverage · revision status · data type) are checked internally but printed only when one diverges from the user's claim or is non-obvious — a `⚠` line flags the gap. Listing them by default is noise; staying silent on a divergence is a red line.
 - **Chart "meaning" verification**: the existence of a chart ≠ the user's reading of it. Check axes, units, start year, log vs linear, cumulative or not.
 - **Negative statements**: negatives are essentially unfalsifiable — switch to a "search for counter-example" path.
 - **Multi-source conflicts**: never force a pick; output both sources side-by-side with a difference attribution.
@@ -71,9 +71,9 @@ For non-Claude terminals (Codex / Gemini / Copilot), unzip the `.zip` file and p
 
 - **范围排除**：拒绝核实政治 / 军事 / 宗教 / 娱乐明星八卦 / 其他天然具有争议性的议题。skill 直接回复「超出能力范围」并停止，不做任何核实尝试
 - **白名单来源**：用户提供文件 → 官方网站与权威数据库（IMF / World Bank / IEA / FRED 等）→ 权威行业信息源（NBER、智库、投行 Research、主流财经媒体）→ 聚合数据库（Statista / Wind / CEIC / SWFI / Refinitiv）
-- **三层搜索深度**：最多向下挖三层，挖不到就明确说「无法核实」
+- **放弃判定标准**：持续溯源直到找到白名单内一手来源，或主流路径都试过仍未命中——直接说「无法核实」。无固定层数预算
 - **下载原文通读**：涉及报告 / 图表 / 数据时必须下载原文通读；下载受阻时把链接交给用户、请用户协助
-- **元数据强制 6 项**：时点 / 口径 / 单位 / 范围 / 修订状态 / 数据类型（actual · forecast · projection · target · estimate）
+- **元数据按需暴露**：六个维度（时点 · 口径 · 单位 · 范围 · 修订状态 · 数据类型）内部都过一遍，但**默认不打印**——只在与用户陈述 diverge 或非常规时单写一行 `⚠`。默认列六项是噪音；diverge 时不写则是越线
 - **图表「图意」核实**：图存在 ≠ 图意被正确解读，要核坐标轴 / 单位 / 起始年份 / 是否对数 / 是否累计
 - **否定性陈述**：负面陈述无法证伪，改走「找反例」路径
 - **多源冲突**：不强行选一个，并列输出 + 差异归因
