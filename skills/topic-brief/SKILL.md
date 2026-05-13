@@ -49,7 +49,7 @@ If the user did not provide all parameters in the trigger, ask everything in **o
 | Question | Header | Options |
 |---|---|---|
 | What is this issue's subject? | 主题 / Subject | free text (region / industry / issue / institution name) |
-| Time window? | 时间 / Period | "past two weeks / past month / past quarter / custom range" |
+| Time window? | 时间 / Period | "past two weeks / past month / past quarter / custom range". **Immediately normalize the answer to two ISO dates `[period_start, period_end]`** (YYYY-MM-DD). Example: if today is 2026-05-13 and the user says "past month" → period_start=2026-04-13, period_end=2026-05-13 |
 | Source preference? | 信息源 / Sources | "A default authoritative whitelist / B my own whitelist / C block certain sources" |
 | Author byline? | 作者 / Author | Prompt: "The cover bottom-left author slot defaults to 'developed by Gen' — what should it show?" Explicit options: "A keep default / B leave blank". The user-question prompt's built-in `Other` option lets the user type a custom byline. |
 
@@ -67,6 +67,12 @@ If the user did not provide all parameters in the trigger, ask everything in **o
 If the trigger already specifies every parameter ("做 5.1–5.12 的中东观察，作者署名 '张三'"), skip the question prompt and proceed.
 
 ### Step 2 — Parallel material gathering
+
+**Every search query must include a time filter.** For Google / Bing: `after:YYYY-MM-DD before:YYYY-MM-DD` (using the period_start / period_end normalized in Step 1); for other engines, use the equivalent syntax. Without a time filter, the engine returns results by relevance — older "big events" with high SEO weight get pulled in and stale the briefing.
+
+**Time policy**:
+- **Focus body** may reference earlier background context for contrast (e.g., "last year a similar report by X said..."), but **must explicitly tag the time point** (e.g., "in 2025 Q3..."), so readers can tell background from in-period events at a glance
+- **Items in the 4 sub-sections** must strictly fall in-window (event_date within `[period_start, period_end]`). Out-of-window material is either cut or moved to the focus body as labeled background
 
 **Search-engine query at least 4–6 times**, covering these dimensions (adapt to subject type):
 
@@ -91,15 +97,24 @@ If the trigger already specifies every parameter ("做 5.1–5.12 的中东观�
 
 ```
 Report to user:
-- Proposed focus report: <title> by <institution> (URL: ...)
-- Proposed 4 sub-sections: A / B / C / D
-- Candidate items per section: 3–5
+- Time window: [period_start, period_end]
+- Proposed focus report: <title> by <institution>, published <YYYY-MM-DD> (URL: ...)
+- Proposed 4 sub-sections with candidate items (each tagged with event date):
+  A. <section> — 3–5 items:
+     · [YYYY-MM-DD] <headline> · <source institution>
+     · [YYYY-MM-DD] <headline> · <source institution>
+  B. ...
+  C. ...
+  D. ...
 
 Ask:
 - Confirm the direction?
 - Swap the focus?
 - Adjust the 4 sub-sections?
+- Any candidate items falling outside the window (check the dates)?
 ```
+
+**Every candidate item must show its event date** — this gate lets both the user and the model spot-check freshness, preventing stale items from leaking into the final draft.
 
 If the user adjusts, revise and confirm once more. **Only after sign-off proceed to Step 4.**
 
@@ -117,6 +132,11 @@ Follow the schema and discipline in [prompts/system.md](prompts/system.md):
 
 **Top discipline — no fabricated numbers**
 Every concrete number (percentage, currency amount, date, count) must be traceable to the materials gathered in Step 2. **After writing, re-read the draft and ask "where did this number come from?" at every figure.** If you cannot answer, fix it.
+
+**Time-window discipline**:
+- Every sub-section `item` must carry an `event_date` field (YYYY-MM-DD; YYYY-MM is acceptable when only the month is known)
+- Every `event_date` must fall within `[period_start, period_end]`
+- When the focus body references earlier background, tag the time point explicitly ("in 2025 Q3..." / "last year...")
 
 **JSON quote discipline**: Chinese inline quotes must use paired `"` and `"`, **never** straight `"` (breaks JSON parsing).
 
@@ -187,15 +207,20 @@ python3 -m pip install --user jinja2
 - [ ] `summary.items` has exactly 4 entries, aligned with the 4 sub-sections
 - [ ] Every number is traceable to a source from Step 2
 - [ ] Every `item.source` has a full URL
+- [ ] **Every `item.event_date` falls within `[period_start, period_end]`**
+- [ ] **If the focus body references out-of-window background, the time point is explicitly tagged** (e.g., "in 2025 Q3...")
 - [ ] `item.headline` ≤ 30 chars
 - [ ] Focus sections 3–5; total focus body 1,500–2,500 chars
 - [ ] Chinese quotes use paired `"` `"`, no straight `"`
 - [ ] `subject_name` field is filled
+- [ ] `period_start` / `period_end` filled with ISO dates
 
 ## Red lines
 
 - **Do not fabricate any number, date, or quote.** If the source material does not contain it, rewrite without the number or cut the item entirely.
 - **Do not use a non-whitelisted source as the focus report.** Pop-econ blogs, social-media posts, and unattributed paraphrases cannot anchor the focus section.
+- **Sub-section items must be strictly in-window.** Any item whose event_date falls outside `[period_start, period_end]` must be cut or moved to the focus body as labeled background (with an explicit time tag).
+- **Every search must include a time filter.** Searching without `after:/before:` lets the engine return SEO-weighted older content — this is the root cause of stale briefings.
 - **Do not skip Step 3 (direction confirmation).** Writing 5,000 characters in the wrong direction wastes the user's review budget.
 - **Do not produce a briefing on a refused subject** (politics / military / religion / celebrity gossip / inherently controversial topics). Reply `Out of scope. (超出能力范围)` and stop.
 - **Do not pad the briefing with non-substantive narration** ("令人震惊" / "标志着" / "势必"). Keep it factual, dense, source-anchored.

@@ -6,6 +6,20 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-05-13
+
+### Changed
+
+- `topic-brief`: tightened time-window discipline across the 5-step workflow. Triggered by user feedback that "past-month" briefings sometimes pulled in items from six months ago (see [FEEDBACK.md](FEEDBACK.md)). Four changes work together:
+  - **Step 1** — the time-window answer is now immediately normalized to two ISO dates `[period_start, period_end]`, not kept as a fuzzy phrase
+  - **Step 2** — every search query must inject a time filter (`after:YYYY-MM-DD before:YYYY-MM-DD` or equivalent). New explicit policy: focus body may reference earlier background context with an explicit time tag; sub-section items must be strictly in-window
+  - **Step 3** — direction-confirmation output now lists each candidate item with its event date, so both the user and the model can spot-check freshness before composition starts
+  - **Step 4** — every sub-section `item` now requires an `event_date` field (YYYY-MM-DD; YYYY-MM acceptable for month-only events), and the self-check checklist verifies all dates fall in-window
+
+### Added
+
+- `FEEDBACK.md` at repo root — log of user feedback, each entry kept to three parts (feedback / analysis / resolution).
+
 ## [0.3.1] - 2026-05-13
 
 ### Fixed
@@ -79,6 +93,20 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
 ## [未发布]
+
+## [0.4.0] - 2026-05-13
+
+### 变更
+
+- `topic-brief`：收紧 5 步工作流的时间窗口纪律。由用户反馈触发——"过去一个月"的简报里偶尔混进半年前的条目（详见 [FEEDBACK.md](FEEDBACK.md)）。四处改动协同：
+  - **步骤 1** —— 时间窗口回答后立即归一化为 `[period_start, period_end]` 两个 ISO 日期，不再以自然语言悬置
+  - **步骤 2** —— 每次搜索必须注入时间过滤词（`after:YYYY-MM-DD before:YYYY-MM-DD` 或等价语法）。明确策略：焦点正文可引用窗口外背景（须显式标注时点），4 个子板块的 items 必须严格 in-window
+  - **步骤 3** —— 方向确认时展示每条候选条目的事件日期，让用户和模型都能在动笔前 spot-check 时效
+  - **步骤 4** —— 每条子板块 item 必填 `event_date`（YYYY-MM-DD，月级事件可用 YYYY-MM），自检 checklist 增加"每个 event_date 落在窗口内"
+
+### 新增
+
+- repo 根目录新增 `FEEDBACK.md` —— 用户反馈日志，每条三段（反馈 / 分析 / 方案），保持简洁。
 
 ## [0.3.1] - 2026-05-13
 
