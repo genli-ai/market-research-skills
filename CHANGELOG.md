@@ -6,6 +6,12 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-05-13
+
+### Fixed
+
+- `topic-brief`: cover author byline (e.g. "developed by Gen") was offset ~2px to the right of the brand name / issue title above it. Root cause: the nested `<table>` wrapping the author/period row in `templates/briefing.html` relied on the legacy HTML `cellspacing="0"` attribute, which modern browsers no longer fully honor. Fixed by adding CSS `border-collapse:collapse; border-spacing:0;` to the table and explicit `padding:0;` on its two `<td>` cells. Author byline now aligns flush-left with brand name and headline.
+
 ## [0.3.0] - 2026-05-13
 
 ### Added
@@ -73,6 +79,12 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
 ## [未发布]
+
+## [0.3.1] - 2026-05-13
+
+### 修复
+
+- `topic-brief`：封面作者署名（如 "developed by Gen"）相对上方品牌名 / 主标题向右偏移约 2px。根因是 `templates/briefing.html` 中包裹作者/期号行的嵌套 `<table>` 只依赖了 HTML 旧属性 `cellspacing="0"`，现代浏览器已不再完全遵守该属性。修复办法是在该表上加 CSS `border-collapse:collapse; border-spacing:0;`、并在两个 `<td>` 上显式 `padding:0;`。作者署名现在与上方品牌名、标题严格左对齐
 
 ## [0.3.0] - 2026-05-13
 
