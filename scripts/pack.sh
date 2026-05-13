@@ -45,6 +45,7 @@ pack_one() {
   (cd "$SKILLS_DIR" && zip -rq "$out" "$name" \
     -x "*.DS_Store" \
     -x "$name/downloads/*" \
+    -x "$name/output/*" \
     -x "$name/SKILL.zh.md")
 
   echo "Generated / 已生成: ${out#$REPO_ROOT/}"

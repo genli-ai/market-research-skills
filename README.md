@@ -9,6 +9,7 @@ A collection of Claude Skills for **market research / equity research / industry
 | Skill | Purpose | Typical triggers |
 |---|---|---|
 | [verifying](skills/verifying/) | Trace a statement back to whitelisted primary sources | "verify X" / "is this true" / "find the original source" |
+| [topic-brief](skills/topic-brief/) | Generate a thematic observation briefing (HTML, paste-into-WeChat-ready) for any subject (region / industry / issue / institution) | "做一份 XX 观察" / "generate a briefing on Y" / "/topic-brief" |
 
 > The list grows with each release. Full change history in [CHANGELOG.md](CHANGELOG.md).
 
@@ -155,6 +156,7 @@ The `releases/` folder is `.gitignored` — the repo does not store binary artif
 | Skill | 用途 | 典型触发语 |
 |---|---|---|
 | [verifying](skills/verifying/) | 信息核实：把陈述追溯到白名单内的一手来源 | 「帮我核实 X」「这条信息是真的吗」「找一下原始出处」 |
+| [topic-brief](skills/topic-brief/) | 主题观察简报生成器：为任意主题（区域 / 行业 / 议题 / 机构）产出可粘贴公众号的 HTML 简报 | 「做一份 XX 观察 / 简报」「`/topic-brief`」 |
 
 > 列表会随版本更新。完整变更见 [CHANGELOG.md](CHANGELOG.md)。
 

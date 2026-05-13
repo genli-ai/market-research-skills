@@ -6,6 +6,29 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-05-13
+
+### Added
+
+- New skill: `topic-brief` — thematic observation briefing generator. Given a subject (region / industry / policy issue / institution) and a time window, produces a single self-contained HTML file with blue "TOPIC BRIEF" branding, pasteable directly into the WeChat Official Account editor. Follows a 5-step workflow with one mandatory user direction-confirmation gate after material gathering.
+- `topic-brief` core capabilities:
+  - 4-question parameter collection (subject / period / source preference / author byline) with smart defaults
+  - Parallel material gathering (≥4 web searches + 1–2 deep fetches of the focus report)
+  - Three-state author rendering (default "developed by Gen" / explicit blank / custom byline)
+  - Self-contained Python rendering pipeline (Jinja2 template + Chinese-quote auto-repair); only external dep is `jinja2`
+  - 4 historical few-shot samples (3 regional + 1 red-brand) under `reference/` to anchor tone and structure
+  - Self-check checklist after composition (issue_title ≤24 chars, 4 sub-sections × 3–4 items, every number traceable, every URL complete, etc.)
+- Dual-language source files for `topic-brief`:
+  - `SKILL.md` (English, canonical, loaded by LLMs)
+  - `SKILL.zh.md` (Chinese reference, kept in sync; excluded from `.zip` packaging)
+- `topic-brief` scope exclusions (politics / military / religion / celebrity gossip / inherently controversial topics) — replies `Out of scope. (超出能力范围)` and stops, mirroring `verifying`.
+- `topic-brief` tool-call mapping section — uses generic verbs (Search-engine query / Fetch web body / User-facing question prompt) so non-Claude terminals can adapt.
+
+### Changed
+
+- `scripts/pack.sh` now also excludes `<skill-name>/output/` (generated artifacts) from the packaged `.zip`, in addition to the existing `downloads/` and `SKILL.zh.md` exclusions.
+- Top-level README + CHANGELOG: added `topic-brief` row to the skills table.
+
 ## [0.2.0] - 2026-05-12
 
 ### Changed
@@ -50,6 +73,29 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
 ## [未发布]
+
+## [0.3.0] - 2026-05-13
+
+### 新增
+
+- 新 skill：`topic-brief` —— 主题观察简报生成器。输入一个主题（区域 / 行业 / 议题 / 机构）+ 时间窗口，产出一份蓝色品牌的 self-contained HTML 文件，可直接粘进微信公众号编辑器。走 5 步工作流，中途**强制 1 次方向确认**避免错方向写 5000 字。
+- `topic-brief` 核心能力：
+  - 4 问参数收集（主题 / 时间 / 信息源偏好 / 作者署名），带智能默认
+  - 并行素材采集（≥4 次搜索 + 1-2 次焦点报告深读）
+  - 作者署名三态渲染（默认 "developed by Gen" / 显式留白 / 自定义文本）
+  - self-contained Python 渲染管道（Jinja2 模板 + 中文引号自动修复）；唯一外部依赖 `jinja2`
+  - `reference/` 下 4 份历史样本（3 份区域 + 1 份红色品牌示例）锚定语气与结构
+  - 撰写后自检 checklist（issue_title ≤24 字 / 4 个子板块 × 3-4 条 / 数字可溯源 / URL 完整 等）
+- `topic-brief` 双语源文件：
+  - `SKILL.md`（英文权威版，被 LLM 加载）
+  - `SKILL.zh.md`（中文参考版，与英文同步；打包时排除）
+- `topic-brief` 范围排除（政治 / 军事 / 宗教 / 八卦 / 天然争议议题）—— 回 `Out of scope. (超出能力范围)` 一行就停，与 `verifying` 风格一致
+- `topic-brief` 工具调用映射 section —— 用通用语义动词（搜索引擎检索 / 抓取网页正文 / 用户提问入口），方便非 Claude 终端适配
+
+### 变更
+
+- `scripts/pack.sh` 现在也排除 `<skill-name>/output/`（生成产物）不打进 zip；原有的 `downloads/` 与 `SKILL.zh.md` 排除规则保留
+- 顶层 README 与 CHANGELOG：skills 表格新增 `topic-brief` 行
 
 ## [0.2.0] - 2026-05-12
 
