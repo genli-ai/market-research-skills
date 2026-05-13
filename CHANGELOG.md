@@ -6,6 +6,12 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-05-13
+
+### Fixed
+
+- Release packaging: GitHub Release v0.4.0 only attached `topic-brief.zip`, making `verifying` appear missing in the version page. v0.4.1 re-attaches both skill zips. Going forward, every GitHub Release must include the full skill set via `gh release create vX.Y.Z releases/*.zip` (documented in CLAUDE.md).
+
 ## [0.4.0] - 2026-05-13
 
 ### Changed
@@ -93,6 +99,12 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
 ## [未发布]
+
+## [0.4.1] - 2026-05-13
+
+### 修复
+
+- 发版打包：v0.4.0 的 GitHub Release 只挂了 `topic-brief.zip`，让 `verifying` 看起来在新版"消失"。v0.4.1 补回两个 skill 的 zip。今后每次 GitHub Release 必须挂全部 skill 的 zip——固定流程 `gh release create vX.Y.Z releases/*.zip`（已沉淀到 CLAUDE.md）。
 
 ## [0.4.0] - 2026-05-13
 
