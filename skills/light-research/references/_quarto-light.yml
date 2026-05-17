@@ -1,0 +1,65 @@
+# light-research 默认 _quarto.yml 模板
+# 用法：项目脚手架阶段 cp 到 <项目根>/_quarto.yml
+# 设计目标：5 页内 executive brief，无 TOC / 无章节编号 / 无 lof / 无 lot
+
+lang: zh
+format:
+  pdf:
+    toc: false
+    number-sections: false
+    lof: false
+    lot: false
+    pdf-engine: xelatex
+    documentclass: ctexart
+    fontsize: "11pt"
+    linestretch: 1.4
+    indent: false
+    geometry:
+      - top=20mm
+      - bottom=20mm
+      - left=22mm
+      - right=22mm
+    include-in-header:
+      text: |
+        % === 字体 ===
+        \usepackage{fontspec}
+        \setmainfont{Times New Roman}
+        \setCJKmainfont{Songti SC}
+
+        % === 段首 / 段间距 ===
+        \setlength{\parindent}{0pt}
+        \setlength{\parskip}{0.4em}
+
+        % === 主标题压缩（5 页 memo 不需要 18pt 巨大主标题） ===
+        \usepackage{titling}
+        \setlength{\droptitle}{-2em}
+        \pretitle{\begin{flushleft}\fontsize{15}{18}\bfseries\selectfont}
+        \posttitle{\par\end{flushleft}\vskip 0.8em}
+        \preauthor{\begin{flushleft}\fontsize{10}{13}\selectfont}
+        \postauthor{\par\end{flushleft}}
+        \predate{\begin{flushleft}\fontsize{10}{13}\selectfont}
+        \postdate{\par\end{flushleft}\vskip 1em}
+
+        % === h1 节标题 13pt 加粗，h2 小节标题 11.5pt 加粗 ===
+        \usepackage{titlesec}
+        \titleformat{\section}{\fontsize{13}{16}\bfseries\selectfont}{\thesection}{0.6em}{}
+        \titlespacing{\section}{0pt}{1em}{0.4em}
+        \titleformat{\subsection}{\fontsize{11.5}{14}\bfseries\selectfont}{\thesubsection}{0.6em}{}
+        \titlespacing{\subsection}{0pt}{0.6em}{0.3em}
+
+        % === 全文无页眉，页尾居中页码 ===
+        \pagestyle{plain}
+
+        % === 脚注 10pt（覆盖 LaTeX 默认 \footnotesize=9pt 但比正文小一档） ===
+        \renewcommand\footnotesize{\fontsize{10}{13}\selectfont}
+
+  # Word docx 派生用 Pandoc default 即可，无需 reference-doc
+  docx:
+    toc: false
+    number-sections: false
+
+execute:
+  echo: false
+  warning: false
+  message: false
+  freeze: auto

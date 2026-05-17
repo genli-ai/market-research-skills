@@ -8,8 +8,8 @@
     {
       "name": "market-research-skills",
       "source": "./",
-      "description": "Claude Skills collection for market research, equity research, and industry analysis. Currently includes: verifying, topic-brief. More skills will be added. | 市场研究 / 投研 / 行业分析 Claude Skills 合集。当前包含：verifying（信息核实）、topic-brief（主题观察简报生成器）。后续会持续新增。",
-      "version": "0.4.1"
+      "description": "Claude Skills collection for market research, equity research, and industry analysis. Currently includes: verifying, topic-brief, light-research. More skills will be added. | 市场研究 / 投研 / 行业分析 Claude Skills 合集。当前包含：verifying（信息核实）、topic-brief（主题观察简报生成器）、light-research（5 页内决策备忘轻量研究工作流）。后续会持续新增。",
+      "version": "0.5.0"
     }
   ]
 }

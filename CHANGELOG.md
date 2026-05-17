@@ -6,6 +6,32 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-05-17
+
+### Added
+
+- New skill: `light-research` — lightweight research workflow that produces a 5-page decision memo / executive brief (PDF + Word) in 60–80 min, single LLM session, zero hard stops, BLUF consulting-style summary, plain text with inline footnote citations and no charts.
+- `light-research` core capabilities:
+  - 6-step skeleton (hypothesis / search / plan / draft / self-check / freeze), all soft stops — the user can interrupt at any time but the workflow does not pause for confirmation
+  - 1-question onboarding (hypothesis only), every other parameter locked to defaults (5-page PDF + Word, no HTML / WeChat / slides, no charts, expert audience, single LLM, BLUF summary, 60–80 min budget)
+  - 6 source categories drawn from heavy-research (drops the academic-only tier); 20–30 source ledger + 5–8 core PDFs downloaded in full; time-lock numbers pulled live at draft time via `financial-data-sources` skill or iFinD MCP
+  - BLUF (Bottom Line Up Front) Executive Summary discipline — single paragraph 80–150 chars, conclusion + key numbers + so-what
+  - 12-item grep self-check (subset of heavy's §7.4) — dashes, manual heading numbers, emoji, h3+ headings, bold-in-body, colon/period ratio, filler words, h2 academic anti-patterns, hyphen-as-dash, technical-symbol connectives, academic/colloquial register, vague quantifiers, meta-language, page count, Quarto render
+  - Self-check failure rollback: any red line trip → back to step 4 → re-render → re-grep; loop until all pass (no hard-stop user gate, so self-check is the only gate)
+  - Pure-Markdown footnote citations (`^[org, title, YYYY-MM-DD. URL.]`), no `references.bib`
+  - Page-count handling: 4–6 OK, 7–9 strong warning + trim suggestion, 10+ asks user to choose between further trim or switching to `heavy-research`
+- `light-research` bilingual source files:
+  - `SKILL.md` (English, canonical, loaded by LLMs)
+  - `SKILL.zh.md` (Chinese reference, kept in sync; excluded from `.zip` packaging)
+- `light-research` references:
+  - `references/workflow.md` — full 6-step workflow + writing discipline + grep red-line table (Chinese; this is the skill's working language)
+  - `references/_quarto-light.yml` — Quarto template optimized for 5-page memo (toc: false / number-sections: false / 11pt body / 13pt h1 / Songti SC CJK / footnote 10pt)
+- `light-research` cross-LLM tool-call mapping section (Read full text / Fetch web body / Search-engine query / Database query) so non-Claude terminals can adapt.
+
+### Changed
+
+- Top-level README + plugin manifests (`plugin.json` / `marketplace.json`): added `light-research` row / description.
+
 ## [0.4.1] - 2026-05-13
 
 ### Fixed
@@ -99,6 +125,32 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
 ## [未发布]
+
+## [0.5.0] - 2026-05-17
+
+### 新增
+
+- 新 skill：`light-research` —— 轻量研究工作流，60–80 min 内单 session 产出 5 页决策备忘 / executive brief（PDF + Word）。单 LLM、0 硬停、BLUF consulting-style 摘要、纯文字 + 内联 footnote 引用，无图表。
+- `light-research` 核心能力：
+  - 6 步骨架（hypothesis / search / plan / draft / self-check / freeze），全部软停 —— 用户随时可叫停，但工作流不暂停等确认
+  - 1 问 onboarding（只问 hypothesis），其余全部锁默认（5 页 PDF + Word、不出 HTML / 公众号 / slide、无图、专家受众、单 LLM、BLUF 摘要、60–80 min 预算）
+  - 6 类来源（沿用 heavy 的分类、删「学术」一类）；20–30 条资料台账 + 5–8 份核心 PDF 全文下载；time-lock 快照数字在 draft 引用前用 `financial-data-sources` skill 或 iFinD MCP 实拉
+  - BLUF (Bottom Line Up Front) Executive Summary 纪律 —— 单段 80–150 字，结论 + 关键数字 + so-what
+  - 12 条 grep 自检（heavy §7.4 的子集）—— 破折号、手写编号前缀、emoji、h3+ 标题、正文加粗、冒号 / 句号比例、抒情铺垫词、h2 学术造作模式、半角连字符当破折号、技术符号代连词、学术 / 口语腔、模糊量化词、meta-language、页数、Quarto 渲染
+  - self-check 失败回退路径：任一红线超标 → 回 step 4 → 重渲 → 重 grep；直到全过才进 step 6（0 硬停 ≠ 0 自检门）
+  - 纯 Markdown footnote 引用（`^[机构, 标题, YYYY-MM-DD. URL.]`），不用 `references.bib`
+  - 超页处置：4–6 页 OK，7–9 页强警告 + 建议精简，10+ 由用户裁定继续精简还是转 `heavy-research`
+- `light-research` 双语源文件：
+  - `SKILL.md`（英文权威版，被 LLM 加载）
+  - `SKILL.zh.md`（中文参考版，与英文同步；打包时排除）
+- `light-research` references：
+  - `references/workflow.md` —— 完整 6 步工作流 + 写作纪律 + grep 红线表（中文版，本 skill 实际工作语言）
+  - `references/_quarto-light.yml` —— 为 5 页 memo 优化的 Quarto 模板（toc: false / number-sections: false / 正文 11pt / h1 13pt / 中文 Songti SC / 脚注 10pt）
+- `light-research` 工具调用映射 section（通读全文 / 抓取网页正文 / 搜索引擎检索 / 数据库查询），方便非 Claude 终端适配
+
+### 变更
+
+- 顶层 README + plugin 清单（`plugin.json` / `marketplace.json`）：新增 `light-research` 行 / 描述
 
 ## [0.4.1] - 2026-05-13
 
