@@ -940,3 +940,67 @@ publication-style PDF 渲完后，公众号长稿渠道可把 PDF 切成逐页 J
 具体切页工具与 DPI 由用户按场景定（常用 200 DPI 即可，公众号正文图宽自适应，对长边像素不敏感）。常见命令行选项：`pdftoppm -jpeg -r 200 input.pdf page` 或 macOS Automator 的「Render PDF Pages as Images」动作。
 
 只在公众号长稿渠道需要时做，主报告 PDF 本身已分页，不需要这层派生。
+
+---
+
+## 八、AI disclosure 尾段（每份 PDF 必加）
+
+每份 PDF 末尾紧挨参考文献之前，加一段 AI 使用披露。专业性 + 透明度 + 可追溯，5 行文字搞定。
+
+### 8.1 标准文案（双语 ready）
+
+英文版（适用 EN PDF）：
+
+```markdown
+::: {.callout-note appearance="minimal" icon=false}
+**About this report.** This report was produced using the [analyst-research](https://github.com/reagan475614947/market-research-skills) workflow, an open-source Claude skill that codifies investment-research methodology (source provenance, three-state labelling, multi-source caliper analysis). Every numerical claim traces to a primary source listed in the bibliography; verifying records are preserved in the project's `_process/` folder. The analysis, judgement, and final sign-off are the author's; AI handled source aggregation, drafting, and citation formatting under explicit human checkpoints.
+:::
+```
+
+中文版（适用 zh PDF）：
+
+```markdown
+::: {.callout-note appearance="minimal" icon=false}
+**关于本报告**：本报告使用 [analyst-research](https://github.com/reagan475614947/market-research-skills) 工作流生成。该工作流是一个开源 Claude skill，封装了投研方法论（来源可追溯、三态标注、多源口径辨析）。所有数字均可追溯至参考文献列出的一手来源，verifying 记录保存在项目 `_process/` 目录。分析判断与最终签字由作者负责；AI 在显式人工检查点下承担素材汇总、初稿撰写、引用格式化工作。
+:::
+```
+
+### 8.2 放置位置
+
+在 `draft.qmd` 末尾、`# 参考文献 / # References` 章节标题**之前**插入。Quarto 把它渲染为正文最后一段，无序号。
+
+```qmd
+... 正文结尾段 ...
+
+{{< pagebreak >}}
+
+::: {.callout-note appearance="minimal" icon=false}
+**About this report**：...（上面的英 / 中模板任选）
+:::
+
+{{< pagebreak >}}
+
+# References {.unnumbered}
+
+::: {#refs}
+:::
+```
+
+### 8.3 三档 mode 差异
+
+| mode | 是否加 | 原因 |
+|---|---|---|
+| light | 可选 | 5 页 memo 篇幅紧张，作者可酌情；加的话放尾段 footer 即可，不用单独成块 |
+| medium | **必加** | 半天产出，专业感重要；按 8.1 模板加 |
+| heavy | **必加** | 旗舰报告对外发布场景多，透明度 + 合规价值高 |
+
+### 8.4 跨工具兼容
+
+`::: {.callout-note ...}` 是 Quarto 原生语法，渲 PDF 时变成淡灰底框 + 「Note」前缀（按 8.1 模板加 `appearance="minimal" icon=false` 后变成无装饰的纯文本块）。如果用户用 Word 派生，Pandoc 把 callout 转换为带左 border 的引用块；HTML 派生则保留 callout 样式。任一渠道都视觉一致。
+
+### 8.5 设计原则（为什么不写成更长的免责声明）
+
+- **5 行内** 控制：长 disclaimer（如学术 venue 的 AI policy 半页声明）对投研产品文档冗余。
+- **不喧宾夺主**：用 `appearance="minimal" icon=false` 让视觉低调，PDF 翻到末页才看到。
+- **不撇清责任**：明示「分析判断与最终签字由作者负责」，AI 角色限定在 "source aggregation, drafting, citation formatting under explicit human checkpoints"。把检查点责任坐实在作者身上，不让读者误以为这是「AI 自动生成、作者放手」的产物。
+- **可追溯**：明示 `_process/` 目录可查 verifying 记录，给真正想 audit 的读者一个落脚点。
