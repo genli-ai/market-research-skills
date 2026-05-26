@@ -76,6 +76,8 @@ Then proceed to `workflow_heavy.md §1.3 new-project onboarding` to scaffold the
 
 ## Mode comparison at a glance
 
+Quick summary below; **authoritative source of truth is `MODE_REGISTRY.md`**. Edit that file first when mode parameters change, then propagate here.
+
 | Dimension | light | medium | heavy |
 |---|---|---|---|
 | Output length | ≤5 pages | 10-15 pages | 15k+ words |
@@ -88,6 +90,8 @@ Then proceed to `workflow_heavy.md §1.3 new-project onboarding` to scaffold the
 | Citation | Markdown footnote | Markdown footnote | BibTeX + APA |
 | Project scaffolding | minimal | minimal | full (10 numbered dirs) |
 | Chart template | n/a | shared (chart_template.py) | shared (chart_template.py) |
+
+For per-mode file dependencies, mode-upgrade trajectory, and retrospective section pointers, see `MODE_REGISTRY.md`.
 
 ## When NOT to use this skill
 
