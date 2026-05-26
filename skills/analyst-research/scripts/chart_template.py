@@ -307,7 +307,7 @@ def _wrap_text_precise(fig, text: str, max_width_in: float,
 
 def save_fig(fig, fig_id: str,
              title: str = None, source: str = None, note: str = None,
-             subdir: str = ""):
+             subdir: str = "", lang: str = "zh"):
     """PDF（裸图）+ JPG（含 title/source/note）+ _clean.jpg（与 PDF 同步的栅格版）三输出。
 
     设计（v9）：在 v8 的 PDF + JPG 基础上加了 `_clean.jpg`，专供 publication-style
@@ -393,15 +393,19 @@ def save_fig(fig, fig_id: str,
         title_text = _wrap_text_precise(fig, title, max_width_in=usable_w_in,
                                          fontsize=12, fontweight="normal")
         title_lines = title_text.count("\n") + 1
+    src_prefix = "Source: " if lang == "en" else "来源："
+    note_prefix = "Note: " if lang == "en" else "注："
+    src_hang = "        " if lang == "en" else "　　　"
+    note_hang = "      " if lang == "en" else "　　"
     if source:
-        src_text = _wrap_text_precise(fig, f"来源：{source}",
+        src_text = _wrap_text_precise(fig, f"{src_prefix}{source}",
                                        max_width_in=usable_w_in, fontsize=10,
-                                       hang_indent="　　　", style="italic")
+                                       hang_indent=src_hang, style="italic")
         src_lines = src_text.count("\n") + 1
     if note:
-        note_text = _wrap_text_precise(fig, f"注：{note}",
+        note_text = _wrap_text_precise(fig, f"{note_prefix}{note}",
                                         max_width_in=usable_w_in, fontsize=10,
-                                        hang_indent="　　", style="italic")
+                                        hang_indent=note_hang, style="italic")
         note_lines = note_text.count("\n") + 1
 
     # 检测「上方 legend」：plot 顶端有 legend（如 bbox_to_anchor=(0,1.02)）。
