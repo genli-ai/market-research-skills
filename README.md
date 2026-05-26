@@ -10,7 +10,7 @@ A collection of Claude Skills for **market research / equity research / industry
 |---|---|---|
 | [verifying](skills/verifying/) | Trace a statement back to whitelisted primary sources | "verify X" / "is this true" / "find the original source" |
 | [topic-brief](skills/topic-brief/) | Generate a thematic observation briefing (HTML, paste-into-WeChat-ready) for any subject (region / industry / issue / institution) | "做一份 XX 观察" / "generate a briefing on Y" / "/topic-brief" |
-| [light-research](skills/light-research/) | Lightweight 6-step research workflow that produces a 5-page decision memo / executive brief (PDF + Word) in 60–80 min, single LLM, BLUF summary, plain text no charts | "5-page memo" / "exec brief" / "快速分析" / "决策摘要" / "/light-research" |
+| [analyst-research](skills/analyst-research/) | Three-mode end-to-end research workflow. User picks scope at trigger: **light** (5-page memo, 0 charts, 60-80 min), **medium** (10-15p topic analysis, 3-8 charts, half-day), or **heavy** (flagship 15k+ word report, 20-35+ charts, days-weeks, multi-LLM optional). Battle-tested on the Saudi Vision 2030 deep-dive. | "research report" / "投研报告" / "深度分析" / "做研报" / "5-page memo" / "/analyst-research" |
 
 > The list grows with each release. Full change history in [CHANGELOG.md](CHANGELOG.md).
 
@@ -158,7 +158,7 @@ The `releases/` folder is `.gitignored` — the repo does not store binary artif
 |---|---|---|
 | [verifying](skills/verifying/) | 信息核实：把陈述追溯到白名单内的一手来源 | 「帮我核实 X」「这条信息是真的吗」「找一下原始出处」 |
 | [topic-brief](skills/topic-brief/) | 主题观察简报生成器：为任意主题（区域 / 行业 / 议题 / 机构）产出可粘贴公众号的 HTML 简报 | 「做一份 XX 观察 / 简报」「`/topic-brief`」 |
-| [light-research](skills/light-research/) | 5 页内决策备忘 / executive brief 的轻量 6 步研究工作流，60–80 min 单 session 跑完，单 LLM，BLUF 摘要，纯文字无图，产出 PDF + Word | 「写个 5 页 memo」「快速分析」「决策摘要」「内部 brief」「`/light-research`」 |
+| [analyst-research](skills/analyst-research/) | 三档端到端研究工作流。用户触发时选档：**light**（5 页备忘、0 图、60-80 分钟）/ **medium**（10-15 页主题分析、3-8 图、半天）/ **heavy**（1.5 万字+ 旗舰报告、20-35+ 图、数天到数周、可选多 LLM 协作）。已在沙特 Vision 2030 深度报告项目跑通。 | 「写研报」「投研报告」「深度分析」「主题分析」「5 页 memo」「`/analyst-research`」 |
 
 > 列表会随版本更新。完整变更见 [CHANGELOG.md](CHANGELOG.md)。
 

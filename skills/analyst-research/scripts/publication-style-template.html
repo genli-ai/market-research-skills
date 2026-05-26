@@ -1,0 +1,661 @@
+<!--
+  publication-style-template.html
+  heavy-research skill | publication-style HTML 模板
+
+  跨项目复用的 consulting / FT 中性长稿风格 HTML → PDF 模板。
+
+  使用方式：
+    1. 把本文件拷到项目 8_publication/2_HTML/<project>-publication-style.html
+    2. 按 spec §7.8「qmd 主报告 → publication HTML」内容映射表填充各 page 内容
+    3. VS Code Live Preview 实时调段（spec §7.3）
+    4. 浏览器 Cmd+P 另存为 PDF（spec §7.6），关掉「页眉与页脚」、边距设「无」
+
+  规范出处：spec §七 publication-style HTML 派生稿（§7.1 至 §7.9）
+
+  本 template 是中性示例填充版（CSS 完全保留，HTML 内容为占位示例）。
+  下方所有「示例：...」「[此处填...]」均需用户按真实研究内容替换。
+  若要替换为其他咨询风格（BCG 绿色调、McKinsey 蓝调、Bain 红调等），可选调 consulting-report-style skill 生成替代模板。
+-->
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[研究题目] — [副标题]</title>
+<style>
+
+:root {
+  --brand:        #1F3A5F;
+  --brand-dark:   #122340;
+  --brand-light:  #4A6B8A;
+  --accent:       #C97B4C;
+  --accent-light: #8FA3B8;
+  --ink:          #1A1A1A;
+  --ink-soft:     #555555;
+  --paper:        #FAFAF7;
+  --rule:         #DDDDDD;
+  --sidebar-bg:   #EEF2F6;
+  --font-cn:      'Songti SC', 'Source Han Serif SC', 'Noto Serif CJK SC', serif;
+  --font-en:      'Times New Roman', Georgia, serif;
+  --font-sans:    -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Helvetica Neue', Arial, sans-serif;
+  --font-body:    var(--font-sans);
+  --font-display: var(--font-sans);
+  --page-w:       210mm;
+  --page-h:       297mm;
+  --page-pad:     22mm;
+  --page-pad-b:   22mm;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: #E8E8E8;
+  font-family: var(--font-body);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  counter-reset: pagenum;
+}
+
+/* WYSIWYG: PDF page == HTML page. NO Chrome-injected footer. */
+@page {
+  size: 210mm 297mm;
+  margin: 0;
+}
+
+/* Force backgrounds to print */
+* {
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+  color-adjust: exact !important;
+}
+
+/* ---------- Page container — STRICT 1 div = 1 A4 page ---------- */
+.page {
+  width: var(--page-w);
+  height: var(--page-h);
+  background: var(--paper);
+  margin: 16px auto;
+  box-shadow: 0 2px 18px rgba(0,0,0,0.08);
+  position: relative;
+  padding: 18mm var(--page-pad) var(--page-pad-b) var(--page-pad);
+  overflow: hidden;
+  font-size: 11pt;
+  line-height: 1.6;
+  color: var(--ink);
+  counter-increment: pagenum;
+}
+.page.no-pad { padding: 0; }
+.page.cover  { padding: 0; counter-increment: none; }
+.page.cover + .page { counter-reset: pagenum; }
+.page.back-cover { padding: var(--page-pad); counter-increment: none; }
+
+/* ---------- Page footer (in-HTML, not @page) ---------- */
+.page-footer {
+  position: absolute;
+  bottom: 9mm;
+  left: var(--page-pad);
+  right: var(--page-pad);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: 'PingFang SC', sans-serif;
+  font-size: 7.5pt;
+  color: var(--ink-soft);
+  letter-spacing: 0.06em;
+  pointer-events: none;
+}
+.page-footer .pf-left  { flex: 1; text-align: left; }
+.page-footer .pf-mid   { flex: 1; text-align: center; }
+.page-footer .pf-right { flex: 1; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.page-footer .pf-right::before { content: counter(pagenum); }
+.page.cover .page-footer,
+.page.back-cover .page-footer { display: none; }
+
+@media print {
+  html, body { width: var(--page-w); background: white; }
+  .page {
+    box-shadow: none !important;
+    margin: 0 !important;
+    page-break-after: always;
+    break-after: page;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .page:last-child { page-break-after: auto; break-after: auto; }
+}
+
+/* ---------- Typography ---------- */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  color: var(--brand);
+  font-weight: 700;
+  margin: 0 0 0.55em 0;
+  line-height: 1.2;
+  letter-spacing: -0.005em;
+}
+h1 { font-size: 38pt; line-height: 1.08; }
+h2 { font-size: 24pt; }
+h3 { font-size: 13.5pt; margin-top: 1em; }
+h4 { font-size: 9pt; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: var(--ink-soft); }
+p { margin: 0 0 0.65em 0; text-align: justify; }
+a { color: var(--brand); text-decoration: none; font-weight: 600; }
+strong, b { font-weight: 700; }
+em { font-style: italic; color: var(--ink); }
+.key-term { color: var(--brand); font-weight: 700; }
+.small-caps { text-transform: uppercase; letter-spacing: 0.1em; font-size: 9pt; font-weight: 700; color: var(--brand); }
+.xref { color: var(--brand); font-weight: 700; }
+
+/* ---------- COVER ---------- */
+.cover { color: white; overflow: hidden; }
+.cover .photo {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+  background-image:
+    linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.05) 35%, rgba(0,0,0,0.35) 100%),
+    linear-gradient(160deg, #0B1F38 0%, #1F3A5F 45%, #2E4F7A 100%);
+}
+.cover .accent-bar {
+  position: absolute; right: 22mm; bottom: 32mm;
+  width: 56mm; height: 1.2mm; background: var(--accent); z-index: 2;
+}
+.cover .cover-content {
+  position: absolute; top: 26mm; left: 22mm; right: 22mm; z-index: 2;
+}
+.cover .series-label {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 8.5pt; font-weight: 700;
+  margin-bottom: 22mm; color: rgba(255,255,255,0.92);
+}
+.cover h1 {
+  color: white; font-size: 44pt; font-weight: 700;
+  line-height: 1.02; letter-spacing: -0.015em;
+  max-width: none; white-space: nowrap; margin-bottom: 6mm;
+}
+.cover .subtitle {
+  font-size: 14pt; color: rgba(255,255,255,0.88);
+  margin-bottom: 14mm; max-width: 140mm;
+}
+.cover .meta { font-size: 10pt; line-height: 1.5; max-width: 120mm; }
+.cover .meta .date { font-weight: 700; margin-bottom: 1.5mm; display: block; }
+.cover .corner-mark {
+  position: absolute; right: 22mm; bottom: 22mm;
+  font-size: 9pt; font-weight: 700; letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.7); z-index: 2;
+}
+
+/* ---------- Page-eyebrow + accent-bar (shared by abstract, contents, refs, authors) ---------- */
+.page-eyebrow {
+  font-size: 9pt; color: var(--accent);
+  text-transform: uppercase; letter-spacing: 0.18em;
+  font-weight: 700; margin-bottom: 4mm;
+}
+.accent-bar-thin {
+  width: 30mm; height: 1.2mm; background: var(--accent);
+  margin-bottom: 6mm;
+}
+
+/* ---------- ABSTRACT ---------- */
+.abstract h2 {
+  font-size: 22pt; line-height: 1.3;
+  max-width: 162mm; margin-bottom: 10mm;
+}
+.abstract .body {
+  font-size: 11pt; line-height: 1.75; max-width: 165mm;
+}
+.abstract .body p { margin-bottom: 0.85em; }
+
+/* ---------- CONTENTS ---------- */
+.contents h2 { margin-bottom: 14mm; font-size: 28pt; }
+.toc-list { list-style: none; padding: 0; margin: 0; font-size: 12pt; }
+.toc-list li {
+  display: flex; align-items: baseline;
+  padding: 4mm 0;
+  border-bottom: 0.5px solid var(--rule);
+  color: var(--ink);
+}
+.toc-list .toc-num {
+  color: var(--brand); font-weight: 700;
+  width: 22mm; flex-shrink: 0; font-size: 11pt;
+}
+.toc-list .toc-title { flex: 1; }
+.toc-list .toc-page {
+  color: var(--ink-soft); font-weight: 600;
+  width: 14mm; text-align: right; font-variant-numeric: tabular-nums;
+}
+
+/* ---------- CHAPTER OPENER ---------- */
+.chapter-opener { padding: 0; }
+.chapter-opener .banner {
+  height: 60mm;
+  background-size: cover; background-position: center;
+  background-image:
+    linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(11,31,56,0.35) 100%),
+    linear-gradient(135deg, #1F3A5F 0%, #4A6B8A 55%, #C97B4C 130%);
+  position: relative;
+}
+.chapter-opener .banner .ch-label {
+  position: absolute;
+  left: 22mm; bottom: 7mm;
+  font-size: 42pt; font-weight: 700;
+  color: rgba(255,255,255,0.95);
+  line-height: 1; letter-spacing: -0.01em;
+  font-family: var(--font-display);
+}
+.chapter-opener .banner .ch-label-en {
+  position: absolute;
+  left: 22mm; top: 9mm;
+  font-size: 9pt; font-weight: 700;
+  color: rgba(255,255,255,0.75);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.chapter-opener .chapter-body {
+  padding: 12mm var(--page-pad) 0;
+}
+.chapter-opener .chapter-eyebrow {
+  font-size: 9pt; color: var(--accent);
+  letter-spacing: 0.18em;
+  font-weight: 700; margin-bottom: 4mm;
+}
+.chapter-opener h2 {
+  font-size: 24pt; line-height: 1.12;
+  color: var(--brand); margin-bottom: 8mm;
+  max-width: 150mm;
+}
+.chapter-opener .lead-text { font-size: 11pt; line-height: 1.6; }
+.chapter-opener .lead-text p { margin-bottom: 0.6em; }
+
+/* ---------- BODY page (continuation) ---------- */
+.page.body-page { padding: 16mm var(--page-pad) var(--page-pad-b); }
+.page.body-page p { margin-bottom: 0.6em; }
+
+/* ---------- EXHIBITS ---------- */
+.exhibit { margin: 5mm 0 6mm; }
+.exhibit .exhibit-label {
+  font-size: 8.5pt; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--brand);
+  margin-bottom: 1mm;
+}
+.exhibit .exhibit-title {
+  font-size: 12pt; color: var(--ink);
+  font-weight: 700; line-height: 1.25;
+  margin-bottom: 3mm;
+}
+.exhibit .exhibit-figure {
+  margin: 0; background: white;
+  border-top: 0.5px solid var(--rule);
+  border-bottom: 0.5px solid var(--rule);
+  padding: 3mm 0;
+}
+.exhibit .exhibit-figure img {
+  width: 100%; height: auto;
+  max-height: 130mm; object-fit: contain; display: block;
+}
+.exhibit .exhibit-source {
+  margin-top: 2mm; font-size: 8pt;
+  line-height: 1.45; color: var(--ink-soft);
+}
+.exhibit .exhibit-source strong { color: var(--ink); }
+
+/* ---------- TABLES ---------- */
+.data-table-block { margin: 5mm 0 6mm; }
+.data-table-block .table-label {
+  font-size: 8.5pt; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--brand);
+  margin-bottom: 1mm;
+}
+.data-table-block .table-title {
+  font-size: 12pt; color: var(--ink);
+  font-weight: 700; line-height: 1.25;
+  margin-bottom: 3mm;
+}
+table.report-table {
+  width: 100%; border-collapse: collapse; font-size: 9.5pt;
+  margin: 0;
+}
+table.report-table thead th {
+  background: var(--brand); color: white;
+  font-weight: 700; padding: 2.2mm 3mm;
+  text-align: left; font-size: 9pt;
+}
+table.report-table thead th.num,
+table.report-table thead th.ctr { text-align: center; }
+table.report-table tbody td {
+  padding: 1.8mm 3mm; border-bottom: 0.5px solid var(--rule);
+  vertical-align: top;
+}
+table.report-table tbody tr:nth-child(even) td { background: #F7F7F4; }
+table.report-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.report-table td.ctr { text-align: center; }
+.data-table-block .table-source {
+  margin-top: 2mm; font-size: 8pt;
+  line-height: 1.45; color: var(--ink-soft);
+}
+.data-table-block .table-source strong { color: var(--ink); }
+
+/* ---------- Pull quote ---------- */
+.pull-quote {
+  font-size: 14pt; line-height: 1.45;
+  color: var(--brand); font-weight: 700;
+  border-left: 3px solid var(--accent);
+  padding: 2mm 0 2mm 7mm;
+  margin: 6mm 0;
+}
+
+/* ---------- References ---------- */
+.references h2 { font-size: 26pt; margin-bottom: 8mm; }
+.references-list {
+  list-style: none; padding: 0; margin: 0;
+  font-size: 9pt; line-height: 1.55;
+}
+.references-list li {
+  padding: 1.6mm 0 1.6mm 34mm;       /* hanging indent: body offset right of ref-key */
+  border-bottom: 0.5px solid var(--rule);
+  text-indent: -34mm;
+  break-inside: avoid;
+}
+.references-list .ref-key {
+  display: inline-block;
+  width: 32mm;                       /* fits all keys without wrapping */
+  margin-right: 2mm;
+  font-weight: 700; color: var(--brand);
+  text-indent: 0;
+  vertical-align: top;
+}
+
+/* ---------- Authors ---------- */
+.authors h2 { margin-bottom: 9mm; font-size: 26pt; }
+.author-card {
+  display: flex; gap: 7mm; align-items: flex-start;
+  margin-bottom: 10mm;
+  max-width: 158mm;
+}
+.author-headshot {
+  width: 30mm; height: 30mm; flex-shrink: 0;
+  border-radius: 50%; overflow: hidden;
+  background: #EEE;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+}
+.author-headshot img {
+  width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block;
+}
+.author-headshot.placeholder {
+  background: linear-gradient(135deg, var(--brand-light), var(--brand));
+  color: white; display: flex; align-items: center; justify-content: center;
+  font-size: 14pt; font-weight: 700;
+}
+.author-bio { flex: 1; font-size: 11pt; line-height: 1.65; max-width: 120mm; }
+.author-bio p { margin: 0 0 0.55em 0; }
+.author-bio .author-name { font-weight: 700; color: var(--ink); font-size: 13pt; display: block; margin-bottom: 1mm; }
+.author-bio .author-email { color: var(--brand); font-weight: 700; }
+.authors .meta-block { max-width: 158mm; }
+.authors .meta-block p { font-size: 10pt; line-height: 1.65; }
+.authors .meta-block h4 { margin: 8mm 0 2mm; }
+
+/* ---------- Back cover ---------- */
+.back-cover { position: relative; height: var(--page-h); }
+.back-cover .accent-bar {
+  width: 56mm; height: 1.2mm; background: var(--accent); margin-bottom: 14mm;
+}
+.back-cover .title-block {
+  font-family: var(--font-display); font-size: 22pt;
+  color: var(--brand); font-weight: 700; line-height: 1.2;
+  margin-bottom: 10mm;
+}
+.back-cover .boilerplate {
+  max-width: 135mm; font-size: 10.5pt; line-height: 1.65; color: var(--ink);
+}
+.back-cover .boilerplate p { margin-bottom: 0.75em; }
+.back-cover .copyright {
+  position: absolute; bottom: 22mm; left: var(--page-pad); right: var(--page-pad);
+  font-size: 9pt; color: var(--ink-soft); max-width: 135mm; line-height: 1.55;
+}
+
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- COVER                                                        -->
+<!-- ============================================================ -->
+<div class="page cover">
+  <div class="photo"></div>
+  <div class="accent-bar"></div>
+  <div class="cover-content">
+    <div class="series-label">[RESEARCH SERIES LABEL] · [YEAR]</div>
+    <h1>[研究题目]</h1>
+    <div class="subtitle">—— [副标题，描述研究对象与切入角度]</div>
+    <div class="meta">
+      <span class="date">[YYYY 年 MM 月]</span>
+      <p>[作者姓名]</p>
+    </div>
+  </div>
+  <div class="corner-mark">[报告类型，如「独立研究报告」]</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ABSTRACT                                                     -->
+<!-- ============================================================ -->
+<div class="page abstract">
+  <div class="page-eyebrow">ABSTRACT · 摘要</div>
+  <div class="accent-bar-thin"></div>
+  <h2>摘要</h2>
+  <div class="body">
+    <p>示例：本研究围绕「[核心研究问题]」展开，基于 [主要数据源 1]、[主要数据源 2]、[主要数据源 3] 三方公开数据，从 [维度 A]、[维度 B]、[维度 C] 三个角度审视 [研究对象] 在 [时间区间] 的实际进展，结论是 [核心 take-away 一句话]。</p>
+    <p>示例：<span class="key-term">[核心论点的一句强调]</span>。[维度 A 的结论]、[维度 B 的结论]、[维度 C 的结论] 三条主线下，[研究对象的总体状态判断]。剩余 [N] 年 [关键变量] 走向决定 [研究对象后续可达性区间]。</p>
+    <p style="margin-top:8mm;"><strong>关键词：</strong>[核心主题] | [地区或国家] | [关键政策] | [关键机构]</p>
+  </div>
+  <div class="page-footer"><span class="pf-left">[研究系列名]</span><span class="pf-mid">[研究题目简写]</span><span class="pf-right"></span></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- CONTENTS                                                     -->
+<!-- ============================================================ -->
+<div class="page contents">
+  <div class="page-eyebrow">CONTENTS · 目录</div>
+  <div class="accent-bar-thin"></div>
+  <h2>本期内容</h2>
+  <ul class="toc-list">
+    <li><span class="toc-num">引言</span><span class="toc-title">[引言主题，一句话]</span><span class="toc-page">04</span></li>
+    <li><span class="toc-num">第一章</span><span class="toc-title">[第一章主题]</span><span class="toc-page">06</span></li>
+    <li><span class="toc-num">第二章</span><span class="toc-title">[第二章主题]</span><span class="toc-page">14</span></li>
+    <li><span class="toc-num">第三章</span><span class="toc-title">[第三章主题]</span><span class="toc-page">19</span></li>
+    <li><span class="toc-num">第四章</span><span class="toc-title">[第四章主题]</span><span class="toc-page">25</span></li>
+    <li><span class="toc-num">结语</span><span class="toc-title">[结语主题]</span><span class="toc-page">40</span></li>
+    <li><span class="toc-num">附录</span><span class="toc-title">[附录主题]</span><span class="toc-page">44</span></li>
+    <li><span class="toc-num">参考</span><span class="toc-title">参考文献</span><span class="toc-page">48</span></li>
+  </ul>
+  <div class="page-footer"><span class="pf-left">[研究系列名]</span><span class="pf-mid">[研究题目简写]</span><span class="pf-right"></span></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- CHAPTER OPENER (示例：引言)                                    -->
+<!-- ============================================================ -->
+<div class="page chapter-opener">
+  <div class="banner">
+    <div class="ch-label-en">INTRODUCTION</div>
+    <div class="ch-label">引言</div>
+  </div>
+  <div class="chapter-body">
+    <h2>[引言核心论点的一句话标题]</h2>
+    <div class="lead-text">
+      <p>示例：本研究的切入点是 [关键问题]。[研究对象] 在 [时间区间] 经历了 [关键变化]，但 [反差现象] 仍然存在。基于这一观察，本报告将 [核心分析框架] 展开为 [N] 章。</p>
+      <p>示例：第一章 [概述]；第二章 [概述]；第三章 [概述]；结语综合给出 [关键判断的形式]。方法论与多源口径辨析置于附录。</p>
+    </div>
+  </div>
+  <div class="page-footer"><span class="pf-left">[研究系列名]</span><span class="pf-mid">[研究题目简写]</span><span class="pf-right"></span></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- CHAPTER OPENER (示例：第一章)                                  -->
+<!-- ============================================================ -->
+<div class="page chapter-opener">
+  <div class="banner">
+    <div class="ch-label-en">CHAPTER ONE</div>
+    <div class="ch-label">第一章</div>
+  </div>
+  <div class="chapter-body">
+    <h2>[第一章核心论点的一句话标题]</h2>
+    <div class="lead-text">
+      <p>示例：本章探讨 [章主题]。已有研究多从 [常见角度] 入手，但本研究采用 [新角度] 切入，理由是 [角度选择的解释]。</p>
+      <p>示例：核心发现是 <span class="key-term">[本章核心论点]</span>。本章分三节展开：1.1 [小节主题]、1.2 [小节主题]、1.3 [小节主题]。</p>
+      <h3>1.1　[小节标题：节论点的一句话]</h3>
+      <p>示例：[本节论证起点，给出第一组数据或事实]。基于 [来源] 的数据，[关键指标] 从 [基线值] 变化到 [当前值]，幅度为 [变化幅度]。</p>
+    </div>
+  </div>
+  <div class="page-footer"><span class="pf-left">[研究系列名]</span><span class="pf-mid">[研究题目简写]</span><span class="pf-right"></span></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- BODY PAGE (示例：含 exhibit)                                  -->
+<!-- ============================================================ -->
+<div class="page body-page">
+  <p>示例：本段承接上节的数据，进一步展开 [子论点]。来源 A 给出 [数字 1]，来源 B 给出 [数字 2]，两源差 [差距]，差异主因是 [口径区别说明]。<span class="xref">（见 Exhibit 1。）</span></p>
+
+  <figure class="exhibit">
+    <div class="exhibit-label">Exhibit 1</div>
+    <div class="exhibit-title">[图标题：事实加数字，承担论点]</div>
+    <div class="exhibit-figure">
+      <img src="../../6_figures/fig_X_X_topic_clean.jpg" alt="[图 alt 文本]">
+    </div>
+    <div class="exhibit-source">
+      <strong>来源：</strong>[机构名] [报告名] [年份] [页码]。<br>
+      <strong>注：</strong>[口径补充说明，如基期、含与不含某子项、单位等]。
+    </div>
+  </figure>
+
+  <p>示例：上图直观呈现 [图核心 take-away]。需要注意 [口径限制或 caveat]。本研究的引用方式是 [引用规则]。</p>
+  <p>示例：进一步分析 [子论点 2]。基于 [来源 C] 的数据，[关键指标 2] 表现 [简短描述]。这一发现与 [先前研究或预期] 一致或冲突。</p>
+
+  <div class="page-footer"><span class="pf-left">[研究系列名]</span><span class="pf-mid">[研究题目简写]</span><span class="pf-right"></span></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- BODY PAGE (示例：含 table)                                   -->
+<!-- ============================================================ -->
+<div class="page body-page">
+  <p>示例：跨多个维度对比时，表格比图更紧凑。<span class="xref">（见 Table 1。）</span></p>
+
+  <div class="data-table-block">
+    <div class="table-label">Table 1</div>
+    <div class="table-title">[表标题：跨维度对比的简短描述]</div>
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th>[维度]</th>
+          <th class="num">[指标 A]</th>
+          <th class="num">[指标 B]</th>
+          <th class="ctr">[判断]</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>[第一行]</td>
+          <td class="num">[值]</td>
+          <td class="num">[值]</td>
+          <td class="ctr">[判断符号或文字]</td>
+        </tr>
+        <tr>
+          <td>[第二行]</td>
+          <td class="num">[值]</td>
+          <td class="num">[值]</td>
+          <td class="ctr">[判断]</td>
+        </tr>
+        <tr>
+          <td>[第三行]</td>
+          <td class="num">[值]</td>
+          <td class="num">[值]</td>
+          <td class="ctr">[判断]</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="table-source">
+      <strong>来源：</strong>[机构名] [报告名] [年份]。<br>
+      <strong>注：</strong>[口径补充说明]。
+    </div>
+  </div>
+
+  <div class="pull-quote">
+    示例：用 pull-quote 强调一句关键判断或读者带走的 take-away。本风格的 pull-quote 是 brand 色加 accent 色左边线。
+  </div>
+
+  <p>示例：表后正文继续展开论证。pull-quote 用于章末或节内承上启下的「停顿点」，不要每页都放。</p>
+
+  <div class="page-footer"><span class="pf-left">[研究系列名]</span><span class="pf-mid">[研究题目简写]</span><span class="pf-right"></span></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- REFERENCES                                                   -->
+<!-- ============================================================ -->
+<div class="page references">
+  <div class="page-eyebrow">REFERENCES · 参考文献</div>
+  <div class="accent-bar-thin"></div>
+  <h2>参考文献</h2>
+  <ul class="references-list">
+    <li><span class="ref-key">[ref-key 1]</span>[作者], [文献标题], [机构], [年份]. <em>[URL 或文献标识]</em></li>
+    <li><span class="ref-key">[ref-key 2]</span>[作者], [文献标题], [机构], [年份].</li>
+    <li><span class="ref-key">[ref-key 3]</span>[作者], [文献标题], [机构], [年份]. <em>[URL]</em></li>
+    <li><span class="ref-key">[ref-key 4]</span>[作者], [文献标题], [机构], [年份].</li>
+    <li><span class="ref-key">[ref-key 5]</span>[作者], [文献标题], [机构], [年份]. <em>[URL]</em></li>
+    <li><span class="ref-key">[ref-key 6]</span>[作者], [文献标题], [机构], [年份].</li>
+  </ul>
+  <div class="page-footer"><span class="pf-left">[研究系列名]</span><span class="pf-mid">[研究题目简写]</span><span class="pf-right"></span></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- AUTHORS                                                      -->
+<!-- ============================================================ -->
+<div class="page authors">
+  <div class="page-eyebrow">ABOUT THE AUTHOR · 关于作者</div>
+  <div class="accent-bar-thin"></div>
+  <h2>关于作者</h2>
+  <div class="author-card">
+    <!--
+      默认头像 author.jpg 是 skill 自带的卡通小猫 placeholder（280x280），随 skill scripts/ 一起拷到项目 8_publication/2_HTML/。
+      替换流程：直接把 author.jpg 覆盖为你自己的头像（建议正方形、长边 ≤ 1200px、文件 ≤ 1MB），HTML 不用改。
+      1:1 图配 1:1 容器时 object-fit 无可裁剪空间，原图额头偏高会被圆形剪掉。处理方法见 spec §7.5。
+    -->
+    <div class="author-headshot">
+      <img src="author.jpg" alt="[作者姓名]">
+    </div>
+    <div class="author-bio">
+      <span class="author-name">[作者姓名]</span>
+      <p>[作者简介一句话，如学历、机构、研究领域]</p>
+      <p>[作者背景，如先前职业、关注领域]</p>
+      <p>邮箱：<span class="author-email">[email@example.com]</span></p>
+    </div>
+  </div>
+
+  <div class="meta-block">
+    <h4>方法说明</h4>
+    <p>示例：本报告采用 heavy-research skill 的工作流：Claude 负责骨架与综合主笔，按 §7.1 与 §7.1.1 自润色（单 LLM 模式）；可选 GPT critique 与 verifying skill 对关键 caveat 做白名单一手源核验（多 LLM 模式）。所有 LLM 输出仅作素材。引用的每一组数字均可定位到原始来源，详见参考文献。无法定位的指标在正文标「待核实」。</p>
+
+    <h4>致谢</h4>
+    <p>示例：感谢 [机构名 1]、[机构名 2]、[机构名 3] 等机构的公开数据披露。</p>
+  </div>
+
+  <div class="page-footer"><span class="pf-left">[研究系列名]</span><span class="pf-mid">[研究题目简写]</span><span class="pf-right"></span></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- BACK COVER                                                   -->
+<!-- ============================================================ -->
+<div class="page back-cover">
+  <div class="accent-bar"></div>
+  <div class="title-block">[研究题目]<br><span style="font-size:11pt; font-weight:400; color:var(--ink-soft);">[副标题]</span></div>
+  <div class="boilerplate">
+    <p>示例：本报告以 [核心切入点] 为切入口，从 [维度 A]、[维度 B]、[维度 C] 三个不受 [常见会计弹性] 影响的硬口径，直击 [研究对象] 的真实结构。综合 [来源 A]、[来源 B]、[来源 C] 三方现成预测，给出 [研究对象] 剩余 [N] 年的可达性区间评估。</p>
+
+    <p>示例：核心结论是 [一句话结论]。[正向发现] 是真改革；[负向发现] 要么实质降标，要么显著滞后。</p>
+
+    <p>本研究为独立研究产出，所有数字均可追溯至原始来源；推断与估算与事实严格分开标注，仅作研究框架，不构成投资建议。</p>
+  </div>
+  <div class="copyright">
+    完整数据与图脚本归档于本研究项目目录。若对本报告内容有疑问或想进一步讨论，请通过邮箱 <em>[email@example.com]</em> 联系作者。<br><br>
+    © [作者姓名] [年份]. 保留所有权利。本研究为非商业用途的独立研究成果。
+  </div>
+</div>
+
+</body>
+</html>

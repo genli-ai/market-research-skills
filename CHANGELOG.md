@@ -6,6 +6,28 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-05-26
+
+### Added
+
+- New skill: `analyst-research` — three-mode end-to-end research workflow for investment analysts and policy researchers. Battle-tested on the Saudi Vision 2030 economic diversification deep-dive (heavy mode, 35 figures, 15k+ words). User picks mode at trigger time:
+  - **light mode** — 5-page decision memo, 0 charts, 60-80 min budget. Successor to the standalone `light-research` skill; all 6 workflow steps and the 12-item grep self-check carried over verbatim (see `references/workflow_light.md`).
+  - **medium mode** — 10-15 page topic analysis, 3-8 charts, half-day budget (3-5 h). 8-step skeleton with one hard stop (sign-off after draft). PDF + Word derivations. Footnote citations (`references/workflow_medium.md`, `_quarto-medium.yml`).
+  - **heavy mode** — Flagship report 15k+ words, 20-35+ charts, days-to-weeks budget. 11-step skeleton, optional multi-LLM (Claude + GPT + DS), three hard stops (outline / draft / final), PDF + Word + WeChat md + HTML publication derivations. BibTeX + APA citations (`references/workflow_heavy.md`, `report_style_spec.md`).
+- Mode-picker UX: when `analyst-research` is triggered, the AI first presents the three modes with runtime budgets and chart counts, then loads only the workflow + Quarto template + spec relevant to the chosen mode. If the user's trigger message already contains explicit scope hints (page count, time budget), the AI infers the mode and asks one-line confirmation.
+- Cross-mode invariants documented in `references/workflow.md` (router file): hypothesis-first start, source provenance, three-state labeling (fact / estimate / inference), no fabricated numbers, reply language matches question language.
+- Mode-upgrade path: a project started in `light` mode can be re-triggered in `medium` or `heavy` since all three share the hypothesis-lock first step. Downgrade is generally not worth it (cut deliverables instead).
+- Visual production stack carried over from heavy mode: shared `chart_template.py` (matplotlib styling — McKinsey blue-grey palette, Songti SC CJK, fig number alignment, accent color separation), `publication-style-template.html` (HTML publication template for heavy mode), `author.jpg` (author photo placeholder).
+- `report_style_spec.md` (~58k chars) covering: document layout, chart design principles, chart production rules, HTML derivation, `chart_template` interface contract, Quarto config defaults. Loaded by medium + heavy modes; skipped by light mode (no charts).
+
+### Removed
+
+- **BREAKING**: `light-research` skill removed as a standalone skill. Its functionality is preserved verbatim as `analyst-research --light` mode. Users who previously invoked `/light-research` should now invoke `analyst-research` and pick `light` when prompted. The `workflow_light.md` and `_quarto-light.yml` files inside `analyst-research/references/` are byte-for-byte copies of the original `light-research` skill files.
+
+### Migration
+
+If you had `light-research` installed via this plugin marketplace at v0.5.0, upgrading to v0.6.0 will replace it with `analyst-research`. Trigger keywords that used to fire `light-research` (e.g., "5-page memo", "quick analysis", "决策摘要") now fire `analyst-research`, which will ask you to pick a mode — pick `light` for byte-identical behavior to v0.5.0.
+
 ## [0.5.0] - 2026-05-17
 
 ### Added

@@ -1,7 +1,7 @@
 {
   "name": "market-research-skills",
-  "version": "0.5.0",
-  "description": "Claude Skills collection for market research, equity research, and industry analysis. Includes: verifying, topic-brief, light-research. | 市场研究 / 投研 / 行业分析 Claude Skills 合集。当前包含：verifying（信息核实）、topic-brief（主题观察简报生成器）、light-research（5 页内决策备忘轻量研究工作流）",
+  "version": "0.6.0",
+  "description": "Claude Skills collection for market research, equity research, and investment analysis. Includes: verifying, topic-brief, analyst-research (3 modes: light/medium/heavy). | 市场研究 / 投研 / 行业分析 Claude Skills 合集。当前包含：verifying（信息核实）、topic-brief（主题观察简报生成器）、analyst-research（三档研究工作流：light/medium/heavy）",
   "author": {
     "name": "ligen",
     "email": "ligen.thu@gmail.com"

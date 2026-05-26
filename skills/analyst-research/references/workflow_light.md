@@ -1,8 +1,8 @@
-# light-research 工作流（v1.0）
+# analyst-research · light 模式工作流（v1.0）
 
 适用对象：5 页内决策备忘 / executive brief / 内部 memo。预算 60-80 min，单 LLM，0 硬停，纯文字无图，仅 PDF + Word 产出。
 
-heavy-research 是姐妹 skill，专攻 1.5 万字+ 长篇研报。两者**完全独立**，互不共用文件，不要混用。
+medium 与 heavy 是 analyst-research 同 skill 内的姐妹模式，分别覆盖 10-15 页主题分析与 1.5 万字+ 旗舰报告。三档共用 hypothesis-lock 起点，下游差异由本模式自治。
 
 ---
 
@@ -10,7 +10,7 @@ heavy-research 是姐妹 skill，专攻 1.5 万字+ 长篇研报。两者**完�
 
 ### 第 0 步：宣告
 
-向用户简短确认：「我已读完 `~/.claude/skills/light-research/references/workflow.md`，准备启动 light-research 6 步流程。」
+向用户简短确认：「我已读完 analyst-research light 模式工作流（`references/workflow_light.md`），准备启动 6 步流程。」
 
 确认后问 **1 个 onboarding 问题**（只 1 题，问完锁定不再追问）：
 
@@ -32,9 +32,16 @@ heavy-research 是姐妹 skill，专攻 1.5 万字+ 长篇研报。两者**完�
 cwd 切到项目根后跑：
 
 ```bash
+SKILL_ROOT="${SKILL_ROOT:-$(find ~/.claude/plugins -type d -path '*market-research-skills/skills/analyst-research' | head -1)}"
 mkdir -p pdfs && \
-cp ~/.claude/skills/light-research/references/_quarto-light.yml _quarto.yml && \
+cp "$SKILL_ROOT/references/_quarto-light.yml" _quarto.yml && \
 touch hypothesis.md research.md outline.md draft.qmd
+```
+
+If the plugin path lookup fails (e.g., installed via clone-and-symlink instead of plugin marketplace), fall back to:
+
+```bash
+cp ~/.claude/skills/analyst-research/references/_quarto-light.yml _quarto.yml
 ```
 
 不创建 `_state.md`、不创建项目级 `CLAUDE.md`、不创建 retrospective、不创建图表 / scripts 子目录。

@@ -1,0 +1,135 @@
+# medium-research 默认 _quarto.yml 模板
+# 用法：项目脚手架阶段 cp 到 <项目根>/_quarto.yml
+# 设计目标：8-15 页主题分析，3-8 图，章节编号 + TOC + 图目录，不带 references.bib（用 inline footnote）
+
+project:
+  type: default
+
+lang: zh
+
+format:
+  pdf:
+    toc: true
+    toc-depth: 2
+    lof: true
+    lot: false                 # medium 默认无独立表（3-8 图为主），需要时项目级覆盖
+    lof-title: "图目录"
+    number-sections: true
+    fig-cap-location: top
+    tbl-cap-location: top
+    fig-pos: 'H'               # 强制图就地放置（不浮动），让 figsource 块紧跟图后不被 LaTeX float 拆散
+    pdf-engine: xelatex
+    documentclass: ctexart
+    fontsize: "11pt"
+    linestretch: 1.5
+    indent: false
+    geometry:
+      - top=22mm
+      - bottom=22mm
+      - left=22mm
+      - right=22mm
+    include-in-header:
+      text: |
+        % === 字体 ===
+        \usepackage{fontspec}
+        \setmainfont{Times New Roman}
+        \setCJKmainfont{Songti SC}
+        % 阿拉伯字体按需启用（heavy 全保留，medium 默认注释，项目级 CLAUDE.md 决定）
+        % \newfontfamily\arabicfont[Script=Arabic]{Noto Sans Arabic}
+
+        % === 段首 / 段间距（report_style_spec §1.5）===
+        \setlength{\parindent}{0pt}
+        \setlength{\parskip}{0.5em}
+
+        % === 主标题 16pt 加粗居中（medium 比 heavy 18pt 略小，匹配 8-15 页量级）===
+        \usepackage{titling}
+        \setlength{\droptitle}{3em}
+        \pretitle{\begin{center}\fontsize{16}{20}\bfseries\selectfont}
+        \posttitle{\par\end{center}\vskip 1.5em}
+        \preauthor{\begin{center}\fontsize{11}{14}\selectfont}
+        \postauthor{\par\end{center}}
+        \predate{\begin{center}\fontsize{11}{14}\selectfont}
+        \postdate{\par\end{center}\vskip 1.5em}
+
+        % 覆盖 Quarto/pandoc 默认 \subtitle（默认 \large ≈ 12pt 把副标题降字号）
+        % 把副标题升到 14pt 与正文形成层级
+        \usepackage{etoolbox}
+        \makeatletter
+        \providecommand{\subtitle}[1]{%
+          \apptocmd{\@title}{\par\medskip {\normalfont\fontsize{14}{18}\selectfont #1 \par}}{}{}%
+        }
+        \makeatother
+
+        % === h1 节标题 13pt 加粗，h2 小节标题 11.5pt 加粗 ===
+        % medium 标题层级比 heavy（14 / 12）略压缩，匹配 8-15 页量级
+        \usepackage{titlesec}
+        \titleformat{\section}{\fontsize{13}{16}\bfseries\selectfont}{\thesection}{0.8em}{}
+        \titlespacing{\section}{0pt}{1em}{0.4em}
+        \titleformat{\subsection}{\fontsize{11.5}{14}\bfseries\selectfont}{\thesubsection}{0.8em}{}
+        \titlespacing{\subsection}{0pt}{0.7em}{0.3em}
+
+        % === 目录 / 图目录：标题 13pt 加粗居中，条目 11pt 常规 ===
+        \usepackage{tocloft}
+        \renewcommand{\cfttoctitlefont}{\fontsize{13}{16}\bfseries\selectfont}
+        \renewcommand{\cftloftitlefont}{\fontsize{13}{16}\bfseries\selectfont}
+        \renewcommand{\cftsecfont}{\fontsize{11}{14}\selectfont}
+        \renewcommand{\cftfigfont}{\fontsize{11}{14}\selectfont}
+        \makeatletter
+        \renewcommand{\@cftmaketoctitle}{%
+          \addpenalty\@secpenalty\vspace{\cftbeforetoctitleskip}\@cftpagestyle
+          \begin{center}{\cfttoctitlefont\contentsname}\end{center}%
+          \cftmarktoc\par\nobreak\vskip\cftaftertoctitleskip\@afterheading}
+        \renewcommand{\@cftmakeloftitle}{%
+          \addpenalty\@secpenalty\vspace{\cftbeforeloftitleskip}\@cftpagestyle
+          \begin{center}{\cftloftitlefont\listfigurename}\end{center}%
+          \cftmarklof\par\nobreak\vskip\cftafterloftitleskip\@afterheading}
+        \makeatother
+
+        % 强制换页：目录前 \clearpage（独立成页）
+        \AtBeginDocument{%
+          \pretocmd{\tableofcontents}{\clearpage}{}{}%
+          \pretocmd{\listoffigures}{\clearpage}{}{}%
+          \apptocmd{\listoffigures}{\clearpage}{}{}%
+        }
+
+        % === 全文无页眉，页尾居中页码（spec §1.11）===
+        \pagestyle{plain}
+
+        % === 摘要：标题 13pt 加粗居中，正文 11pt 常规 ===
+        \renewenvironment{abstract}
+          {\par\medskip{\centering\fontsize{13}{16}\bfseries\selectfont 摘要\par}\medskip\normalsize}
+          {\par\medskip}
+
+        % === 图 / 表 caption 11pt italic ===
+        \usepackage{caption}
+        \captionsetup{font={normalsize,it},labelfont={normalsize,bf,it}}
+
+        % === 脚注 10.5pt（覆盖 LaTeX 默认 \footnotesize=9pt 但比正文小一档）===
+        \renewcommand\footnotesize{\fontsize{10.5}{13}\selectfont}
+
+        % === figsource 环境：图下方来源 + 注，10pt 灰度（spec §1.4 + §3.3）===
+        % \nopagebreak[4] 强禁止 figsource 前换页，使其紧贴前面的 figure
+        \usepackage{xcolor}
+        \definecolor{sourcegray}{gray}{0.4}
+        \newenvironment{figsource}
+          {\par\penalty10000\smallskip\penalty10000\noindent\begingroup\fontsize{10pt}{12pt}\color{sourcegray}\selectfont}
+          {\par\endgroup\medskip}
+        % tblsource 同 figsource（保留以备项目临时启用 lot 时用）
+        \newenvironment{tblsource}
+          {\par\penalty10000\smallskip\penalty10000\noindent\begingroup\fontsize{10pt}{12pt}\color{sourcegray}\selectfont}
+          {\par\endgroup\medskip}
+
+  # Word docx 派生用 Pandoc default + 章节编号
+  docx:
+    toc: true
+    toc-depth: 2
+    number-sections: true
+
+# medium 不带 bibliography（用 inline footnote `^[源, 标题, YYYY-MM-DD. URL.]`）
+# heavy 在此处会有 `bibliography: 7_draft/references.bib`，medium 故意省略
+
+execute:
+  echo: false
+  warning: false
+  message: false
+  freeze: auto
