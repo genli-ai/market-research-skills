@@ -1,85 +1,88 @@
-# analyst-research · heavy 模式工作流 v1.0
+# analyst-research · heavy mode workflow
 
-> **v0.6.0 迁移说明**：本文件由原 `heavy-research` skill 整体迁入 analyst-research 作为 heavy 模式。文档内提及「heavy-research skill」「heavy-research/ 文件夹」「~/.claude/skills/heavy-research/...」等表述均指当前 analyst-research 的 heavy 模式与其 references/scripts 文件夹（即 `analyst-research/` 本身）。后续 v0.7 会做一次文字纯化。
+> English is the authoritative version; the Chinese mirror is `workflow_heavy.zh.md`.
+> Writing-standard examples illustrating Chinese-prose redlines are kept in Chinese (they apply when the report language is Chinese); the surrounding rules are in English and apply to both languages unless noted.
 
-> 这份文档是「用 AI 做投研」的方法论框架，不绑定任何具体研究主题。v1.0 定位为「基于已有成熟研究或大量数据的综述加分析」类型，不做原创建模。
+> This document is a methodology framework for "doing investment research with AI", not bound to any specific topic. It is positioned for "synthesis-and-analysis based on an existing body of mature research or large datasets", not original modelling.
 >
-> 配套关系：项目级 `CLAUDE.md` 写本项目的具体调整与约定，本文件写一般性经验总结。两处同步更新（项目处记具体，本处记一般）。
+> Companion relationship: the project-level `CLAUDE.md` holds this project's specific adjustments and conventions; this file holds general accumulated experience. Update both in sync (project for specifics, here for generals).
 >
-> 本文档同时作为 `heavy-research` skill 的 `references/workflow.md`。skill 加载与 onboarding 流程见 §1.3 第 0 步。
+> skill loading and onboarding flow: see §1.3 Step 0.
+
 ---
 
-## 一、定位与使用指南
+## 1. Positioning & usage guide
 
-### 1.1 这份文档是什么
+### 1.1 What this document is
 
-一套用 AI 协助做投研类研究的认知阶段流水线。它不告诉你做哪个具体题目，告诉你**任何投研类题目都应经过哪些步骤、每步的交付物质量门、人介入点是什么**。
+A cognitive-stage pipeline for AI-assisted investment research. It does not tell you which topic to do; it tells you **what steps any investment-research topic should go through, the deliverable quality gate at each step, and where the human intervenes**.
 
-### 1.2 给谁看
+### 1.2 Who it is for
 
-未来开新项目的自己。AI 助手进入新项目时也会读到，但它的最高优先级是配合用户的判断而非机械执行。
+Your future self opening a new project. The AI assistant also reads it when entering a new project, but its highest priority is to work with the user's judgement rather than execute mechanically.
 
-与项目级 `CLAUDE.md` 的关系：CLAUDE.md 是某个具体项目的「宪法」，本文件是所有项目共用的「方法论」。重叠部分（如写作风格、PDF 渲染约定）以本文件为基线，项目级可以覆盖但需要写明理由。
+Relationship to the project-level `CLAUDE.md`: CLAUDE.md is a specific project's "constitution", this file is the shared "methodology" across all projects. For overlapping parts (writing style, PDF render conventions) this file is the baseline; the project level may override with a stated reason.
 
-### 1.3 新项目 onboarding 流程
+### 1.3 New-project onboarding flow
 
-**场景**：用户希望在一个主对话中完成项目脚手架搭建并启动十一步流程。skill 整体（`SKILL.md` + `references/workflow.md` + `references/report_style_spec.md` + `scripts/chart_template.py` + `scripts/publication-style-template.html` + `scripts/author.jpg`）通过以下两种方式之一到位：A. `heavy-research` skill 被触发后由 AI 整体拷贝到项目根；B. 用户手动把 `heavy-research/` 文件夹整体拷到新项目根目录。AI 助手在新项目对话中**第一次读到本文档时**，依次读完 references/ 下两份文档，然后按以下流程进入。
+**Scenario**: the user wants to scaffold the project and launch the 11-step flow in one main conversation. The skill as a whole (`SKILL.md` + `references/workflow_heavy.md` + `references/report_style_spec.md` + `scripts/chart_template.py` + `scripts/publication-style-template.html` + `scripts/author.jpg`) arrives one of two ways: A. the skill is triggered and the AI copies it wholesale into the project root; B. the user manually copies the `analyst-research/` folder into the new project root. When the AI assistant **first reads this document** in a new-project conversation, it reads the two references/ docs in order, then enters the flow below.
 
-**第 0 步：三件套到位检查**
+**Step 0: three-piece-set check**
 
-两种到位路径，结束状态相同：项目根有完整 `heavy-research/` 文件夹，结构与 skill 自身一致。
+Two arrival paths, same end state: the project root has a complete `analyst-research/` folder, structurally identical to the skill itself.
 
-A. **skill 加载场景**（`heavy-research` skill 已激活）：整体拷贝，命令一行：
+A. **skill-load scenario** (skill active): wholesale copy, one line:
 
 ```bash
-cp -r ~/.claude/skills/heavy-research <项目根>/
+cp -r ~/.claude/skills/analyst-research <project root>/
 ```
 
-B. **直接拷贝场景**（无 skill）：用户手动把 `heavy-research/` 文件夹整体拷到新项目根目录（拖拽或 `cp -r`）。
+B. **direct-copy scenario** (no skill): the user manually copies the `analyst-research/` folder into the new project root (drag or `cp -r`).
 
-结束状态项目根的 `heavy-research/` 文件夹结构：
+End-state structure of the project-root folder:
 
 ```
-heavy-research/
-├── SKILL.md                              ← skill 入口，本地副本作 placeholder 留着即可
+analyst-research/
+├── SKILL.md                              ← skill entry, local copy as placeholder
 ├── references/
-│   ├── workflow.md                       ← 过程纪律（本文档）
-│   └── report_style_spec.md              ← 视觉规范 + chart_template 接口契约
+│   ├── workflow_heavy.md                 ← process discipline (this document)
+│   └── report_style_spec.md              ← visual spec + chart_template interface contract
 └── scripts/
-    ├── chart_template.py                 ← 绘图实现代码（跨项目种子）
-    ├── publication-style-template.html   ← publication HTML 模板（可选派生用）
-    └── author.jpg                        ← 作者头像 placeholder（可选派生用）
+    ├── chart_template.py                 ← chart implementation (cross-project seed)
+    ├── publication-style-template.html   ← publication HTML template (optional derivation)
+    └── author.jpg                        ← author headshot placeholder (optional derivation)
 ```
 
-读完 `references/workflow.md` + `references/report_style_spec.md` 再进第 1 步。三件套外只新增 `_quarto.yml`、`.claude/`、各阶段产出目录，不在 `heavy-research/` 里加任何文件。项目级特化（调色板、字体、领域约定）在本地副本里改，不污染 skill 主体。
+Read `references/workflow_heavy.md` + `references/report_style_spec.md` before Step 1. Outside the three-piece set, only add `_quarto.yml`, `.claude/`, and the stage output dirs; add nothing inside `analyst-research/`. Project-specific tailoring (palette, fonts, domain conventions) is edited in the local copy, not polluting the skill body.
 
-**第 1 步：宣告**
+**Step 1: announce**
 
-向用户简短确认：「我已读完 heavy-research/ 三件套，准备搭建项目脚手架并启动步骤 1。请确认。」
+Briefly confirm: "I have read the analyst-research/ three-piece set and am ready to scaffold the project and start step 1. Please confirm."
 
-同时问两个 onboarding 问题，回答后全程锁定不再追问：
+Ask three onboarding questions at the same time; lock the answers and do not re-ask:
 
-1. **是否采用多 LLM 协作模式？**
-   - **不采用（default）**：全程 Claude solo。Step 2 广搜与补搜 Claude 一家做，Step 9b critique 由 Claude 按 6 类视角 self-critique（事实、口径、引用、跨节一致、论证流、语言规范），独立性弱于多 LLM 模式
-   - **采用**：Step 2 调三家平行（Claude + GPT + DS），Step 9b critique 调 GPT（不调 DS）。其他步骤仍 Claude solo
-   - 多 LLM 模式需要用户手动切到对应 plugin 或网页运行 GPT / DS，节奏代价显著；单 LLM 模式无切换成本但失去 critique 独立性。default 选不采用，确认要采用时显式说明
-2. **是否有验证过的 Quarto `_quarto.yml` 模板可以复用？**
-   - 实战经验：用户已有的经验证 yml 比 Claude 从零拼出的「最佳实践」更靠谱，复用能省去字体、linestretch、目录中文化的多轮反复调试
+0. **Report language?** English (default) / Chinese / other. If unspecified, write the main report and derivations in English (see SKILL.md "Language policy"). English drafts skip the Chinese colon redline and enforce the unescaped-`$` redline (write amounts as `\$`, else LaTeX treats `$` as a math delimiter and the render fails). Lock into CLAUDE.md.
+1. **Multi-LLM collaboration mode?**
+   - **No (default)**: Claude solo throughout. Step 2 broad search and supplementary search done by Claude alone; Step 9b critique by Claude self-critique against 6 perspectives (facts, calipers, citations, cross-section consistency, argument flow, language standards), weaker independence than multi-LLM.
+   - **Yes**: Step 2 runs three in parallel (Claude + GPT + DS), Step 9b critique by GPT (not DS). Other steps still Claude solo.
+   - Multi-LLM mode requires the user to manually switch to the relevant plugin or web app for GPT / DS, a significant rhythm cost; single-LLM has no switching cost but loses critique independence. Default to No; state explicitly when confirming Yes.
+2. **Is there a validated Quarto `_quarto.yml` template to reuse?**
+   - Field experience: a user's already-validated yml beats Claude's from-scratch "best practice", saving multiple rounds of font / linestretch / TOC-localisation tuning.
 
-两项答案锁定后写入项目级 CLAUDE.md「多 LLM 协作」段，进第 2 步搭脚手架。
+After the three answers lock, write them into the project CLAUDE.md (language into the "report language" section, multi-LLM into the "multi-LLM collaboration" section), then proceed to Step 2 scaffolding.
 
-工具栈其余默认值不再每次询问。如用户对默认有调整（如改用 Word），由用户主动说明：
+Other toolchain defaults are not asked each time. If the user adjusts a default (e.g. switch to Word), the user states it:
 
-- 排版：Quarto + xelatex 渲染 PDF（**优先复用用户已有的 _quarto.yml**，没有再用 spec §5.1 默认头）
-- 数据脚本：Python（不建 venv，用户级安装，详见全局 `~/.claude/CLAUDE.md`）
-- 项目类别：投研行业研报
-- 产出形态：主报告 PDF + Word docx 派生（10b default），加可选派生 publication HTML（10c）+ 公众号 JPG 切页（10d）
-- 目标读者：双兼（受过本科教育有基础经济学知识的非专业读者，亦适合专业读者）
-- 时间预期：不预设节奏，按 §四 各步骤的硬停或软停推进，用户随时可叫停或加速
+- Layout: Quarto + xelatex for PDF (**prefer reusing the user's existing _quarto.yml**; otherwise use the spec §5.1 default header)
+- Data scripts: Python (no venv, user-level install, see global `~/.claude/CLAUDE.md`)
+- Project category: investment-research industry report
+- Output forms: main report PDF + Word docx derivation (10b default), plus optional publication HTML (10c) + WeChat JPG slices (10d)
+- Target audience: dual (undergraduate-educated non-specialist with basic economics, also suits professional readers)
+- Time expectation: no preset pace, advance by the hard / soft stops in §4, the user can stop or accelerate at any time
 
-**第 2 步：搭建脚手架**
+**Step 2: scaffold**
 
-按 §十一 创建文件夹与所有成果 md：
+Create folders and all deliverable mds per §11:
 
 ```bash
 mkdir -p .claude \
@@ -94,11 +97,11 @@ mkdir -p .claude \
          9_retrospective
 ```
 
-`heavy-research/` 已由用户拷入，不再创建。
+`analyst-research/` is already copied in by the user; do not recreate it.
 
-接着创建以下文件。
+Then create the following files.
 
-`.claude/settings.local.json`，一次性允许常用工具，避免后续反复审批：
+`.claude/settings.local.json`, allowing common tools once to avoid repeated approvals:
 
 ```json
 {
@@ -111,1464 +114,1492 @@ mkdir -p .claude \
 }
 ```
 
-`5_scripts/_path.py`，让 `5_scripts/` 里的脚本能 import `heavy-research/scripts/chart_template.py`：
+`5_scripts/_path.py`, so scripts in `5_scripts/` can import `analyst-research/scripts/chart_template.py`:
 
 ```python
-"""把 heavy-research/scripts/ 加进 sys.path，让本目录的 make_fig_*.py 能 import chart_template。"""
+"""Add analyst-research/scripts/ to sys.path so make_fig_*.py here can import chart_template."""
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "heavy-research" / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "analyst-research" / "scripts"))
 ```
 
-之后每个 `make_fig_*.py` 顶部 `import _path` + `from chart_template import setup_style, save_fig, PALETTE`（详见 `heavy-research/references/report_style_spec.md §6.4`）。
+Then each `make_fig_*.py` top has `import _path` + `from chart_template import setup_style, save_fig, PALETTE` (see `analyst-research/references/report_style_spec.md §6.4`).
 
-`_quarto.yml`，从 `heavy-research/references/report_style_spec.md §5.1` 拷标准头，按项目调字体段。
+`_quarto.yml`, copy the standard header from `analyst-research/references/report_style_spec.md §5.1` and adjust the font block per project.
 
-其他要建的文件：
+Other files to create:
 
-- `_state.md`，按 §十二 模板，初始化「步骤 1 进行中」
-- `CLAUDE.md`，项目级宪法。先复制全局 `~/.claude/CLAUDE.md` 的核心约定，再加项目特定的领域约定（部分内容话题确认后补全）
-- 各文件夹的成果 md（`topic.md` / `research.md` / `outline.md` / `data.md` / `scripts.md` / `figures.md` / `draft.md` / `retrospective.md`），按 §十一 最小骨架建空文件，先写一句用途，后续步骤填充
-- `references.bib` 空文件，预留给步骤 8/9 引用
+- `_state.md`, per the §12 template, initialised to "step 1 in progress"
+- `CLAUDE.md`, the project constitution. First copy the core conventions from the global `~/.claude/CLAUDE.md`, then add project-specific domain conventions (some content filled in after the topic is confirmed)
+- the deliverable mds for each folder (`topic.md` / `research.md` / `outline.md` / `data.md` / `scripts.md` / `figures.md` / `draft.md` / `retrospective.md`), empty per the §11 minimal skeleton with a one-line purpose, filled in by later steps
+- `references.bib`, empty, reserved for step 8/9 citations
 
-完成后 `git init` + 首次 commit，tag `scaffold-init`。
+When done, `git init` + first commit, tag `scaffold-init`.
 
-**第 3 步：启动步骤 1**
+**Step 3: launch step 1**
 
-向用户提一个问题：**您想研究什么话题（一句话）？**
+Ask the user one question: **What topic do you want to research (one sentence)?**
 
-其他参数已在第 1 步固定（双兼读者、PDF + 公众号双版、不预设时间），不再问。
+Other parameters are fixed at Step 1 (dual audience, PDF + WeChat dual version, no preset time) and not re-asked.
 
-**第 4 步：每步按 §四 规则推进**
+**Step 4: advance each step per §4 rules**
 
-- **软停**：给阶段产出后宣告「本步告一段落，可以进步骤 N+1，请确认或叫停」
-- **硬停**：停下来等签字，明确说「本步是硬停点，需要您审阅 [文件路径]，签字后才进步骤 N+1」
+- **Soft stop**: after the stage output, announce "this step is done, ready for step N+1, please confirm or stop me".
+- **Hard stop**: stop and wait for sign-off, saying clearly "this is a hard stop, you need to review [file path], I proceed to step N+1 only after sign-off".
 
-每次步骤切换：① 更新 `_state.md` 的「▶ 当前位置」段；② 关键里程碑打 git tag。
+On each step switch: (1) update `_state.md`'s "▶ Current position" section; (2) git-tag key milestones.
 
-**第 5 步：贯穿性纪律自动执行**
+**Step 5: cross-cutting discipline runs automatically**
 
-无需用户提醒，AI 全程自觉执行：
-- 每个 section 综合后立即追加复盘到 `9_retrospective/retrospective.md`（§十）
-- 重要文献结构性引用前必须下载全文（§步骤 5）
-- 数据 + 脚本必须双双落盘（§5.5）
-- 写作规范、PDF 兼容、CSV 卫生贯穿所有步骤
-- 多 LLM 平行产出时各家只在 `_process/<llm>/` 下产出，由 Claude 综合
+Without user reminder, the AI runs throughout:
+- append a retrospective to `9_retrospective/retrospective.md` right after each section is synthesised (§10)
+- download full text before any structural citation of an important document (§step 5)
+- data + script must both land (§5.5)
+- writing standards, PDF compatibility, CSV hygiene run through all steps
+- under multi-LLM parallel output, each LLM produces only under `_process/<llm>/`, synthesised by Claude
 
-**遇到分歧的处理**：
-- 用户说「跳过某步」：先问「为什么」，硬停不能跳，软停可裁剪深度
-- 用户说「加快进度」：缩短某步深度可以，硬停不能省
-- 用户说「自己跑模型」：参照 §2.2，先穷尽搜索现成研究，需要时简单测算作辅助
-- 用户与本框架冲突：用户优先，但要明确告知「这与 v1.0 §X 冲突，原因 Y」，由用户决定是否覆盖
-
----
-
-## 二、边界
-
-### 2.1 适用场景
-
-有明确研究问题的、需要中长篇产出的投研类项目。产出可以是行业研报、宏观主题稿、公司深度、政策评估、地缘事件影响分析等。
-
-### 2.2 核心定位：综述 + 分析，不做原创建模
-
-所有研究都是「基于已有成熟研究 / 大量数据的综述 + 分析」类型。AI 的角色按优先级排序：
-
-1. 搜集与汇总现成研究（IMF、World Bank、IEA、各大行 Research、咨询机构、学术论文等）
-2. **对已有数据做处理、对比、可视化、解读**（高优先级，是 AI 投研的核心增值环节之一）
-   - 描述性测算：占比、增速、份额、市占率、CAGR、跨国对比、简单情景估算等
-   - 套用现成方法重算：如套用 IMF 公开的财政平衡油价公式重算最新数字
-   - **可视化要做出功夫和亮点**：图表设计、配色、口径标注、信息密度都要打磨。可视化是研报的脸面
-3. 把分散的素材组织成有论证流的研报语言
-
-第 2 项的边界是「简单处理」，不展开成「自有方法论」的复杂分析。具体见下文。
-
-AI 不主动启动，用户认可后可作为辅助：
-
-- **简单计量**：OLS、相关性、描述性统计回归，作为 sanity check 或 cross-check 已有研究的辅助。不作为主结论
-- 自己另起炉灶设计计算公式（套用现成公式可以，自己造不可以）
-
-AI 绝对不做：
-
-- 不自己造方法跑 novel 模型（如自己设计 panel VAR、DSGE、状态空间模型）
-- 不试图业余复现 IMF / 学术界的精细估计（粗糙复现伤全文质量，读者会质疑全文）
-- 不在已有成熟研究领域重新发明轮子
-
-判断口诀：先穷尽搜索现成研究 → 找到的优先引用 → 描述性测算与可视化大胆做（这是研报的看点）→ 简单计量需要用户认可 → 永远不试图复现已有学术界的精细方法。
-
-### 2.3 不适用场景
-
-一次性快问快答、纯文学创作、营销文案、单纯的工具脚本开发。
+**Handling disagreement**:
+- user says "skip a step": first ask "why"; hard stops cannot be skipped, soft stops can have depth trimmed
+- user says "speed up": trimming a step's depth is OK, hard stops cannot be dropped
+- user says "run your own model": per §2.2, exhaust the search for existing research first, simple calculation as an aid only if needed
+- user conflicts with this framework: the user wins, but state clearly "this conflicts with this framework's §X, reason Y" and let the user decide whether to override
 
 ---
 
-## 三、十一步骨架
+## 2. Boundaries
 
-| 步骤 | 名称 | 主导 | 停点 |
+### 2.1 Applicable scenarios
+
+Investment-research projects with a clear research question that need medium-to-long-form output. Output can be industry reports, macro thesis pieces, company deep-dives, policy assessments, geopolitical-event impact analysis, etc.
+
+### 2.2 Core positioning: synthesis + analysis, no original modelling
+
+All research is "synthesis + analysis based on existing mature research / large datasets". The AI's role in priority order:
+
+1. Collect and aggregate existing research (IMF, World Bank, IEA, major-bank Research, consulting, academic papers, etc.)
+2. **Process, compare, visualise, and interpret existing data** (high priority, one of the core value-add steps of AI investment research)
+   - descriptive calculation: shares, growth rates, market share, CAGR, cross-country comparison, simple scenario estimates
+   - re-compute with an existing method: e.g. re-compute the latest figures with the IMF's public fiscal-breakeven-oil-price formula
+   - **visualisation must be crafted with care and highlights**: chart design, palette, caliper labelling, information density all polished. Visualisation is the report's face
+3. Organise scattered material into report language with an argument flow
+
+The boundary of item 2 is "simple processing", not expanding into complex analysis of "your own methodology". See below.
+
+The AI does not start these on its own; with user approval they can be aids:
+
+- **Simple econometrics**: OLS, correlation, descriptive-statistics regression, as a sanity check or cross-check of existing research. Not the main conclusion.
+- Designing your own calculation formula from scratch (applying an existing formula is fine, inventing one is not)
+
+The AI absolutely does not:
+
+- invent a method to run a novel model (e.g. design your own panel VAR, DSGE, state-space model)
+- attempt an amateur reproduction of IMF / academic fine estimates (a crude reproduction harms the whole report's quality, the reader doubts the whole thing)
+- reinvent the wheel in a field with existing mature research
+
+Mnemonic: exhaust the search for existing research first → cite what you find → do descriptive calculation and visualisation boldly (these are the report's highlights) → simple econometrics needs user approval → never attempt to reproduce existing academic fine methods.
+
+### 2.3 Inapplicable scenarios
+
+One-shot Q&A, pure literary creation, marketing copy, tool-script-only development.
+
+---
+
+## 3. The 11-step skeleton
+
+| Step | Name | Lead | Stop |
 |---|---|---|:-:|
-| 1 | 初步话题 | 用户提出 | 软 |
-| 2 | 广搜 | Claude solo（单 LLM 模式 default）；三家平行（多 LLM 模式） | 软 |
-| 3 | AI 基于资料建议话题方向 | Claude | 软 |
-| 4 | 确认话题与研究思路 | 用户 | **硬 #1** |
-| 5 | 补搜（聚焦深做，重要资料全文下载） | Claude solo（多 LLM 模式可调三家平行） | 软 |
-| 6 | 详细 outline draft（含图表清单） | Claude solo（多 LLM 模式可调三家 brainstorm） | **硬 #2** |
-| 7 | 完成图与表，回填 outline | Claude 主笔 | 软（落盘后告知，用户随时审 JPG） |
-| 8 | draft 写作（default 一气连写整稿） | Claude solo（含渲染与 YAML 调优） | 软（节内硬停作为 fallback） |
-| 9 | 精修：9b critique → 9c verifying → 9d 用户 sign off | 单 LLM 模式 Claude self-critique；多 LLM 模式 GPT critique | 软（9d **硬 #3**）|
-| 10 | 定稿 + 派生：10a 主报告冻结、10b Word、10c publication HTML（可选）、10d 公众号 JPG 切页（可选） | Claude | 软（每子步落盘后告知） |
-| 11 | 复盘 | Claude + 用户 | 随时（11.2 项目收尾一次性 audit）|
+| 1 | initial topic | user proposes | soft |
+| 2 | broad search | Claude solo (single-LLM default); three in parallel (multi-LLM) | soft |
+| 3 | AI suggests topic directions from material | Claude | soft |
+| 4 | confirm topic and thesis | user | **hard #1** |
+| 5 | supplementary search (focused depth, full-text download of key material) | Claude solo (multi-LLM may run three in parallel) | soft |
+| 6 | detailed outline draft (with chart list) | Claude solo (multi-LLM may run three brainstorm) | **hard #2** |
+| 7 | complete charts and tables, backfill outline | Claude lead | soft (announce after landing, user reviews JPGs any time) |
+| 8 | draft writing (default one continuous pass) | Claude solo (incl. render and YAML tuning) | soft (per-section hard stop as fallback) |
+| 9 | refine: 9b critique → 9c verifying → 9d user sign-off | single-LLM Claude self-critique; multi-LLM GPT critique | soft (9d **hard #3**) |
+| 10 | finalise + derive: 10a freeze main PDF, 10b Word, 10c publication HTML (optional), 10d WeChat JPG slices (optional) | Claude | soft (announce after each sub-step lands) |
+| 11 | retrospective | Claude + user | anytime (11.2 one-time project-close audit) |
 
-**硬停 vs 软停**：
-- **硬停**：必须停下来等用户审阅签字，AI 不能自行进入下一步
-- **软停**：AI 可以给出阶段性产出后继续推进，但用户随时可以叫停
+**Hard vs soft stop**:
+- **Hard stop**: must stop and wait for user review / sign-off; the AI cannot proceed on its own.
+- **Soft stop**: the AI can give a stage output and continue, but the user can stop at any time.
 
-**关键迭代环**：步骤 6 ↔ 7 是双向反馈，不是单向。outline draft 在步骤 7 图表全部完成后通常需要回头修订（口径陷阱、数据缺口、新发现的论证角度）才形成 final outline。
-
----
-
-## 四、各步骤细则
-
-### 步骤 1：初步话题（软停）
-
-**关键问题**：用户对什么话题感兴趣？
-
-**操作**：
-- 用户给出一句话题方向（如「我想看 GCC 国家在油价波动中的财富累积可持续性」）
-- AI 只做最小响应：复述确认理解、问 1-2 个澄清问题（产出形态、目标读者、时间预期）。**不做扩散性的话题建议**（扩散在 step 3）
-
-**交付物**：对话内的话题描述（不必单独建文件）
-
-**注意**：这一步的话题是「靶子」，不是定稿。步骤 2-4 之后大概率会被修正甚至替换。
+**Key iteration loop**: steps 6 ↔ 7 are bidirectional, not one-way. The outline draft usually needs revising after all step 7 charts are done (caliper traps, data gaps, newly found argument angles) to become the final outline.
 
 ---
 
-### 步骤 2：广搜（软停）
+## 4. Step details
 
-**关键问题**：围绕这个初步话题，世界上**已经存在**哪些数据和资料？
+### Step 1: initial topic (soft stop)
 
-**目标**：定话题方向（数量优先，覆盖面优先）
+**Key question**: what topic is the user interested in?
 
-**操作**（按 onboarding 锁定的 LLM 模式执行）：
+**Operations**:
+- the user gives a one-sentence direction (e.g. "I want to look at the sustainability of GCC wealth accumulation through oil-price volatility")
+- the AI does only minimal response: restate to confirm understanding, ask 1-2 clarifying questions (output form, target audience, time expectation). **No divergent topic suggestions** (divergence is step 3).
 
-- **单 LLM 模式（default）**：Claude solo 走遍七类来源，配合 iFinD MCP 或 `financial-data-sources` skill 抓数据。**单 LLM 模式的盲点兜底机制是用户手动补关键 PDF**（实战经验：曾有项目在 step 5 之后用户补 11 份核心 PDF，引出 8 项 step 2 没搜到的关键发现）。Claude 综合到 `2_research/research.md`
-- **多 LLM 模式**：Claude / GPT / DeepSeek 三家独立搜索一遍，三家的搜索引擎接口、训练数据覆盖、检索风格差异大，平行能避免单家盲点（实战案例：某区域统计局数据被一家 LLM 漏掉，用户追问后才被另一家补上）。Claude 综合三家结果，去重归类落 `research.md`
+**Deliverable**: the topic description in conversation (no separate file needed).
 
-两种模式共用以下动作：
+**Note**: this step's topic is a "target", not final. It will likely be revised or even replaced after steps 2-4.
 
-- **数据侦察**：候选数据源清单（机构名、口径、频率、字段、可达性）
-- **文献侦察**：候选文献清单（IMF、World Bank、IEA、各大行 Research、咨询机构、学术论文）
+---
 
-**关键纪律：来源全覆盖（七类必检）**
+### Step 2: broad search (soft stop)
 
-广搜阶段 AI 必须**主动检索以下七类来源**，不能只挑两三类已熟悉的就交差。完整清单见 §附录 A，简要：
+**Key question**: what data and material **already exist** around this initial topic?
 
-| 类别 | 代表 |
+**Goal**: fix the topic direction (quantity first, coverage first).
+
+**Operations** (per the LLM mode locked at onboarding):
+
+- **Single-LLM mode (default)**: Claude solo walks all seven source classes, using the iFinD MCP or `financial-data-sources` skill for data. **The blind-spot safety net in single-LLM mode is the user manually supplying key PDFs** (field experience: a project once had the user supply 11 core PDFs after step 5, surfacing 8 key findings step 2 had missed). Claude synthesises into `2_research/research.md`.
+- **Multi-LLM mode**: Claude / GPT / DeepSeek search independently; their search-engine interfaces, training-data coverage, and retrieval styles differ widely, so parallel runs avoid single-LLM blind spots (field case: one LLM missed a regional statistics-office dataset, another supplied it after the user's follow-up). Claude synthesises, dedupes, and classifies into `research.md`.
+
+Both modes share:
+
+- **Data scouting**: candidate data-source list (institution, caliper, frequency, fields, accessibility)
+- **Document scouting**: candidate document list (IMF, World Bank, IEA, major-bank Research, consulting, academic papers)
+
+**Key discipline: full source coverage (seven classes mandatory)**
+
+In the broad search the AI must **proactively search the following seven source classes**, not just the two or three it knows. Full list in §Appendix A, brief:
+
+| Class | Examples |
 |---|---|
-| A.1 国际机构 | IMF、World Bank、IEA、OECD、BIS、UN、地区开发银行 |
-| A.2 主权 / 政府 / 央行 | 央行、统计局、财政部、主权基金、行业监管 |
-| A.3 学术与智库 | NBER、SSRN、Google Scholar、Brookings、CSIS、Chatham House |
-| A.4 投行 + 咨询 | GS / JPM / MS / Citi 等 Country Outlook，麦肯锡 / BCG 等行业报告，中资投行海外研究 |
-| A.5 主流财经媒体 | 中文：财新、华尔街见闻、FT 中文等；英文：Bloomberg、Reuters、FT、WSJ、Economist |
-| A.6 公众号 / 行业社群 | 财经 / 区域 / 垂直行业的中文公众号 |
-| A.7 数据库（程序化） | 项目可用的 MCP / API / skill：iFind、OpenBB、`financial-data-sources` skill 等 |
+| A.1 international organisations | IMF, World Bank, IEA, OECD, BIS, UN, regional development banks |
+| A.2 sovereign / government / central bank | central banks, statistics offices, finance ministries, sovereign funds, sector regulators |
+| A.3 academic & think tank | NBER, SSRN, Google Scholar, Brookings, CSIS, Chatham House |
+| A.4 investment banks + consulting | GS / JPM / MS / Citi Country Outlooks, McKinsey / BCG sector reports, Chinese-bank overseas research |
+| A.5 mainstream financial media | Chinese: Caixin, Wallstreetcn, FT Chinese; English: Bloomberg, Reuters, FT, WSJ, Economist |
+| A.6 WeChat / industry communities | finance / regional / vertical Chinese public accounts |
+| A.7 databases (programmatic) | available MCP / API / skill: iFind, OpenBB, `financial-data-sources` skill |
 
-**中英文并重原则**：国际机构、投行、学术英文为主，区域、政策、一手新闻中文常更准。多 LLM 模式下三家分工：Claude 偏英文学术与投行报告，DeepSeek 偏中文与区域语境，GPT 平衡（详见 §6.2）。单 LLM 模式下 Claude 一家走遍七类，中文区域类用 iFinD MCP 与公众号 WebFetch 补足。
+**Both-languages principle**: international orgs, investment banks, academia mostly English; regional, policy, primary news often more accurate in Chinese. In multi-LLM mode the three divide: Claude leans English academic and bank reports, DeepSeek Chinese and regional context, GPT balanced (see §6.2). In single-LLM mode Claude alone walks all seven, filling Chinese regional ones via iFinD MCP and WeChat WebFetch.
 
-**来源覆盖自检**：步骤 2 完成时 AI 必须自查七类是否各检索过。任何一类完全没搜过，须补做后再进步骤 3。
+**Source-coverage self-check**: at the end of step 2 the AI must self-check whether all seven classes were searched. Any class not searched at all must be done before step 3.
 
-**交付物**：`2_research/research.md` 起稿（分七节对应 A.1-A.7），原始多 LLM 产出留 `2_research/_process/`
+**Deliverable**: `2_research/research.md` first draft (seven sections matching A.1-A.7), raw multi-LLM output kept in `2_research/_process/`.
 
-**关键纪律：「打开网页下载，再判断」**
+**Key discipline: "open the page and download, then judge"**
 
-数据侦察时**至少下载一个代表性时点的实际数据再判断**可达性，不要只看 SERP 摘要 / 印象 / 网站描述就下结论「数据不全」。实战教训：仅凭 SERP 印象判断某数据源「部分可达」，实际下载后才发现完整覆盖。
+When scouting data, **download at least one representative point of actual data before judging** accessibility; do not conclude "data incomplete" from a SERP snippet / impression / site description. Field lesson: judging a data source "partially accessible" from a SERP impression, only to find full coverage after downloading.
 
-**踩坑警示**：
+**Pitfall warnings**:
 
-- （仅多 LLM 模式）三家平行搜出现矛盾时，不要让 Claude 仲裁，让用户看到原始矛盾
-- （仅单 LLM 模式）单家给的关键判断必须对照另一类来源（如 IMF 估算对照官方主权方披露）才能成结论，单一来源孤证不立
-- 「找不到」要谨慎下结论，可能是检索词不对，再换一两组关键词
-
----
-
-### 步骤 3：AI 基于资料建议话题方向（软停）
-
-**关键问题**：基于已搜到的资料密度，哪几个话题方向是站得住的？
-
-**操作**：
-- 基于步骤 2 的清单，给出 2-3 个可行的话题方向
-- 每个方向按**固定 5 维度**横向对比：
-  1. **核心研究问题**（一句话）
-  2. **资料密度**（强 / 中 / 弱）
-  3. **潜在 take-away**（读者能带走的判断）
-  4. **风险与不确定性**（数据缺口、口径限制、政策敏感）
-  5. **独特性**（与已有研究的差异，避免重复劳动）
-- **明示哪些方向资料不够，劝退**
-
-**交付物**：对话内的方向建议（也可落 `1_topic/_process/_options.md`）
-
-**注意**：不要把「话题方向」写成 outline。outline 是步骤 6 的事，这里只是粗分方向。
+- (multi-LLM only) when the three parallel searches conflict, do not let Claude arbitrate; show the user the raw conflict.
+- (single-LLM only) a single LLM's key judgement must be cross-checked against another source class (e.g. IMF estimate vs official sovereign disclosure) before becoming a conclusion. A single source is not enough.
+- Be cautious concluding "not found"; the search terms may be wrong, try another keyword set or two.
 
 ---
 
-### 步骤 4：确认话题与研究思路（**硬停**）
+### Step 3: AI suggests topic directions from material (soft stop)
 
-**关键问题**：用户基于 AI 建议，定下做哪个？
+**Key question**: based on the density of material found, which topic directions hold up?
 
-**操作**：
-- 用户从 AI 建议中选定，或修改，或推翻重来
-- 落地为 `1_topic/topic.md`，最少包含：
-  - 题目一句话
-  - 研究问题（一段）
-  - 目标读者（如「受过本科教育、有基础经济学知识的非专业读者」）
-  - 产出形态（如「主报告 PDF 加公众号派生」）。字数与图表数都不写硬上下限，由内容必要性决定。onboarding 时用户可给一个粗略字数目标作为方向感参考（如 1.5 万字左右），但 step 7 / 8 不按字数与图表数 audit，按「写图前判断」与「写作前 grep self-check 清单」audit
-  - 章节骨架草稿：**step 4 仅 h1 粗轮廓**（5-7 个 h1 即可），h2 细化留到 step 6 outline。研报正文仅两级，无 h3
+**Operations**:
+- based on the step 2 list, give 2-3 viable topic directions
+- compare each across **5 fixed dimensions**:
+  1. **core research question** (one sentence)
+  2. **material density** (strong / medium / weak)
+  3. **potential take-away** (the judgement the reader walks away with)
+  4. **risk and uncertainty** (data gaps, caliper limits, policy sensitivity)
+  5. **uniqueness** (difference from existing research, avoiding duplicate effort)
+- **explicitly flag which directions lack material, and dissuade**
 
-**硬停判据**：用户必须明确签字确认才进步骤 5。话题没定就开始补搜会浪费精力。
+**Deliverable**: direction suggestions in conversation (can also land in `1_topic/_process/_options.md`).
 
----
-
-### 步骤 5：补搜（软停）
-
-**关键问题**：围绕已确认的话题，深度支撑材料够不够？
-
-**目标**：深做支撑（质量优先，深度优先）
-
-**操作**：
-- 基于 topic.md 的章节骨架，逐节列出还需要的支撑资料
-- **单 LLM 模式（default）**：Claude solo 聚焦子问题深搜，用户补关键文献全文
-- **多 LLM 模式**：三家平行聚焦子问题深搜，Claude 综合
-- 关键文献全文下载（两模式共用，见下方纪律）
-
-**关键纪律：重要资料全文下载**
-
-承担**结构性论证作用**的文献必须下载全文 PDF 到 `2_research/pdfs/`，并在 `research.md` 把「重要性」字段标为「核心」，再用 pypdf 抽全文摘要决定怎么引用。
-
-「结构性论证作用」的判断标准（任一即触发）：
-- 一个章节的核心论点引用它
-- 它提供了关键数字（如财政平衡油价、油价-GDP 弹性）
-- 它的方法论被本项目借鉴或对照
-
-**操作流程**：
-1. 优先用机构官网原始链接（IMF eLibrary、World Bank Open Knowledge、IEA、央行官网等），不要从二手转载
-2. 命名格式：`<编号> <机构> <标题>.pdf`，编号从现有最大号 +1
-3. 下载后通读：**优先用 pypdf 抽全文摘要**（结构化输出更稳，可程序化提取标题、章节、表格），pypdf 解析失败或需要看具体页面时再用 Read 工具的 `pages` 参数限页读。把方法、关键参数、结论摘出来再决定怎么引用
-4. bib 条目同步：`url` 指官网原始链接，`urldate` 写下载日期
-5. 受限处理（付费墙 / 登录墙）：放 `<编号>_<标题>_NOTES.md` 记录获取路径与摘要，bib 备注 `note = {access via X, download blocked}`
-
-**反例**：「我从 GS 报告里看到 GCC 非石油 GDP 损失 80 bps，引用一下」+ 没下载全文 + 不知道这个数字假设了什么。正确做法是先把 GS 报告全文拿到、看清它的情景定义、再决定是否引用。
-
-**关键纪律：用户补充资料优先**
-
-用户可能在任何时间点直接把资料放到 `2_research/pdfs/`（不限 PDF 格式，也包括 md 笔记、网页清洗稿、截图、Excel 等）。这些文件优先级高于 AI 自己搜的资料：
-
-- AI 必须主动**通读全文**（用 Read 全文，不只看摘要 / 目录）
-- 在 `research.md` 标注「来源：用户补充」
-- 重要性默认为「核心」，除非用户明确说是参考
-- `pdfs/` 目录里除 PDF 还可能有 md 文件（用户手写笔记、网页清洗稿等），按统一编号命名
-- 用户补充资料的内容如与 AI 自搜资料冲突，以用户补充为准；若需要进一步辨析，把分歧明确告诉用户
-
-**交付物**：
-- `2_research/pdfs/` 下的全文 PDF 集合（统一平铺，按编号命名）
-- `2_research/research.md` 完稿：每条资料的类型 / 机构 / 标题 / 年份 / PDF 路径 / 重要性 / 关键字段 / 获取方式记录
+**Note**: do not write a "topic direction" as an outline. The outline is step 6; here it is only a coarse direction split.
 
 ---
 
-### 步骤 6：详细 outline draft（**硬停**）
+### Step 4: confirm topic and thesis (**hard stop**)
 
-**关键问题**：基于完整资料库，详细 outline 长什么样？
+**Key question**: based on the AI's suggestions, which one does the user pick?
 
-**操作**：
-- 基于完整资料库（步骤 2 + 5 的清单）写 `3_outline/outline.md`
-- **章节骨架**：h1 / h2 标题本身就是结论性的（不写「财政视角」，写「财政视角：油气占财政收入 30%-90% 的三梯度」）。研报正文仅两级，禁止 h3（详见 `report_style_spec.md §1.2`）
-- **每个 section 列出**：
-  - 研究子问题（一句话）
-  - 核心 take-away（一句话）
-  - 计划用的数据与图表（具体到表 / 图编号、底层数据来源）
-  - 关键引用（具体到文献名 + 页码）
-- **强制段落**：「不做什么」+「不确定性边界」（数据缺口、口径限制、商业信息风险等）
+**Operations**:
+- the user picks from the AI's suggestions, or modifies, or starts over
+- land it as `1_topic/topic.md`, containing at minimum:
+  - one-sentence title
+  - research question (one paragraph)
+  - target audience (e.g. "undergraduate-educated non-specialist with basic economics")
+  - output form (e.g. "main report PDF plus WeChat derivation"). Scale is by content necessity, but heavy's **target scale is 30-40 pages / 15k words+ / 25-35 charts**. This is a direction floor, not a quota ceiling: **if output is clearly below this (e.g. < 25 pages or < 20 charts), it is almost certainly insufficient coverage depth, and you should go back to step 5 for more search, step 6 for more chapters, step 7 for more charts, rather than ship a "formally complete but thin" draft**. step 7 / 8 do not audit by precise word count, but by "does each of the six dimensions have enough chapter depth + did each add-figure trigger actually produce a chart"; clearly thin = incomplete. Common laziness signals: each section only 1-2 paragraphs, the whole report < 20 charts, sub-questions glossed over without data support. This floor is no longer left to discretion: it is locked as a contract at step 6 sign-off and enforced at the §7.4 finalise count-gate (paste actual page / chart / word counts; below floor = not done).
+  - chapter-skeleton draft: **step 4 only h1 coarse outline** (5-7 h1), h2 refinement left to step 6 outline. The report body has two levels only, no h3.
 
-**图表清单生成（按 LLM 模式分）**：
-
-- **单 LLM 模式（default）**：Claude 一家基于完整资料库给图表清单（每节建议哪些图表能支撑论点），用户裁定后落 outline
-- **多 LLM 模式**：Claude / GPT / DeepSeek 三家各自给图表方案，Claude 综合一份统一清单。三家分工倾向：数据精度与口径辨析图 GPT 强，历史时序与区域语境图 DS 强，论证流锚定与跨节衔接图 Claude 强
-
-两种模式下，最终交付都是 Claude 整合的一份统一图表清单，不拼接三家原文。
-
-**outline 版本号管理**：
-
-- **v1**：step 6 初稿（基于完整资料库写出第一版）
-- **v2 / v3 / ...**：step 6 ↔ step 7 双向迭代后的修订版（step 7 图表做出来发现口径冲突、新论证角度等，回 step 6 改 outline）
-- **签字版**：用户签字 v 终版后打 `git tag outline-locked`，进 step 7 final 执行
-
-实战经验：曾有项目 outline 跑到 v3 才签字落锁（v2 阶段用户补 11 份 PDF 浮出 8 项新发现，触发 outline 重写）。
-
-**outline 与 step 7「加图 / 删图判据」的关联**：
-
-- outline 列图表清单时，**已按 step 7「加图判据 6 条」预筛**（多源对比、时序变化、跨维度、量级分布、目标实际对照、空间流程），outline 上写的每张图都满足至少一条加图判据
-- step 7 commit 前过「删图判据 5 条」（单一数字、2-3 项简单占比、同节多次切片、无节点数字的趋势陈述、结论与承接段），触发即删
-- 新增图清单变更（step 7 实施中发现需要加图）必须**回 step 6 同步 outline**，不能让正文与 outline 失同步
-
-**硬停判据**：用户审 outline.md 签字后才进 step 7。
-
-**注意**：这里的 outline 是 draft，不是 final。步骤 7 完成后通常需要回头修订形成 final outline。
+**Hard-stop criterion**: the user must sign off explicitly before step 5. Starting supplementary search before the topic is fixed wastes effort.
 
 ---
 
-### 步骤 7：完成图与表，回填 outline（软停）
+### Step 5: supplementary search (soft stop)
 
-**关键问题**：所有图表先做出来，看看论证站不站得住？
+**Key question**: around the confirmed topic, is there enough deep supporting material?
 
-**为什么图表前置**：先做图再写正文是钻石级实战洞察。实战反例：曾有项目先写了 outline 和正文「X 国某政策目标 65%」，画图时才发现这个数字根本不对应该指标（原 65% 是另一个口径下的占比）。如果先做图，画图过程中口径不可比的问题立刻暴露。
+**Goal**: deepen support (quality first, depth first).
 
-**操作流程**：
+**Operations**:
+- based on topic.md's chapter skeleton, list per section the supporting material still needed
+- **single-LLM mode (default)**: Claude solo deep-searches the sub-questions, the user supplies key full-text documents
+- **multi-LLM mode**: three parallel deep-searches on sub-questions, Claude synthesises
+- full-text download of key documents (both modes, see discipline below)
 
-0. **前置：调色板确认**。开图前先在 `heavy-research/scripts/chart_template.py` 定调色板（默认 FT 蓝调，见 `report_style_spec.md §5.3`），让用户确认后再画。色系不定画完都得重做。
-1. **数据落盘**：原始下载落 `4_data/1_raw/`、处理后版本落 `4_data/2_processed/`，命名 `<节号>_<主题>.csv`
-2. **脚本落盘**：**一图一脚本**（见 `report_style_spec.md §3.1`），命名 `make_fig_<节号>_<编号>_<topic>.py`，head docstring 写清用途 / 输入 / 输出。不允许「一节一脚本生成多图」。**每个脚本只画一个 plot，禁止并列子图**（见 `report_style_spec.md §3.7`）。脚本顶部 `import _path` + `from chart_template import ...`（见 `report_style_spec.md §6.4`）
-3. **图表生成**：每张图同时输出 PDF + JPG + `_clean.jpg` 三格式到 `6_figures/`（见 `report_style_spec.md §3.3`），命名 `fig_<节号>_<编号>_<topic>.{pdf,jpg}` + `fig_<...>_clean.jpg`。`save_fig` 接受 `title / source / note` 参数：PDF 裸图（Quarto caption 提供）；JPG 自包含烧入；`_clean.jpg` 是 PDF 同步栅格供 publication-style HTML 嵌入（HTML 模板提供 title/source）。JPG 长边 ≤ 2000px（见 `report_style_spec.md §3.11`）
-4. **回填 outline**：每张图 / 表完成后回填到 `3_outline/outline.md` 对应 section（嵌入 `![]` 引用 + caption + 一段图下注预览）
-5. **对照检查**：图能呈现的结论与 outline draft 的 take-away 是否一致？不一致回头修 outline
+**Key discipline: full-text download of important material**
 
-**关键纪律：双双落盘**
+Documents with a **structural argumentative role** must be downloaded in full to `2_research/pdfs/`, with the `research.md` "importance" field marked "core", then summarised with pypdf to decide how to cite.
 
-凡涉及数据处理的图 / 表，**底稿数据 + 完整脚本必须双双落盘**（reproducible）。研究纪律核心是「来源可追溯、过程可复现」，只有图没有数据 / 脚本等同结论变黑箱。即使图很简单也要留底稿，便于复盘与未来重绘。
+Criteria for "structural argumentative role" (any one triggers):
+- a section's core argument cites it
+- it provides a key number (e.g. fiscal-breakeven oil price, oil-price-GDP elasticity)
+- its methodology is borrowed or contrasted by this project
 
-**关键纪律：写图前判断（加图与删图判据）**
+**Operating flow**:
+1. Prefer the institution's official original link (IMF eLibrary, World Bank Open Knowledge, IEA, central-bank sites), not a second-hand repost.
+2. Naming: `<n> <institution> <title>.pdf`, number from the current max +1.
+3. Read after download: **summarise with pypdf first** (structured output is more robust, can extract title, sections, tables programmatically); fall back to the Read tool's `pages` parameter for page-limited reads when pypdf fails or you need a specific page. Extract the method, key parameters, conclusions before deciding how to cite.
+4. Sync the bib entry: `url` to the official original link, `urldate` the download date.
+5. Restricted handling (paywall / login wall): put a `<n>_<title>_NOTES.md` recording the access path and summary; bib note `note = {access via X, download blocked}`.
 
-不规定图表总数上下限。每张图存在的唯一理由是「文字与表格无法或低效地表达某个具体释义」。每张图都要能回答测试问题：**没有这张图，读者能否同样高效地理解该段释义？** 能就不画，不能才画。
+**Bad example**: "I saw GCC non-oil GDP loss of 80 bps in a GS report, let me cite it" + did not download the full text + does not know what the number assumes. The right move is to get the full GS report, see its scenario definition, then decide whether to cite.
 
-**加图判据**（写每节正文时逐节走一遍，满足任一即加）：
+**Key discipline: user-supplied material takes priority**
 
-| 情境 | 为什么文字搞不定 |
+The user may drop material into `2_research/pdfs/` at any time (not only PDFs; also md notes, cleaned web text, screenshots, Excel). These rank above the AI's own search results:
+
+- the AI must proactively **read them in full** (Read full text, not just summary / TOC)
+- mark "source: user-supplied" in `research.md`
+- importance defaults to "core" unless the user says it is reference
+- the `pdfs/` dir may have md files besides PDFs (user notes, cleaned web text); name them with the unified numbering
+- if user material conflicts with the AI's findings, the user material wins; if further analysis is needed, tell the user the conflict clearly
+
+**Deliverables**:
+- the full-text PDF set under `2_research/pdfs/` (flat, named by number)
+- `2_research/research.md` complete: each source's type / institution / title / year / PDF path / importance / key fields / acquisition method
+
+---
+
+### Step 6: detailed outline draft (**hard stop**)
+
+**Key question**: based on the full source library, what does the detailed outline look like?
+
+**Operations**:
+- write `3_outline/outline.md` based on the full library (steps 2 + 5)
+- **chapter skeleton**: h1 / h2 titles are themselves conclusive (not "Fiscal view", but "Fiscal view: the three-tier 30%-90% oil-and-gas share of fiscal revenue"). The body has two levels only, no h3 (see `report_style_spec.md §1.2`).
+- **each section lists**:
+  - research sub-question (one sentence)
+  - core take-away (one sentence)
+  - planned data and charts (specific table / figure number, underlying data source)
+  - key citations (specific document name + page)
+- **mandatory paragraphs**: "what we do not do" + "uncertainty boundary" (data gaps, caliper limits, commercial-information risk, etc.)
+
+**Chart-list generation (by LLM mode)**:
+
+- **single-LLM mode (default)**: Claude alone proposes the chart list from the full library (which charts in each section support the argument), the user decides, lands in the outline
+- **multi-LLM mode**: Claude / GPT / DeepSeek each propose a chart plan, Claude synthesises one unified list. Tendencies: data-precision and caliper-analysis charts strong with GPT, historical-time-series and regional-context charts strong with DS, argument-flow anchoring and cross-section bridging strong with Claude
+
+In both modes, the final deliverable is one unified chart list synthesised by Claude, not a stitch of three originals.
+
+**Outline version management**:
+
+- **v1**: step 6 first draft (first version from the full library)
+- **v2 / v3 / ...**: revisions after step 6 ↔ step 7 bidirectional iteration (charts reveal caliper conflicts, new argument angles, go back to step 6)
+- **signed version**: after the user signs the final v, tag `git tag outline-locked`, proceed to step 7 final
+
+Field experience: a project's outline ran to v3 before sign-off lock (in the v2 phase the user supplied 11 PDFs surfacing 8 new findings, triggering an outline rewrite).
+
+**Link between outline and step 7 add/remove-figure criteria**:
+
+- when listing charts, each is **pre-screened against the step 7 "6 add-figure criteria"** (multi-source comparison, time variation, cross-dimension, magnitude/distribution, target-vs-actual, spatial/process); every chart in the outline satisfies at least one
+- before step 7 commit, each passes the "5 remove-figure criteria" (single number, 2-3 simple shares, multiple slices in one section, trend statement with no node numbers, conclusion/bridging paragraphs); remove on trigger
+- any chart-list change (a chart found necessary during step 7) must **go back to step 6 to sync the outline**
+
+**Outline-as-contract (the floor anchor)**:
+
+The signed outline is not just a plan, it is a **contract** that step 8 draft and step 10 finalise are measured against. At sign-off, write a one-block contract header at the top of `outline.md`:
+
+- **section count**: N h1 chapters, M h2 subsections
+- **planned chart count**: K charts (the unified chart list), each tied to a section
+- per section: its one-sentence take-away + its planned chart(s)
+
+Two checks at sign-off:
+
+1. **Does the contract itself clear the heavy band?** If the planned outline is only, say, 4 chapters / 12 charts, the outline is too thin — go back and add chapters / charts **before** the user signs, do not sign a thin contract and discover the shortfall at step 10. The target band is 30-40 pages / 25-35 charts / 15k words (English) or 1.5万字 (Chinese); an outline that cannot plausibly reach it is incomplete.
+2. **The signed counts become the step 8 / step 10 floor.** A final draft with fewer sections or charts than the signed contract is a contract breach: either restore them, or explicitly tell the user which planned item was dropped and why (e.g. the data turned out unavailable). Silent shrinkage is the classic laziness failure mode and is not allowed.
+
+Tie the contract to the existing `git tag outline-locked`: the tagged outline is the reference the §7.4 finalise count-gate checks against.
+
+**Hard-stop criterion**: proceed to step 7 only after the user reviews and signs off on outline.md. Sign-off also locks the contract counts above; they become the floor checked at the §7.4 finalise count-gate.
+
+**Note**: this outline is a draft, not final. After step 7 it usually needs revising into the final outline.
+
+---
+
+### Step 7: complete charts and tables, backfill outline (soft stop)
+
+**Key question**: build all charts first and see whether the argument stands.
+
+**Why charts first**: building charts before writing is a diamond-grade field insight. Field counter-example: a project wrote the outline and body "Country X policy target 65%" first, only to find during charting that the number did not correspond to that metric (the 65% was a share under another caliper). Building charts first exposes incomparable-caliper problems immediately.
+
+**Operating flow**:
+
+0. **Pre-flight: confirm the palette**. Before charting, set the palette in `analyst-research/scripts/chart_template.py` (default FT blue, see `report_style_spec.md §5.3`), get user confirmation before drawing. If the colours are not fixed, you redo everything after charting. (Also run the chart_template self-test for the `$` / annotation-colour / long-y-tick checks per spec §3.13.)
+1. **Data landing**: raw downloads to `4_data/1_raw/`, processed versions to `4_data/2_processed/`, named `<section>_<topic>.csv`.
+2. **Script landing**: **one script per chart** (see `report_style_spec.md §3.1`), named `make_fig_<section>_<n>_<topic>.py`, head docstring stating purpose / input / output. No "one section, one script generating multiple charts". **Each script draws one plot; no side-by-side subplots** (see `report_style_spec.md §3.7`). Script top `import _path` + `from chart_template import ...` (see `report_style_spec.md §6.4`).
+3. **Chart generation**: each chart outputs PDF + JPG + `_clean.jpg` to `6_figures/` (see `report_style_spec.md §3.3`), named `fig_<section>_<n>_<topic>.{pdf,jpg}` + `fig_<...>_clean.jpg`. `save_fig` takes `title / source / note`: bare PDF (Quarto caption provides these); self-contained burn-in JPG; `_clean.jpg` is a PDF-synced raster for publication-style HTML embedding (the HTML template provides title/source). JPG long edge ≤ 2000px (see `report_style_spec.md §3.11`).
+4. **Backfill outline**: after each chart / table, backfill into the matching section of `3_outline/outline.md` (embed `![]` + caption + a one-line figure-note preview).
+5. **Cross-check**: does the chart's conclusion match the outline draft's take-away? If not, go back and fix the outline.
+
+**Key discipline: double-landing**
+
+For any chart / table involving data processing, **the underlying data + the full script must both land** (reproducible). The core of research discipline is "source-traceable, process-reproducible"; a chart with no data / script makes the conclusion a black box. Keep the source even if the chart is simple, for retrospective and future redraws.
+
+**Key discipline: judge before charting (add and remove criteria)**
+
+No upper/lower bound on chart count. The only reason a chart exists is "text and tables cannot, or inefficiently, express a specific reading". Each chart must answer the test: **without this chart, could the reader understand the passage equally efficiently?** If yes, do not chart; only chart if no.
+
+**Add-figure criteria** (run per section when writing the body; any one triggers):
+
+| Situation | Why text fails |
 |---|---|
-| **多源对比**：同一指标 3 个以上来源数据并列 | 文字列举混乱，对比读者要心算 |
-| **时序变化**：5 年以上趋势、拐点、节奏 | 文字给端点数字看不出走势形状 |
-| **跨维度对比**：二维或多维（如国家 × 行业、年份 × 指标）| 文字描述失去结构，读者脑中重建不出 |
-| **量级或分布**：分布形态、极值、quartile | 文字给统计量但失去 shape |
-| **目标与实际对照**：两组数据视觉对比 | 表格能给但视觉对比速度更快 |
-| **空间或流程关系**：地理、网络、流程图 | 文字描述读者脑中重建不出 |
+| **Multi-source comparison**: same metric, 3+ sources side by side | text listing is messy, the reader has to compute the comparison |
+| **Time variation**: 5+ year trend, inflection, rhythm | endpoint numbers in text do not show the shape |
+| **Cross-dimension comparison**: 2D or multi-D (country × sector, year × metric) | text description loses structure, the reader cannot reconstruct it |
+| **Magnitude or distribution**: shape, extremes, quartiles | text gives statistics but loses shape |
+| **Target vs actual**: two data sets compared visually | a table works but visual comparison is faster |
+| **Spatial or process relation**: geography, network, flowchart | the reader cannot reconstruct it from text |
 
-**删图判据**（每张图 commit 前走一遍，满足任一即删）：
+**Remove-figure criteria** (run per chart before commit; any one triggers):
 
-| 反模式 | 为什么不画 |
+| Anti-pattern | Why not |
 |---|---|
-| 单一数字陈述（「某指标 = X%」） | 一句话能说清，画 single bar 不增信息 |
-| 2 至 3 项简单占比（「A 占 60%、B 占 40%」） | 饼图与文字等效，文字更紧凑 |
-| 同节内对同一数据集多次切片 | 合并为多面板或选最强的一张 |
-| 趋势性陈述但无具体节点数字 | 没有「在哪一年发生什么」，图无锚点 |
-| 结论性、承接性、引言、结语段 | 这些段不锚定数据，不需要图 |
+| Single-number statement ("metric X = Y%") | one sentence says it, a single bar adds no information |
+| 2-3 simple shares ("A 60%, B 40%") | a pie equals text, text is tighter |
+| Multiple slices of the same dataset in one section | merge into a multi-panel or keep the strongest |
+| Trend statement with no specific node numbers | no "what happened in which year", the chart has no anchor |
+| Conclusion, bridging, intro, closing paragraphs | these do not anchor data |
 
-**反偷懒**：AI 在 step 7 开工前对每节论证流逐节过加图判据，任何节有数据声明却不画图都是违规（除非整节本来就是结论或承接性质）。
+**Anti-laziness**: before step 7 the AI runs the add criteria per section's argument flow; any section with a data statement but no chart is a violation (unless the section is inherently conclusion or bridging).
 
-**反堆砌**：AI 在 step 7 每张图 commit 前过删图判据，触发了不删也是违规。
+**Anti-stuffing**: before each chart commit the AI runs the remove criteria; not removing on trigger is also a violation.
 
-**删图后续动作**：把删掉图的数字与论点 inline 到段落叙述，不要让删图导致论证流断裂。
+**Post-removal action**: inline the removed chart's numbers and argument into the prose; do not let removal break the argument flow.
 
-**主观争议交 step 9d**：判据有边界 case 时，step 9d 用户审 PDF 时作为 final check，用户裁决。
+**Subjective disputes go to step 9d**: for boundary cases, step 9d's user PDF review is the final check, the user decides.
 
-**关键纪律：title / source / note 字符串从 CSV 派生，不要 hardcode 数字**
+**Key discipline: derive title / source / note strings from CSV, do not hardcode numbers**
 
-本项目 9b critique 一次性暴露 18 张图脚本字符串（title / source / note）与 CSV 数据 / 正文叙事不一致——这是 step 7 出图时最高频的踩坑点。根因是「title 写具体数字时凭印象 hardcode，CSV 后续修订时脚本没同步」。
+This project's 9b critique once exposed 18 chart-script strings (title / source / note) inconsistent with CSV data / body narrative — the highest-frequency step 7 pitfall. Root cause: "title hardcoded from impression, script not synced when the CSV was later revised".
 
-预防纪律：
+Prevention discipline:
 
-- **title 引用具体数字时**（如「财政赤字 \$32B」「私营女性 +84%」），脚本里**现场计算 max / min / argmax / 最新值再 f-string 插入**，不 hardcode。例：`title=f"私营女性 +{df.loc['private_female_growth'].max():.0%}"` 而非 `title="私营女性 +84%"`
-- **source 引用页码 / 表号**（如「机构 Annual Report 2024 page 15」）：写之前 grep 一遍 CSV header / data 中对应字段名，确认页码与你 CSV 当时摘的同一处
-- **note 引用具体口径** / 时点：同步看 CSV 的 metadata 列（`source_year` / `definition` 等），不要凭记忆
+- **when title cites a specific number** (e.g. "fiscal deficit \$32B", "private female +84%"), the script **computes max / min / argmax / latest on the spot and f-string-inserts it**, not hardcode. E.g. `title=f"private female +{df.loc['private_female_growth'].max():.0%}"`, not `title="private female +84%"`
+- **when source cites a page / table number** (e.g. "institution Annual Report 2024 page 15"): grep the CSV header / data for the field name before writing, confirm the page matches where you took it from
+- **when note cites a specific caliper** / time point: check the CSV metadata columns (`source_year` / `definition`), do not rely on memory
 
-**fail-safe**：脚本顶部加一条 `assert` 校验 title 引用的数字与 CSV 计算结果一致，CI 不通过即不允许 commit。例：`assert "84%" in title and df.loc['private_female_growth'].max() >= 0.84`
+**fail-safe**: add an `assert` at the script top checking the title number matches the CSV computation; no commit if CI fails. E.g. `assert "84%" in title and df.loc['private_female_growth'].max() >= 0.84`
 
-**关键纪律：source / note 字符串「4 处一改全核」**
+**Key discipline: source / note strings "edit one, reconcile all 4"**
 
-同一图的 source / note 字符串在 **4 个位置**存在：
+The same chart's source / note string exists in **4 places**:
 
-1. `make_fig_*.py` 脚本里的 `save_fig(source=..., note=...)` 参数（JPG 自包含用）
-2. `draft.qmd` 里对应 `![](fig.pdf)` 后的 `\begin{figsource}` 块（研报 PDF 用，spec §3.3）
-3. 正文段落引用图时叙述的相关来源 / 时点 / 口径
-4. `references.bib` 里对应引用键（如果用 `[@cite]` 引用）
+1. the `save_fig(source=..., note=...)` parameters in `make_fig_*.py` (for the self-contained JPG)
+2. the `\begin{figsource}` block after the matching `![](fig.pdf)` in `draft.qmd` (for the report PDF, spec §3.3)
+3. the narrative source / time / caliper where the body cites the chart
+4. the matching citation key in `references.bib` (if cited with `[@cite]`)
 
-**任意一处修订（如删除某个引用源、改口径、改时点），必须 4 处全核**。实战教训：曾有项目 9d 才 catch 到某图 figsource 块里残留旧来源标签（脚本同步删了，但 figsource 块单独写入时漏跟）。这种四方不一致是高频踩坑点。预防：用 helper script 从图脚本自动派生 figsource 内容，避免手工双源维护。
+**Any edit to one (delete a source, change a caliper, change a time point) must reconcile all 4.** Field lesson: a project caught a leftover old source label in a figsource block only at 9d (the script was synced but the figsource block, written separately, was missed). This four-way inconsistency is a high-frequency pitfall. Prevention: derive the figsource content from the chart script with a helper, avoiding dual-source manual maintenance.
 
-**关键纪律：commit 前 AI 做逻辑自检，视觉自检留给用户**
+**Key discipline: AI does logic self-check before commit, leaves visual self-check to the user**
 
-按 spec §四 明文「AI 不做视觉检查」（中文字体识别不稳定、多图触发 API 上限、用户审美比 AI 准）。AI 在 step 7 commit 前只做**逻辑一致性自检**，按 `report_style_spec.md §3.13 写图脚本自检 4 项`（title 数字与图内数据一致、annotation 颜色不与下方 plot 同色、横向柱图 y-tick label 完整显示、legend 居中且水平排开），任一不通过的图必须修脚本重渲再 commit。视觉自检本身留给 step 9d 用户通读 PDF 时一次性做。
+Per spec §4, "the AI does not do visual checks" (CJK font recognition is unstable, multiple images hit the API limit, the user's taste beats the AI's). Before step 7 commit the AI does only a **logic-consistency self-check** per `report_style_spec.md §3.13 4-item chart-script self-check` (title number matches in-chart data, annotation colour not same as the plot below it, horizontal-bar y-tick labels fully shown, legend centered and laid out horizontally); any chart that fails must have its script fixed and re-rendered before commit. The visual self-check itself is left to the user reading the PDF at step 9d.
 
-**软停加三条质量门**：图表全部落盘后告知用户，用户随时审 JPG 提修订意见，默认不阻塞进 step 8。三条质量门 AI 自检即可：① spec §3.13 写图脚本逻辑自检 4 项全过；② 每张图过加图判据成立且过删图判据不触发（详见本节「写图前判断」）；③ 自检中暴露的任何问题已修复重渲。质量门是 commit 前的 AI 自检约束，不是硬停 gate。
+**Soft stop plus three quality gates**: after all charts land, tell the user; the user reviews JPGs and gives feedback any time, default non-blocking into step 8. The three gates the AI self-checks: (1) spec §3.13 4-item chart-script logic self-check all pass; (2) each chart passes the add criteria and does not trigger the remove criteria (see "judge before charting"); (3) any issue exposed in self-check is fixed and re-rendered. The gates are commit-time AI self-checks, not a hard-stop gate.
 
-视觉问题（口径冲突、单位不符、annotation 错位等）最易在用户审 JPG 时暴露，用户随时可叫停回 step 7 修，然后再进 step 8。step 9d 用户通读 PDF 时是 final 视觉审。
+Visual problems (caliper conflicts, unit mismatches, annotation misplacement) surface most easily when the user reviews JPGs; the user can stop and go back to step 7, then proceed to step 8. The user's PDF read at step 9d is the final visual review.
 
-**踩坑警示**：
-- 「跨国 / 跨源对比」时必须显式记录口径差异。同一国在两种口径下（如名义价 vs 不变价、含 vs 不含某子项）相差 20+ 个百分点的情况常见
-- 不要把口径不可比的指标强行画在一张「目标 vs 实际」图上，会误导读者
-- 引用机构 KPI 时必须打开官方网站确认（上方 §步骤 7 提到的「Vision 目标张冠李戴」反例的核心教训）
+**Pitfall warnings**:
+- For cross-country / cross-source comparison, explicitly record caliper differences. A 20+ percentage-point gap for one country under two calipers (nominal vs constant price, with vs without a sub-item) is common.
+- Do not force incomparable-caliper metrics onto one "target vs actual" chart; it misleads the reader.
+- When citing an institution's KPI, open the official site to confirm (the core lesson of the "Vision-target mix-up" counter-example above).
 
 ---
 
-### 步骤 8：draft 写作（default 一气连写整稿，软停）
+### Step 8: draft writing (default one continuous pass, soft stop)
 
-**关键问题**：把图表与文献组织成研报语言。
+**Key question**: organise charts and documents into report language.
 
-**主导**：Claude solo 全程（初稿 + 自润色 + 格式 / 渲染调优）。critique 留到步骤 9。
+**Lead**: Claude solo throughout (first draft + self-polish + format / render tuning). critique is left to step 9.
 
-**写作纪律**：Claude 主笔时**严格按 §7.1 与 §7.1.1 写**，目标是 step 8 终稿质量等同于经第三方文字润色。§7.1.1 7 条规则（同主题续接、列举展开、takeaway 嵌入、单位规范、书面化用词、序号起头、不用技术符号代连词）是从 DS 润色实战反推沉淀的，Claude 主动应用即可达成无需第三方润色的初稿质量，step 9 不再需要 DS 文字润色环节。
+**Writing discipline**: when Claude writes, **follow §7.1 and §7.1.1 strictly**, targeting a step 8 final quality equal to third-party-edited prose. The 7 rules of §7.1.1 (same-theme continuation, list expansion, embedded take-away, unit standards, written-register wording, numbered lead-ins, no technical symbols as conjunctions) are reverse-engineered from DS-polishing field practice; Claude applying them proactively achieves no-third-party-polish first-draft quality, so step 9 no longer needs a DS text-polish stage.
 
-**default 一气连写整稿**：Claude 按 outline 顺序写完全部章节，整稿 v1 完成后一次性交用户审。理由是 outline 已在 step 6 硬停签字、take-away 已锁定，节内反复停审节奏代价远超价值，致命错误由 step 9b critique 兜住。
+**Default: one continuous draft**: Claude writes all chapters in outline order, then hands the full v1 to the user for one review. The rationale is that the outline was hard-stop-signed at step 6, take-aways are locked, per-section stop-and-review costs far exceed the value, and fatal errors are caught by step 9b critique.
 
-**fallback：节内硬停**（用户明确要求时启用）。每个 section 综合完成后停下来等用户审，下一节才写。适用场景：outline 未充分锁定、take-away 仍在调整、用户希望深度参与每节论证流校准。
+**fallback: per-section hard stop** (enabled on explicit user request). Stop after each section for user review before writing the next. Fits: outline not fully locked, take-aways still adjusting, user wants deep involvement in each section's argument-flow calibration.
 
-**两种路径的实际代价对照**（沙特项目实测）：
+**Cost comparison of the two paths** (measured on the Saudi project):
 
-| 维度 | 节内硬停 fallback 路径 | 一气连写 default 路径 |
+| Dimension | per-section hard-stop fallback | one continuous default |
 |---|---|---|
-| step 8 用户人工审时间 | N 次审（每节 1 次） | 1 次（整稿后） |
-| step 8 总时长 | 长，受用户响应节奏制约 | 短，AI 端通常 1 小时内连写完 |
-| step 9b critique 整合工作量 | 低，每节已审过结构与论证 | **高，约 3 倍**：实测约 30 处需修订（5 致命、11 严重、19 轻微、18 张图脚本错、3 个 CSV 错），9b 整合约半天、9 个 commit |
-| step 9 commit 数 | 通常 1-3 个（B1、B2、B3 合并） | 9 个以上（致命、严重、轻微、图脚本各占多个）|
-| 风格与论证流回头改成本 | 低，每节都审过 | 高，整稿才发现某节论证流不对要重改 |
+| step 8 user review time | N reviews (1 per section) | 1 (after the full draft) |
+| step 8 total time | long, gated by user response pace | short, AI usually finishes in 1 hour |
+| step 9b critique integration | low, each section already reviewed | **high, ~3x**: ~30 revisions measured (5 fatal, 11 serious, 19 minor, 18 chart-script errors, 3 CSV errors), 9b integration ~half a day, 9 commits |
+| step 9 commit count | usually 1-3 (B1, B2, B3 merged) | 9+ (fatal, serious, minor, chart-script each multiple) |
+| style and argument-flow rework cost | low, each section reviewed | high, only the full draft reveals a wrong section's argument flow to redo |
 
-**单 LLM 模式下的额外提示**：单 LLM 模式 9b 是 Claude self-critique，独立性弱于多 LLM 模式的 GPT critique。一气连写代价在单 LLM 模式下兜底能力下降，用户对致命错误敏感时考虑启用节内硬停 fallback。
+**Extra note in single-LLM mode**: in single-LLM mode 9b is Claude self-critique, weaker independence than multi-LLM GPT critique. The one-continuous-pass cost has reduced safety-net ability in single-LLM mode; if the user is sensitive to fatal errors, consider the per-section hard-stop fallback.
 
-**操作顺序**：
-1. Claude 按节写初稿（v1.0），**逐节自检 §7.1.1 6 条规则**（句号续接 / 列举冒号 / 嵌入 takeaway / ppts 改个百分点 / 书面化连接词 / 序号起头）
-2. 每节 v1 完成后交用户审「结构 + 数据 + 论证」
-3. 整稿 v1.0 完成后做渲染 / 字体 / YAML 调优（v1.1 → v1.x），正文不动
-4. 步骤 8 终版 = Claude 纯版，**快照到 `_process/draft_v1_claude.qmd`**（步骤 9 改文字前必须先落盘这一份，否则没有「纯 Claude 基线」可回溯）
-5. 进步骤 9（GPT critique → verifying → 用户 sign off）
+**Operating order**:
+1. Claude writes the first draft per section (v1.0), **self-checking the §7.1.1 6 rules per section** (period continuation / list colon / embedded take-away / "ppts" → "percentage points" / written connectives / numbered lead-ins). Also **per-section depth self-check against the outline contract**: each section carries its planned chart(s) and is more than the 1-2-paragraph laziness signal (step 4); a section that came out thinner than its contract take-away promised goes back to step 5 / 7 for more material, it is not padded with filler.
+2. After each section's v1, hand the user "structure + data + argument".
+3. After the full v1.0, do render / font / YAML tuning (v1.1 → v1.x); the body does not change.
+4. The step 8 final = Claude's pure version, **snapshot to `_process/draft_v1_claude.qmd`** (this must land before step 9 changes text, or there is no "pure Claude baseline" to revert to).
+5. Proceed to step 9 (GPT critique → verifying → user sign-off).
 
-**写作前自检清单**（每节 v1 完成立刻跑）：
+**Pre-writing self-check list** (run when each section's v1 is done):
 
-| 红线 | 检查命令 | 应为 |
+| Redline | Check command | Expected |
 |---|---|---|
-| 破折号 `——` | `grep -c "——" draft.qmd` | 0 |
-| h3 及更深标题 | `grep -nE "^#{3,}" draft.qmd` | 0 行 |
-| 标题手写 §N 前缀 | `grep -nE "^#{1,3} §" draft.qmd` | 0 行 |
+| Em-dash `——` | `grep -c "——" draft.qmd` | 0 |
+| h3 and deeper titles | `grep -nE "^#{3,}" draft.qmd` | 0 lines |
+| Hand-written §N title prefix | `grep -nE "^#{1,3} §" draft.qmd` | 0 lines |
 | emoji | `grep -cP "[\\x{1F300}-\\x{1F9FF}\\x{2600}-\\x{27BF}]" draft.qmd` | 0 |
-| ppts 残留 | `grep -c "ppts" draft.qmd` | 0（改为「个百分点」）|
-| 抒情铺垫 | 抽检「实际上 / 事实上 / 值得指出的是」 | 删除 |
-| Quarto 渲染 | `quarto render draft.qmd` | 成功 |
-| **图脚本-CSV-正文三方一致**（新增）| 对每个 `![...](fig_X_Y_*.pdf)` 引用：grep 正文用到的对应数字 + grep `make_fig_X_Y_*.py` title / source / note + 查 CSV 对应字段，**三者数字一致才算通过** | 全通过 |
+| Unescaped `$` (English drafts) | `grep -nP "(?<!\\\\)\\$" draft.qmd` | 0 (write amounts as `\$`) |
+| leftover ppts | `grep -c "ppts" draft.qmd` | 0 (change to "percentage points") |
+| lyrical padding | spot-check "实际上 / 事实上 / 值得指出的是" | delete |
+| Quarto render | `quarto render draft.qmd` | success |
+| **chart-script / CSV / body three-way consistency** (new) | for each `![...](fig_X_Y_*.pdf)`: grep the body number used + grep `make_fig_X_Y_*.py` title / source / note + check the CSV field, **pass only if all three agree** | all pass |
 
-**「图脚本-CSV-正文三方一致」自检的具体做法**：
+**How to do the "chart-script / CSV / body three-way consistency" check**:
 
-每节正文引用某个图（如「fig_X 某指标从 A 升至 B」）时，逐项核：
+When a section cites a chart (e.g. "fig_X metric rose from A to B"), verify item by item:
 
-1. 正文数字「16% / 24%」是否真在 CSV `s1-3_non_oil_exports_progress.csv` 里？
-2. `make_fig_X_*.py` 里 title / source / note 有没有也写这两个数？写的话是否一致？
-3. 渲染后的 fig PDF（打开 JPG 看）轴值 / data label 是否对应 16% / 24%？
+1. Are the body numbers "16% / 24%" actually in CSV `s1-3_non_oil_exports_progress.csv`?
+2. Do title / source / note in `make_fig_X_*.py` also write those two numbers? If so, consistent?
+3. Does the rendered fig PDF (open the JPG) show axis values / data labels matching 16% / 24%?
 
-任何一处不一致，**当节就改对**，不要拖到 step 9b 让 GPT 来 catch（本项目 9b 一次性发现 18 张图脚本字符串与 CSV / 正文不一致——proactive 比 reactive 省 3 倍工作量）。
+If anything disagrees, **fix it in that section**, do not defer it to step 9b GPT to catch (this project's 9b once found 18 chart-script strings inconsistent with CSV / body — proactive saves 3x the work of reactive).
 
-**过程稿落盘**（见 §11 `_process/` 内容指南）：步骤 8 各小版本（v1.0 / v1.1 / …）只在 `draft.qmd` 原地迭代即可；大版本（v1 终版 → v2 → v3）按 `_process/draft_<vX>_<who>.qmd` 命名落盘。**`draft.qmd` 永远只指向「当前可对外的最新版」**。
+**Finalise count-gate (anti-slacking, see §7.4)**: after the full v1 draft, before handing it to the user, run the §7.4 count-gate and **paste the actual measured numbers** (pages, charts, words) into your report-back, exactly like the grep redlines. The signed step-6 outline contract and the heavy band (30-40 pages / 25-35 charts / 15k words) are the floor. **If any dimension is clearly below floor (< 25 pages or < 20 charts, per step 4), do not declare the draft complete** — state which dimension is short and go back to step 5 (more search) / 6 (more chapters) / 7 (more charts). The gate is cleared only by genuine coverage depth: do **not** close the gap by padding (lyrical filler, restating a point, splitting one argument into choppy paragraphs) or by fabricating numbers (§5.2). If the real material honestly cannot reach the band, say so to the user explicitly rather than padding — but a heavy report landing far below the band almost always means the step 5 search or step 6 outline was too shallow, not that the topic is exhausted.
+
+**Process-draft landing** (see the §11 `_process/` guide): step 8 minor versions (v1.0 / v1.1 / …) iterate in place in `draft.qmd`; major versions (v1 final → v2 → v3) land under `_process/draft_<vX>_<who>.qmd`. **`draft.qmd` always points to "the current shippable latest version".**
 
 ---
 
-### 步骤 9：精修（critique 与 verifying 与用户 sign off，软停加 9d 硬停）
+### Step 9: refine (critique, verifying, user sign-off; soft stop plus 9d hard stop)
 
-**关键问题**：完整稿读起来站不站得住？所有 caveat 都核到位了吗？用户最终接受吗？
+**Key question**: does the full draft hold up? Are all caveats reconciled? Does the user finally accept it?
 
-**三子步串行**：
+**Three sub-steps in series**:
 
-- **9b · critique 与 Claude 三批整合 v2**（按 LLM 模式分双轨）
-- **9c · verifying skill 核未闭合 caveat，落 v2.x**
-- **9d · 用户 sign off**（硬停 gate）
+- **9b · critique and Claude's three-batch integration into v2** (two tracks by LLM mode)
+- **9c · verifying skill checks unresolved caveats, lands v2.x**
+- **9d · user sign-off** (hard-stop gate)
 
-子步编号沿用 9b / 9c / 9d，不重编为 9a / 9b / 9c，理由是与早期版本的子步号保持稳定，便于跨版本对照阅读。原 9a DS 文字润色子步在本版本删除（DS 教学价值已沉淀到 §7.1.1，Claude step 8 主动应用即可达成等同质量）。
+Sub-step numbering keeps 9b / 9c / 9d, not renumbered to 9a / 9b / 9c, to stay stable against earlier versions for cross-version reading. The original 9a DS text-polish sub-step is removed in this version (the DS teaching value is distilled into §7.1.1, Claude applying it at step 8 achieves equal quality).
 
-**版本号命名约定**：
+**Version-number convention**:
 
-- step 8 终稿 = v1
-- 9b 整合 = v2
+- step 8 final = v1
+- 9b integration = v2
 - 9c verifying = v2.1
-- 9d 用户修订 = v2.2 / v3 / v3.2 / ... 反复迭代直到签字
-- 核心原则：v 主版本号 = 已完成子步数，v 小数位 = 同子步内迭代轮次
+- 9d user revision = v2.2 / v3 / v3.2 / ... iterate until sign-off
+- core principle: v major = completed sub-steps, v decimal = iteration rounds within the same sub-step
 
 ---
 
-#### 9b · critique 与 Claude 三批整合 v2（双轨）
+#### 9b · critique and Claude's three-batch integration into v2 (two tracks)
 
-**双轨流程**（按 onboarding 锁定的 LLM 模式分）：
+**Two-track flow** (by the LLM mode locked at onboarding):
 
-##### 单 LLM 模式（default）：Claude self-critique
+##### Single-LLM mode (default): Claude self-critique
 
-1. Claude 在独立对话或独立上下文里**重新加载 step 8 终稿**（避免上下文偏向），按下面 6 类视角对全稿做一遍 self-critique，产出 critique 清单落 `_process/critique_v2_self.md`：
-   - **事实与数据**：每个数字、年份、人名、机构名都必须能定位到原始来源，引用键真在 `references.bib`
-   - **跨节口径一致**：同一指标在不同节里的数字、单位、口径一致
-   - **引用支撑**：`[@xxx]` 对应文献真支持文中陈述（不能挂羊头卖狗肉）
-   - **论证流**：各节衔接，结论逐级支撑
-   - **图脚本与 CSV 与正文三方一致**：图 title、source、note 与 CSV 数据、正文引用三方对齐（本项目曾经一次性暴露 18 张图脚本字符串不一致，是高频踩坑点）
-   - **语言规范**：见 §七 写作规范
-2. Claude 按 B1 / B2 / B3 分批整合 critique 清单
-3. 三批每批一个 commit + 决策日志 → `_process/v2_integration_log.md`
+1. In a separate conversation or context, Claude **reloads the step 8 final** (to avoid context bias) and self-critiques the whole draft against the 6 perspectives below, producing a critique list in `_process/critique_v2_self.md`:
+   - **Facts and data**: every number, year, person, institution must trace to an original source, the citation key really in `references.bib`
+   - **Cross-section caliper consistency**: the same metric's number, unit, caliper consistent across sections
+   - **Citation support**: `[@xxx]` genuinely supports the statement (no bait-and-switch)
+   - **Argument flow**: sections connect, conclusions support level by level
+   - **chart-script / CSV / body three-way consistency**: chart title, source, note aligned with CSV data and body citation (this project once exposed 18 inconsistent chart-script strings at once, a high-frequency pitfall)
+   - **Language standards**: see §7 writing standards
+2. Claude integrates the critique list in batches B1 / B2 / B3
+3. one commit per batch + decision log → `_process/v2_integration_log.md`
 
-**单 LLM 模式的独立性弱**：Claude 自评同一稿件无第二视角，漏致命错误风险高于多 LLM 模式。三条对冲：
-- 关键事实仍按下方「不盲信」原则处置，独立读原始资料核验
-- 9c verifying 严格执行不偷工
-- 派生稿发布前用户自己再通读一遍
+**Weak independence in single-LLM mode**: Claude self-evaluating its own draft has no second perspective, higher risk of missing a fatal error than multi-LLM. Three hedges:
+- still handle key facts per the "don't blindly trust" principle below, independently reading the original material to verify
+- run 9c verifying rigorously, no shortcuts
+- the user reads the derivation once more before publishing
 
-##### 多 LLM 模式：GPT critique
+##### Multi-LLM mode: GPT critique
 
-1. step 8 终稿交 GPT
-2. GPT 产出完整 critique → `_process/critique_v2_gpt.md`
-3. Claude 分批整合（**critique 条数 > 30 时按三批切分，< 30 可单批**）
-4. 三批每批一个 commit + 决策日志 → `_process/v2_integration_log.md`
+1. hand the step 8 final to GPT
+2. GPT produces a full critique → `_process/critique_v2_gpt.md`
+3. Claude integrates in batches (**> 30 critique items split into three batches, < 30 single batch**)
+4. one commit per batch + decision log → `_process/v2_integration_log.md`
 
-**critique 独立性原则**：9b critique LLM 与 step 8 主笔 LLM 不重叠。多 LLM 模式下 step 8 是 Claude solo、9b 是 GPT critique，独立性自然满足。**不使用 DS critique**（critique 独立性 GPT 已够，且 DS 看不到 PDF 有结构性盲区）。
+**Critique independence principle**: the 9b critique LLM and the step 8 lead LLM do not overlap. In multi-LLM mode step 8 is Claude solo, 9b is GPT critique, independence is satisfied. **Do not use DS critique** (GPT independence is enough, and DS cannot see the PDF, a structural blind spot).
 
-##### 两模式共用的整合分批与不盲信原则
+##### Integration batching and the "don't blindly trust" principle (both modes)
 
-**B1 / B2 / B3 三批分类**：
-- **B1 · 轻修**：语言规范红线（ppts 改为「个百分点」、中英混写、抒情铺垫等）与图脚本 / CSV / 正文「数字硬一致性」错误
-- **B2 · 致命与严重**：事实层、口径层、引用层修订。关键事实判断 Claude 必须**独立核验**（读原始资料），不盲信 critique；处置往「降级加 caveat」方向靠，保留信息密度同时明示不确定性
-- **B3 · 图脚本字符串修订 + 全部重渲 + PDF 验证**
+**B1 / B2 / B3 three-batch classification**:
+- **B1 · light fixes**: language-standard redlines ("ppts" → "percentage points", Chinese-English mixing, lyrical padding) and chart-script / CSV / body "hard number consistency" errors
+- **B2 · fatal and serious**: fact-layer, caliper-layer, citation-layer revisions. Key fact judgements Claude must **independently verify** (read the original material), not blindly trust critique; lean toward "downgrade + add caveat", preserving information density while making uncertainty explicit
+- **B3 · chart-script string revisions + re-render all + PDF verification**
 
-人不裁定 B1 / B2 / B3 分类，信任 Claude 三档处置 + 决策日志事后审计。
+The human does not adjudicate the B1 / B2 / B3 classification; trust Claude's three-tier handling + post-hoc audit of the decision log.
 
-**Claude 整合时的「不盲信」原则**：critique 给的关键事实判断（如「数字错」「来源不支持」），Claude 必须**独立读原始资料核验**。三种处置方向：
+**Claude's "don't blindly trust" principle when integrating**: for key fact judgements from critique ("number wrong", "source does not support"), Claude must **independently read the original material to verify**. Three handling directions:
 
-- 核验后判断 critique 对，按 critique 修订
-- 核验后判断 critique 错，在决策日志记录否决理由，保留原文
-- 核验后判断 critique 部分对，把强结论降级为「按媒体报道」「本研究估算」「待补源」等 caveat 表达，保留信息密度
+- after verifying, judge the critique correct, revise per critique
+- after verifying, judge the critique wrong, record the rejection reason in the decision log, keep the original text
+- after verifying, judge the critique partly correct, downgrade the strong conclusion to "per media report" / "this study's estimate" / "source pending" caveat wording, preserving information density
 
-红线：critique 是对照参考，不是拼贴素材。Claude 综合 critique 时必须经过统一叙述声音重写，让读者读不出「哪段是哪家」。
-
----
-
-#### 9c · verifying skill 核未闭合 caveat，落 v2.x
-
-**触发**：9b 决策日志末尾通常会 list 一组「降级为媒体引述 / 标 caveat / 待补源」的引用，这些是 9b 通过「降级处置」绕过的，不是已闭合的。9c 把这些逐条用 `market-research-skills:verifying` skill 严格核一次，能升级的升级，确认无法核的保留 caveat 进 9d。
-
-**流程**：
-
-1. 从 9b 决策日志 `_process/v2_integration_log.md` 末尾摘出所有未闭合 caveat
-2. 逐条调用 verifying skill 核：
-   - **能找到 primary（whitelisted 来源直接读全文）**：升级，去 caveat
-   - **多源同源 to primary**（如原网站被 Cloudflare 拦截，但多家 whitelisted 媒体同时引述同一 official release）：升级到「多源同源」状态，明示「原网站未直接获取，引用来自 X、Y、Z 多源」
-   - **确实查不到 primary**：保留 caveat，补「曾尝试核实未公开」明示态度
-3. 同步修订相关图脚本字符串（source 与 note）若引用源升级
-4. 产出 v2.1（或 v2.x）与决策日志 `_process/v2_1_verifying_log.md`
-
-**为什么这是独立子步而不是 9b 内部一环**：
-
-- 9b critique 处置「降级」是个低成本动作，整合时不可能逐条停下来 deep-search 原始来源
-- 9c 集中处理所有 caveat，用 verifying skill 严格 protocol（whitelist、download primary、多源同源等）一次跑完
-- 9b 整合产 v2 是「critique 反馈接受」，9c 产 v2.x 是「事实层最后一道闸」。两步分开让 commit 历史和决策日志更清晰
-
-**verifying 实战教训**：
-
-- 同样的数字，statement Z（如「机构 X 的 A 指标目标 \$80B」）和 source Z'（如「另一相关 B 指标目标 \$80B」）可能数字对但**口径完全不同**。verifying 时必须辨认两者是否真同一指标，不能仅看数字对得上
-- 「YYYY 年 MM 月」式模糊时点容易锚定首次集中爆发而非首次报道。verifying 时把时点改成区间（「YYYY 年初」）更稳
-- whitelisted 媒体多源同源 to primary 与「未明的媒体引述」是两个不同等级，前者可视为等价 primary，后者必须降级
+Redline: critique is a reference, not collage material. When Claude integrates critique, it must rewrite in a unified narrative voice so the reader cannot tell "which paragraph is from which".
 
 ---
 
-#### 9d · 用户 sign off（硬停）
+#### 9c · verifying skill checks unresolved caveats, lands v2.x
 
-**关键问题**：v2.x PDF 在用户手上读完之后，是否还有人类视角才能发现的问题？
+**Trigger**: the 9b decision log usually lists a set of "downgraded to media citation / marked caveat / source pending" citations; these are bypassed by 9b's "downgrade handling", not closed. 9c checks each rigorously with the `market-research-skills:verifying` skill, upgrading what can be upgraded and keeping caveats on what cannot be verified into 9d.
 
-9d 是 step 9 的最后一道 gate，**硬停**：Claude 不能跳过 9d 直接进 step 10。
+**Flow**:
 
-**流程**：
+1. extract all unresolved caveats from the end of the 9b decision log `_process/v2_integration_log.md`
+2. call the verifying skill per item:
+   - **can find primary (read the full text from a whitelisted source)**: upgrade, remove caveat
+   - **multi-source-converging to primary** (e.g. the original site is Cloudflare-blocked, but several whitelisted media cite the same official release): upgrade to "multi-source converging", stating "original site not directly accessed, citation from X, Y, Z"
+   - **genuinely cannot find primary**: keep the caveat, add "attempted to verify, not public" explicitly
+3. sync the related chart-script strings (source and note) if the source is upgraded
+4. produce v2.1 (or v2.x) and the decision log `_process/v2_1_verifying_log.md`
 
-1. v2.x 重渲 PDF 后，Claude 把 `7_draft/draft.pdf` 交用户
-2. 用户**通读全文 PDF**，重点关注：
-   - 论证流是否站得住（人读 vs LLM critique 的盲区）
-   - 图表视觉效果（spec §四 明文 AI 不做视觉检查，9d 是视觉自检唯一时机）
-   - 公众号或 LinkedIn 派生的目标读者代入感（target reader test）
-   - 措辞或立场是否需要软化或加强（critique LLM 不掌握用户的真实表达意图）
-3. 用户产出修改意见清单（口头、文字、直接 PDF 批注均可）
-4. Claude 整合意见落 v2.2 / v3（视改动量决定版本号）
-5. 9d 可能反复（v3 落 v4）直到用户满意
-6. 用户最终签字，9d 通过，进 step 10
+**Why this is a separate sub-step, not part of 9b**:
 
-**硬停判据**：用户明确说「可以进 step 10」（书面或 commit message 或 state.md 登记）。
+- 9b critique's "downgrade" handling is a low-cost action; integration cannot stop per item to deep-search the original source
+- 9c handles all caveats centrally, running the verifying skill's strict protocol (whitelist, download primary, multi-source converging) once
+- 9b integration producing v2 is "accept critique feedback", 9c producing v2.x is "the final fact-layer gate". Splitting the two keeps the commit history and decision log clearer
 
-**9d 与 step 10 落盘告知的区别**：
+**verifying field lessons**:
 
-- 9d sign off 是 step 9 的硬停 gate，用户审「内容加视觉」状态，决定是否 freeze 主报告 PDF
-- step 10 各子步落盘后告知用户（软停），派生稿是 format conversion，内容回 9d 重新走
-
-如果 9d 反复改主报告，step 10 还没启动。
+- the same number, statement Z (e.g. "institution X's A metric target \$80B") and source Z' (e.g. "another related B metric target \$80B") may match on the number but be **completely different calipers**. When verifying, identify whether the two are really the same metric, not just that the numbers match.
+- a vague "YYYY month MM" time point easily anchors to the first concentrated burst rather than the first report. When verifying, change the time point to a range ("early YYYY") for robustness.
+- whitelisted-media multi-source-converging to primary and "unspecified media citation" are two different levels; the former is equivalent to primary, the latter must be downgraded.
 
 ---
 
-**整步软停加 9d 硬停**：9b 与 9c 之间可反复迭代（v2 落 v2.1 再迭代），软停。9d 是硬停。
+#### 9d · user sign-off (hard stop)
+
+**Key question**: after the user reads the v2.x PDF, are there problems only a human perspective can find?
+
+9d is the last gate of step 9, **hard stop**: Claude cannot skip 9d to step 10.
+
+**Flow**:
+
+1. after re-rendering the v2.x PDF, Claude hands `7_draft/draft.pdf` to the user
+2. the user **reads the full PDF**, focusing on:
+   - does the argument flow hold (human read vs LLM-critique blind spots)
+   - chart visual effect (spec §4 says the AI does not do visual checks, 9d is the only visual-self-check moment)
+   - target-reader immersion for the WeChat or LinkedIn derivation (target reader test)
+   - whether wording or stance needs softening or strengthening (the critique LLM does not know the user's real intent)
+3. the user produces a revision list (verbal, written, or direct PDF annotation)
+4. Claude integrates into v2.2 / v3 (version number by change size)
+5. 9d may iterate (v3 → v4) until the user is satisfied
+6. the user signs off, 9d passes, proceed to step 10
+
+**Hard-stop criterion**: the user explicitly says "proceed to step 10" (written, or commit message, or state.md entry).
+
+**Difference between 9d and step-10 landing announcements**:
+
+- 9d sign-off is the step-9 hard-stop gate; the user reviews the "content + visual" state and decides whether to freeze the main PDF
+- step 10 announces after each sub-step lands (soft stop); derivations are format conversion, content changes go back to 9d
+
+If 9d keeps changing the main report, step 10 has not started.
 
 ---
 
-### 步骤 10：定稿 + 派生（软停，每子步落盘后告知用户）
-
-**关键问题**：所有渠道版本都做好了吗？
-
-**四子步串行**：
-
-- **10a · 主报告 PDF 冻结**
-- **10b · Word 派生**
-- **10c · publication-style HTML 与 PDF**（可选，受众需要更强视觉识别时做）
-- **10d · 公众号 JPG 切页**（可选，10c 完成后给公众号长稿用）
-
-每子步落盘后告知用户，软停可迭代。整步无硬停 gate：派生稿是 format conversion，内容已在 9d sign off 时锁定，不允许在派生层反向修订。用户审派生稿发现内容问题，回 9d 重新走 sign off。
+**Whole step soft + 9d hard**: 9b and 9c may iterate (v2 → v2.1 → iterate), soft. 9d is hard.
 
 ---
 
-#### 10a · 主报告 PDF 冻结
+### Step 10: finalise + derive (soft stop, announce after each sub-step lands)
 
-qmd → PDF 重渲一遍，确认排版、引用、图表、目录序号、图表索引全部无报错。最终版本落 `7_draft/draft.pdf`，git tag 标记冻结版本号（如 `v1.0-release`）。
+**Key question**: are all channel versions ready?
 
-后续 10b-10d 的所有派生稿只能从这份 frozen qmd 抄内容，**不允许在派生品里反向修订原文**。若 10b-10d 期间发现内容问题须改，回到 step 9d 重新走 sign off 流程，重新冻结主报告。
+**Four sub-steps in series**:
+
+- **10a · freeze main PDF**
+- **10b · Word derivation**
+- **10c · publication-style HTML + PDF** (optional, when the audience needs stronger visual identity)
+- **10d · WeChat JPG slices** (optional, after 10c, for the WeChat long-form channel)
+
+Announce after each sub-step lands, soft stop, iterable. No hard-stop gate for the whole step: derivations are format conversion, content was locked at 9d sign-off, no reverse revision in the derivation layer. If the user finds a content problem in a derivation, go back to 9d.
 
 ---
 
-#### 10b · Word 派生
+#### 10a · freeze main PDF
 
-**目的**：给客户、老板、合作方需要 Word 格式审阅或批注的场景出一份 docx。公众号长稿走 10d JPG 切页路径，不在本子步覆盖。
+Re-render qmd → PDF once, confirming layout, citations, charts, TOC numbering, list-of-figures all error-free. The final version lands in `7_draft/draft.pdf`, git-tag the frozen version (e.g. `v1.0-release`). Before tagging, **re-confirm the §7.4 count-gate against the signed step-6 contract** and record the final page / chart / word counts (it should already pass from the step-8 gate; this is the last backstop). A frozen PDF below the floor or short of the contract goes back to step 5/6/7 first — it does not get frozen and shipped thin.
 
-**工具**：Quarto 内置 docx output，无需核外工具。一条命令：
+All 10b-10d derivations copy content from this frozen qmd; **no reverse revision in the derivatives**. If a content problem must be changed during 10b-10d, go back to step 9d to re-run sign-off and re-freeze the main report.
+
+---
+
+#### 10b · Word derivation
+
+**Purpose**: a docx for clients, bosses, partners who need Word for review or annotation. The WeChat long-form goes the 10d JPG-slice path, not covered here.
+
+**Tool**: Quarto's built-in docx output, no external tool. One command:
 
 ```bash
 quarto render draft.qmd --to docx
-# 落 7_draft/draft.docx (或 8_publication/1_word/<project>.docx, 移过去更整齐)
+# lands 7_draft/draft.docx (or 8_publication/1_word/<project>.docx, tidier to move there)
 ```
 
-**自动处理**：
+**Auto-handled**:
 
-- 图表（fig PDF / JPG）自动嵌入
-- 表格转 Word 原生表
-- 引用按 Pandoc 处理（bib 元数据走通）
-- 段落与标题层级保留
+- charts (fig PDF / JPG) auto-embedded
+- tables converted to native Word tables
+- citations handled by Pandoc (bib metadata works)
+- paragraphs and heading levels preserved
 
-**需要降级处理的**：
+**Needs downgrade handling**:
 
-- **figsource / tblsource 自定义 LaTeX env 在 docx 里失效**（LaTeX 专属）。两种处置：
-  - 简单：忽略，docx 里 figsource / tblsource 块显示为空或原文，用户审阅时不影响内容
-  - 干净：在 qmd 里用 `{=docx}` 条件块或 `\begin{figsource}...\end{figsource}` 改为 markdown raw（如 `> 来源：...`），双 output 兼容
-- 公式（如有 LaTeX 数学）渲染为图片
-- 自定义页眉页脚需要 `reference-doc:` 字段指向 .docx 模板（不指定就用 Pandoc default）
+- **figsource / tblsource custom LaTeX envs fail in docx** (LaTeX-only). Two handlings:
+  - simple: ignore; the figsource / tblsource blocks show empty or as raw text in docx, not affecting review content
+  - clean: in the qmd use a `{=docx}` conditional block or change `\begin{figsource}...\end{figsource}` to markdown raw (e.g. `> Source: ...`) for dual-output compatibility
+- formulas (if any LaTeX math) render as images
+- custom headers/footers need a `reference-doc:` field pointing to a .docx template (unspecified = Pandoc default)
 
-**品牌模板（可选）**：
+**Brand template (optional)**:
 
-如要项目品牌 Word 样式（字体、页眉、页脚），在 qmd 前置元数据加：
+For a project-branded Word style (fonts, headers, footers), add to the qmd front matter:
 
 ```yaml
 format:
   docx:
-    reference-doc: <项目根>/reference.docx
+    reference-doc: <project root>/reference.docx
 ```
 
-reference.docx 是 Pandoc 风格化模板（先用 `quarto render --to docx` 出一份 default，按需在 Word 里改样式，存为 reference.docx）。default 风格够用时不必做。
+reference.docx is a Pandoc style template (first `quarto render --to docx` a default, adjust the style in Word as needed, save as reference.docx). Not needed if the default style is enough.
 
-**落盘位置**：`8_publication/1_word/<project>.docx`。
+**Landing location**: `8_publication/1_word/<project>.docx`.
 
-**派生纪律**：与 10c HTML、10d JPG 切页一致，docx 是 format conversion，内容回 9d 改不在 10b 改。
-
----
-
-#### 10c · publication-style HTML + PDF（可选）
-
-只有当「内容已签字 + 受众需要更强视觉识别（咨询风、杂志风、社交分享）」时才做。完整规范见 `report_style_spec.md §七`。落 `8_publication/2_HTML/`。
-
-**起手动作（两种路径，详见 spec §7.1）**：
-
-- **路径 A（default）**：把 skill 的 `scripts/publication-style-template.html` 拷到项目 `8_publication/2_HTML/<project>-publication-style.html`，按 spec §7.8 内容映射表替换占位符，按 §7.3 在 VS Code Live Preview 里手动调段
-- **路径 B**：调 `consulting-report-style` skill 生成其他咨询风格（如 BCG 绿色调、McKinsey 蓝调等）替代模板，再按 §七 各子节微调
-
-要点回顾（详见 spec §七，两种路径共用）：
-
-- qmd 是真相之源，HTML 是派生品，不在 HTML 上做内容修订
-- 嵌图必须用 `fig_*_clean.jpg`（不要 `fig_*.jpg` 否则双标题）
-- 每个 page div 就是一张 A4，超界或留白在 VS Code Live Preview 里手动调段（无自动重排）
-- HTML → PDF 直接在浏览器里 Cmd+P 另存为 PDF，关掉「页眉与页脚」，边距设「无」
-- 一次生成后转手工维护，不要留 builder 脚本
+**Derivation discipline**: like 10c HTML and 10d JPG slices, docx is format conversion; content changes go back to 9d, not in 10b.
 
 ---
 
-#### 10d · 公众号 JPG 切页（可选）
+#### 10c · publication-style HTML + PDF (optional)
 
-把 10c 产出的 publication PDF 切成逐页 JPG，给公众号长稿编辑器分发（公众号编辑器不直接吃 PDF，但原生支持图序）。落 `8_publication/3_wechat_pages/page_NN.jpg`（zero-pad 两位数）。完整规范见 spec §7.9。
+Do this only when "content is signed off + the audience needs stronger visual identity (consulting style, magazine style, social sharing)". Full spec in `report_style_spec.md §7`. Lands `8_publication/2_HTML/`.
 
-只在公众号长稿渠道需要时做。短稿走 10b 的 md + 单图占位即可。
+**Starting moves (two paths, see spec §7.1)**:
 
----
+- **Path A (default)**: copy the skill's `scripts/publication-style-template.html` to project `8_publication/2_HTML/<project>-publication-style.html`, replace placeholders per the spec §7.8 content-mapping table, manually tune pages in VS Code Live Preview per §7.3
+- **Path B**: call the `consulting-report-style` skill to generate another consulting style (BCG green, McKinsey blue, etc.) as the template, then fine-tune per §7 sub-sections
 
-**整步软停**：每子步落盘后告知用户即可。无 explicit 硬停 gate；用户随时可叫停回 9d 重新走 sign off。
+Key points (see spec §7, shared by both paths):
 
----
-
-### 步骤 11：复盘（随时追加 + 项目收尾一次性 audit）
-
-**关键问题**：这次学到了什么？哪些经验上溯到 heavy-research/ 三件套？
-
-**两层机制**：
-
-- **11.1 随时追加**：项目期间发现的坑 / 教训 / 经验立即落 retrospective
-- **11.2 项目收尾一次性 audit**：step 10 整步签字后、进入新项目前，统一审一遍 workflow / spec / CLAUDE.md / retrospective 与实际产出的四方一致性，把可上溯的经验集中沉淀
+- the qmd is the source of truth, the HTML is a derivative; no content revision on the HTML
+- embedded figures must use `fig_*_clean.jpg` (not `fig_*.jpg`, else double title)
+- each page div is one A4; over/under-flow tuned manually in VS Code Live Preview (no auto-reflow)
+- HTML → PDF directly via the browser's Cmd+P "save as PDF", turn off "headers and footers", margins "none"
+- after one generation, switch to manual maintenance; do not keep a builder script
 
 ---
 
-#### 11.1 随时追加
+#### 10d · WeChat JPG slices (optional)
 
-**触发条件**（任一即追加）：
+Slice the 10c publication PDF into per-page JPGs for the WeChat long-form editor (it does not take PDF directly but supports image sequences natively). Lands `8_publication/3_wechat_pages/page_NN.jpg` (zero-padded two digits). Full spec in spec §7.9.
 
-- 每个 section 综合后立即追加（不要等「集中复盘」）
-- 用户在对话中明确说「这是个坑 / 教训 / 经验」
-- AI 自己识别出一类反复出现的问题
-- 每次发生 CLAUDE.md 沉淀时同步登记一行（标注是哪条规则、原始触发场景）
-
-**格式**：三段式（详见 §十）。**路径**：`9_retrospective/retrospective.md`。
+Do this only when the WeChat long-form channel is needed. Short pieces use 10b's md + single-figure placeholders.
 
 ---
 
-#### 11.2 项目收尾一次性 audit（step 10 整步签字后做）
-
-**原则**：项目期间不反复对工作流本身做 audit / 上溯，流程稳定之后只在 step 11.2 一次性收尾。频繁 audit 会让 workflow / spec 沉淀节奏跟着开发节奏走，反成内耗。开发期 retrospective 随时追加即可，是否上溯统一在 11.2 裁决。
-
-**三动作**：
-
-1. **retrospective 提炼为下个项目改进清单**：通读 `9_retrospective/retrospective.md` 全部条目，把跨条目反复出现的 pattern 提炼为 3-5 条核心 take-aways，落在文件末段「项目收尾总结」。重点写「下个项目应该做什么不一样」，不是流水账重述
-2. **项目 CLAUDE.md → workflow 上溯裁决**：项目级 CLAUDE.md「与框架的偏离」段逐条裁决「① 项目内保留 / ② 上溯到 heavy-research/ 三件套」。上溯的条目同步改 workflow.md 或 spec，项目级处加注「跨项目沉淀于 workflow §X.Y」
-3. **三件套 + 实际产出 grep audit**：
-   - grep workflow / spec 节号交叉引用是否对齐实际章节（避免节号失同步）
-   - grep 三件套里的「双输出 / 双格式 / 旧目录名」等 stale 表达
-   - 对照实际产出（如 `8_publication/` 实际结构、`5_scripts/` 实际脚本）vs spec 描述，发现的不一致逐条修
-
-**完成判据**：三动作全部做完，git tag final 收尾版本号（如 `final-v1`）后才宣布项目收尾。
-
-**何时不做 11.2**：单次实验性项目（不准备复用工作流）/ 跑通验证流程（不产出正式研报）。其他情况都应该做，否则 workflow 会逐步偏离实际经验积累。
+**Whole step soft stop**: announce after each sub-step lands. No explicit hard-stop gate; the user can stop and go back to 9d at any time.
 
 ---
 
-## 五、贯穿性纪律
+### Step 11: retrospective (append anytime + one-time project-close audit)
 
-以下纪律不属于任何单一步骤，但所有步骤都适用。
+**Key question**: what did we learn? Which lessons promote to the analyst-research/ three-piece set?
 
-### 5.1 来源可追溯
+**Two-layer mechanism**:
 
-任何数字都要能定位到原始来源。不能定位的，标「待核实」或剔除，不要写进结论。
-
-### 5.2 不造数
-
-宁可写「未公开 / 待核实」，也不要给一个看似合理的猜测。
-
-### 5.3 区分三态
-
-**事实**（有原始来源直接支持）：
-
-- 「据 IMF 2024 Article IV，X 为 Y」
-- 「GASTAT 2025-05 修订后，X 为 Y」
-- 「PIF 年报 2024 page 15 披露，X 为 Y」
-
-**估算**（基于公式或他人估算的推算）：
-
-- 「据市场估算约 X」（多家媒体或投行口径）
-- 「本研究估算 X」（按已知公式或简单测算重算）
-- 「按 IMF 公式重算 X」（明示用到的公式）
-
-**推断**（无直接数据支撑的方向性判断）：
-
-- 「推测可能 X」
-- 「方向性判断 X」（明示不给绝对值）
-- 「目前线索倾向 X 方向」
-
-三者用不同措辞与标注严格区分，正文中不混用（避免读者误把推断当事实）。
-
-### 5.4 AI 输出 ≠ 结论
-
-AI 提供素材和初稿，最终结论由人决定。AI 在每个硬停点产出后可以说「我认为本步已完成，等待您审阅」，但不能自己宣布「完成」并进入下一步。
-
-### 5.5 双双落盘
-
-凡涉及数据处理（清洗、聚合、统计、可视化）的每张图 / 表，**必须**同时保存：
-- 底层数据（CSV / GeoJSON / 原始下载）到 `4_data/`
-- 完整脚本到 `5_scripts/`
-- 图 PDF + JPG + `_clean.jpg` 三格式到 `6_figures/`（由 `save_fig` 一次调用同时落地）
-
-### 5.6 CSV 写入卫生
-
-- 含逗号 / 引号 / 换行的字段必须用双引号包起来
-- source 列统一命名为 `sources`（复数），多个来源用 `;` 分隔，不要用 `,`（与字段分隔符冲突）
-- **日期格式统一 ISO 8601**：`YYYY-MM-DD`（如 `2024-12-31`），不用 Excel-style `12/31/2024` 或 `31-Dec-2024`。年度数据只到年的写 `2024`
-- **数字字段不带千分位逗号**：写 `1234567` 而非 `1,234,567`（千分位会被 csv parser 误判为额外列）。展示给读者时再由 Python f-string 加千分位
-- 每次综合后用 `csv.DictReader` 跑一遍校验：列数对齐 + 关键字段值类型符合预期
-
-### 5.7 跨阶段决断由人做
-
-AI 在每个步骤内可以主导执行，但**「是否进入下一步」必须人决定**。质量门是给人看的，不是 AI 自评的。
-
-### 5.8 跨节数字硬一致性
-
-同一指标在五处的数字、单位、口径必须完全一致：
-
-1. **outline.md** 计划用到的数字与论点
-2. **draft.qmd** 正文段落里的数字
-3. **make_fig_*.py** 脚本里 title / source / note / annotation 引用的数字
-4. **4_data/2_processed/*.csv** 底层数据字段
-5. **references.bib** 引用键对应文献的原始数字
-
-任一处修订（如改基期、改源、改时点），必须**五处全核**。
-
-**实战教训**：曾有项目 step 9b critique 一次性暴露 18 张图脚本字符串与 CSV / 正文不一致（占该项目总图数 18 / 41 = 44%）。根因是 step 7 出图时 title 数字 hardcode 而非从 CSV 派生，step 8 写作时正文数字改了脚本没同步。
-
-**预防纪律**（与 §步骤 7 / §步骤 8 自检清单呼应）：
-
-- step 7 出图时：`title=f"{df.loc[...].max():.1%}"` 从 CSV 派生，禁止 hardcode
-- step 8 写正文时：每段引用具体数字时回查对应 CSV
-- step 9b critique 时：B1 轻修批次专门核「图脚本-CSV-正文-bib」四方一致
+- **11.1 append anytime**: pitfalls / lessons / experience found during the project land in the retrospective immediately
+- **11.2 one-time project-close audit**: after step 10 is fully signed off and before the next project, audit the four-way consistency of workflow / spec / CLAUDE.md / retrospective vs the actual output, and consolidate promotable experience
 
 ---
 
-## 六、多 LLM 协作机制
+#### 11.1 append anytime
 
-### 6.1 哪些步骤需要多 LLM
+**Trigger conditions** (any one appends):
 
-onboarding §1.3 第 1 步用户裁定「是否采用多 LLM 协作模式」，锁定全程。两种模式下各步骤协作方式如下：
+- append right after each section is synthesised (do not wait for a "consolidated retrospective")
+- the user explicitly says "this is a pitfall / lesson / experience" in conversation
+- the AI itself identifies a recurring class of problem
+- log one line in the retrospective each time a CLAUDE.md entry is made (note which rule, the original trigger)
 
-| 步骤 | 单 LLM 模式（default） | 多 LLM 模式 |
+**Format**: three-part (see §10). **Path**: `9_retrospective/retrospective.md`.
+
+---
+
+#### 11.2 one-time project-close audit (after step 10 is fully signed off)
+
+**Principle**: do not repeatedly audit / promote the workflow itself during the project; do it once at step 11.2 after the flow is stable. Frequent audits make the workflow / spec accretion pace track the development pace, becoming overhead. Append retrospectives anytime during development; whether to promote is adjudicated at 11.2.
+
+**Three actions**:
+
+1. **distil the retrospective into a next-project improvement list**: read all entries in `9_retrospective/retrospective.md`, distil cross-entry recurring patterns into 3-5 core take-aways in the file's final "project-close summary". Focus on "what to do differently next project", not a running re-statement
+2. **adjudicate project CLAUDE.md → workflow promotion**: adjudicate each item in the project CLAUDE.md "deviations from the framework" section as "(1) keep in project / (2) promote to the analyst-research/ three-piece set". Promoted items sync into workflow.md or spec, with a note at the project level "promoted cross-project to workflow §X.Y"
+3. **grep audit of the three-piece set + actual output**:
+   - grep workflow / spec section-number cross-references against actual chapters (avoid section-number drift)
+   - grep the three-piece set for stale phrasing ("dual output / dual format / old dir name")
+   - compare actual output (e.g. the real `8_publication/` structure, `5_scripts/` scripts) vs the spec description, fix inconsistencies item by item
+
+**Completion criterion**: all three actions done, git-tag the close version (e.g. `final-v1`) before declaring the project closed.
+
+**When not to do 11.2**: a one-off experimental project (not reusing the workflow) / a validation run (not producing a formal report). All other cases should, or the workflow gradually drifts from accumulated experience.
+
+---
+
+## 5. Cross-cutting discipline
+
+These do not belong to any single step but apply to all.
+
+### 5.1 Source traceability
+
+Every number must trace to an original source. Mark what cannot be located "to be verified" or drop it; do not write it into the conclusion.
+
+### 5.2 No fabricated numbers
+
+"Not publicly available / to be verified" beats a plausible guess.
+
+### 5.3 Three-state labelling
+
+**Fact** (directly supported by an original source):
+
+- "per IMF 2024 Article IV, X is Y"
+- "after the GASTAT 2025-05 revision, X is Y"
+- "PIF annual report 2024 page 15 discloses X is Y"
+
+**Estimate** (a calculation based on a formula or someone else's estimate):
+
+- "per market estimate ~X" (multiple media or bank calibrations)
+- "this study estimates X" (re-computed by a known formula or simple calculation)
+- "re-computed by the IMF formula, X" (state the formula used)
+
+**Inference** (directional judgement with no direct data support):
+
+- "possibly X"
+- "directional judgement X" (state that no absolute value is given)
+- "current evidence leans toward X"
+
+Strictly distinguish the three with distinct wording and labels; do not mix them in the body (so the reader does not mistake inference for fact).
+
+### 5.4 AI output ≠ conclusion
+
+The AI provides material and a first draft; the human decides the final conclusion. After each hard-stop output the AI can say "I think this step is done, awaiting your review", but cannot declare "done" and proceed on its own.
+
+### 5.5 Double-landing
+
+For every chart / table involving data processing (cleaning, aggregation, statistics, visualisation), **must** save together:
+- the underlying data (CSV / GeoJSON / raw download) to `4_data/`
+- the full script to `5_scripts/`
+- the chart PDF + JPG + `_clean.jpg` to `6_figures/` (all from one `save_fig` call)
+
+### 5.6 CSV write hygiene
+
+- fields containing commas / quotes / newlines must be double-quoted
+- the source column is named `sources` (plural) uniformly, multiple sources separated by `;`, not `,` (conflicts with the field separator)
+- **dates in ISO 8601**: `YYYY-MM-DD` (e.g. `2024-12-31`), not Excel-style `12/31/2024` or `31-Dec-2024`. Year-only annual data writes `2024`
+- **no thousands separators in numeric fields**: write `1234567`, not `1,234,567` (the thousands comma is misread as an extra column by the csv parser). Add thousands separators with a Python f-string when displaying to the reader
+- after each synthesis, validate once with `csv.DictReader`: column alignment + key-field value types as expected
+
+### 5.7 Cross-stage decisions are made by the human
+
+The AI can lead execution within each step, but **"whether to proceed to the next step" must be the human's decision**. Quality gates are for the human, not AI self-assessment.
+
+### 5.8 Hard cross-section number consistency
+
+The same metric's number, unit, and caliper must be identical in five places:
+
+1. **outline.md** planned numbers and arguments
+2. **draft.qmd** body numbers
+3. **make_fig_*.py** title / source / note / annotation numbers
+4. **4_data/2_processed/*.csv** underlying data fields
+5. **references.bib** the original number behind the citation key
+
+Any edit to one (change base period, source, time point) must **reconcile all five**.
+
+**Field lesson**: a project's step 9b critique once exposed 18 chart-script strings inconsistent with CSV / body (18 / 41 = 44% of the project's charts). Root cause: step 7 title numbers hardcoded rather than derived from CSV, step 8 body numbers changed without syncing the script.
+
+**Prevention discipline** (echoing the §step 7 / §step 8 self-check lists):
+
+- at step 7 charting: `title=f"{df.loc[...].max():.1%}"` derived from CSV, no hardcode
+- at step 8 writing: re-check the CSV when each paragraph cites a specific number
+- at step 9b critique: the B1 light-fix batch specifically checks "chart-script / CSV / body / bib" four-way consistency
+
+---
+
+## 6. Multi-LLM collaboration mechanism
+
+### 6.1 Which steps need multi-LLM
+
+The onboarding §1.3 Step 1 user decides "whether to use multi-LLM collaboration", locked throughout. Collaboration per step in the two modes:
+
+| Step | Single-LLM (default) | Multi-LLM |
 |---|---|---|
-| 2 广搜 | Claude solo，配合 iFinD MCP 或 `financial-data-sources` skill 与用户手动补关键 PDF | Claude + GPT + DS 三家平行搜，Claude 综合 |
-| 5 补搜 | Claude solo 与用户手动补关键文献全文 | 三家平行（聚焦子问题），Claude 综合 |
-| 6 outline 图表 brainstorm | Claude 一稿，用户裁定 | 三家给方案，Claude 综合 |
-| 7 数据脚本图表 | Claude solo | Claude solo |
-| 8 draft 主笔 | Claude solo（按 §7.1 与 §7.1.1 自润色，目标质量等同经第三方润色） | Claude solo |
-| 9b critique | Claude self-critique（按 6 类视角自评：事实、口径、引用、跨节一致、论证流、语言规范），分三批整合 | GPT critique，Claude 三批整合（B1 / B2 / B3）v3 |
-| 9c verifying | Claude solo 调用 `market-research-skills:verifying` skill（两模式共用） | 同左 |
-| 9d sign off | 用户通读 PDF，反复直到签字（两模式共用） | 同左 |
+| 2 broad search | Claude solo, with iFinD MCP or `financial-data-sources` skill and user-supplied key PDFs | Claude + GPT + DS three parallel, Claude synthesises |
+| 5 supplementary search | Claude solo with user-supplied key full-text documents | three parallel (focused sub-questions), Claude synthesises |
+| 6 outline chart brainstorm | Claude one draft, user decides | three propose, Claude synthesises |
+| 7 data scripts charts | Claude solo | Claude solo |
+| 8 draft lead | Claude solo (self-polish per §7.1 and §7.1.1, target quality equal to third-party-edited) | Claude solo |
+| 9b critique | Claude self-critique (6 perspectives: facts, calipers, citations, cross-section consistency, argument flow, language standards), three-batch integration | GPT critique, Claude three-batch integration (B1 / B2 / B3) v3 |
+| 9c verifying | Claude solo calls the `market-research-skills:verifying` skill (both modes) | same |
+| 9d sign off | user reads PDF, iterates to sign-off (both modes) | same |
 
-**单 LLM 模式 self-critique 的独立性弱**：Claude 自评同一稿件无独立第二视角，漏致命错误风险高于多 LLM 模式。三条对冲建议：① 派生稿发布前用户自己再通读一遍；② 关键事实仍按 9b 处置框架要求独立核验原始资料；③ 9c verifying 严格执行不偷工。
+**Weak independence of single-LLM self-critique**: Claude self-evaluating its own draft has no independent second perspective, higher fatal-error risk than multi-LLM. Three hedges: (1) the user reads the derivation once more before publishing; (2) key facts still independently verified against the original material per the 9b handling framework; (3) run 9c verifying rigorously, no shortcuts.
 
-**多 LLM 模式的切换成本**：用户需要手动切到 GPT plugin 或网页运行 critique，节奏代价显著。仅在用户明确要求或项目预期 GPT 独立 critique 价值高（如复杂跨源对比、关键数字密集、对外发布前需第二视角）时启用。
+**Switching cost of multi-LLM mode**: the user must manually switch to the GPT plugin or web app for critique, a significant rhythm cost. Enable only when the user explicitly asks or the project expects high GPT-independent-critique value (complex cross-source comparison, dense key numbers, a second perspective needed before external publication).
 
-**DS 不再作 default**：实战实测 DS 文字润色的教学价值已沉淀到 §7.1.1，Claude 按规则自润色可达等同质量；DS critique 在多 LLM 模式下由 GPT 承担（critique 独立性 GPT 已够）。DS 留作未来 fallback 的可能性，不在 default 路径。
+**DS no longer default**: field-measured DS text-polish teaching value is distilled into §7.1.1, Claude self-polishing per the rules achieves equal quality; DS critique in multi-LLM mode is handled by GPT (GPT independence is enough). DS remains a possible future fallback, not on the default path.
 
-### 6.2 三家相对优势（实战观察，迭代中）
+### 6.2 Relative strengths of the three (field observation, iterating)
 
-| 工具 | 优势 |
+| Tool | Strength |
 |---|---|
-| **GPT** | 结构化框架、数据精度、口径辨析、研究纪律提示 |
-| **DeepSeek** | 历史溯源、中文 / 区域语境、时间序列、视觉细节、原文术语。**中文长句节奏 / 连接词 / 自然度的教学价值已沉淀至 §7.1.1**（实战学习自 DeepSeek 润色）；步骤 9 default 不再调用 DS，Claude 在 step 8 直接应用 §7.1.1；DS 留作 step 9 fallback（GPT critique 暴露 ≥ 10 条「文字明显需改进」时启用） |
-| **Claude** | 数据档案、Web 抓取、研报论证流、综合定稿、全程裁判 |
+| **GPT** | structured frameworks, data precision, caliper analysis, research-discipline prompts |
+| **DeepSeek** | historical tracing, Chinese / regional context, time series, visual detail, original terminology. **The teaching value of Chinese long-sentence rhythm / connectives / naturalness is distilled into §7.1.1** (learned from DeepSeek polishing); step 9 default no longer calls DS, Claude applies §7.1.1 directly at step 8; DS remains a step-9 fallback (enabled when GPT critique exposes ≥ 10 "clearly needs improvement" text items) |
+| **Claude** | data archive, web scraping, report argument flow, synthesis finalisation, end-to-end referee |
 
-模型代际更替会改变这张表，每个项目结束后由用户在项目级 CLAUDE.md 中更新观察。
+Model-generation turnover changes this table; the user updates the observation in the project CLAUDE.md after each project.
 
-### 6.3 综合的红线
+### 6.3 The redline of synthesis
 
-不要拼接三家文字。综合后的成文必须经过统一的叙述声音重写，让读者读不出「哪段是哪家」。三家原稿的价值在素材，不在语句。
+Do not stitch three LLMs' text. The synthesised piece must be rewritten in a unified narrative voice so the reader cannot tell "which paragraph is from which". The three originals' value is in the material, not the sentences.
 
-### 6.4 多 LLM 并发时的状态机
+### 6.4 State machine for multi-LLM concurrency
 
-如果在 Claude Code 里跑多 LLM 协作（用 sub-agent 或人工切换），并发期各家**只在自己的子目录下产出**（如 `_process/<llm>/`），不直接修改共享状态文件（如 outline.md、`_state.md`）。共享状态由综合者（Claude）在 Round 结束时统一更新，避免 last-write-wins 冲突。
+If running multi-LLM collaboration in Claude Code (via sub-agent or manual switching), during concurrency each LLM **produces only under its own subdir** (e.g. `_process/<llm>/`), not directly editing shared state files (outline.md, `_state.md`). Shared state is updated by the synthesiser (Claude) at the end of each round, avoiding last-write-wins conflicts.
 
-### 6.5 错误诊断顺序：模型 → prompt → 通道
+### 6.5 Error-diagnosis order: model → prompt → channel
 
-跨 LLM / 跨工具调用失败时，按这个顺序定位根因，不要乱跳：
+When a cross-LLM / cross-tool call fails, locate the root cause in this order, do not jump around:
 
-1. **模型层**：模型本身是否与场景兼容？关键追问：
-   - 是否 Thinking / reasoner / o 系列（长 reasoning 静默期，与 streaming 中间层易冲突）？
-   - 是否 context window 不够？
-   - 是否模型版本太新 / 太旧，工具调用 schema 不匹配？
-2. **prompt 层**：prompt 设计是否合理？关键追问：
-   - 任务太大 / 输出太长，是否要拆分？
-   - prompt 是否冗余 / 含特殊字符触发 escape 问题？
-   - 输出格式约束是否模型能稳定遵守？
-3. **通道层**：访问通道是否稳定？关键追问：
-   - VSCode Copilot / Claude Code CLI / 浏览器，哪条链路？
-   - 网络 / 代理 / VPN 异常？
-   - 中间层（Copilot streaming gateway）是否有断流问题？
+1. **Model layer**: is the model itself compatible with the scenario? Key questions:
+   - is it a Thinking / reasoner / o-series (long reasoning silence, conflicts with the streaming middle layer)?
+   - is the context window insufficient?
+   - is the model version too new / too old, tool-call schema mismatch?
+2. **Prompt layer**: is the prompt design reasonable? Key questions:
+   - task too big / output too long, split?
+   - prompt redundant / containing special characters triggering escape problems?
+   - output-format constraints the model can follow stably?
+3. **Channel layer**: is the access channel stable? Key questions:
+   - VSCode Copilot / Claude Code CLI / browser, which link?
+   - network / proxy / VPN anomaly?
+   - middle layer (Copilot streaming gateway) stream-break?
 
-**反面案例（实战 DS 调试踩坑）**：连续 3 轮 DS 失败，Claude 直接跳到「prompt 太长」，调小 prompt 失败，再跳到「通道不稳」，推荐换 Cline。实际根因是用户选了 `DeepSeek V4 Pro (Thinking Max)`（模型层），切到普通版立刻通。4 轮浪费根因是没先查模型层。
+**Counter-example (field DS debugging pitfall)**: after 3 consecutive DS failures, Claude jumped straight to "prompt too long", shrank the prompt and failed, then jumped to "channel unstable" and recommended switching to Cline. The actual root cause was the user selecting `DeepSeek V4 Pro (Thinking Max)` (model layer); switching to the regular version worked immediately. The 4 wasted rounds were because the model layer was not checked first.
 
-stack trace signature 也是误导陷阱：`Copilot Request id` 出现在 trace 里只说明 Copilot 是请求经手者，不等于 Copilot 是根因。
+A stack-trace signature is also a misleading trap: `Copilot Request id` in the trace only means Copilot handled the request, not that Copilot is the root cause.
 
 ---
 
-## 七、写作规范模板（伴生）
+## 7. Writing-standards template (companion)
 
-这一节是 domain-agnostic 的写作规范，每个项目级 CLAUDE.md 可以继承 + 特化。
+This section is a domain-agnostic writing standard; each project CLAUDE.md can inherit + specialise.
 
-### 7.1 文风
+> The examples below illustrate Chinese-prose redlines (they apply when the report is Chinese); the rules apply to both languages. For English reports, apply the spirit (short sentences, no padding, no body bold) with English idiom and skip the Chinese-colon items.
 
-**适用范围**：主报告、派生稿（Word、HTML、公众号长稿等）、复盘文档，以及 AI 对话回复中涉及文字表达的部分。下方主规则与子节 §7.1.1 / §7.1.2 / §7.1.3 同此范围。AI 在与用户对话时也按本规则写，避免「→」「+」「半角 - 当破折号」「使得 / 不难看出 / 一定程度上」等口语腔、AI 生成痕迹、学术腔残留。
+### 7.1 Style
 
-- 目标读者是受过本科教育、有基础经济学知识的非专业读者，同时兼顾专业读者
-- **研报正文仅 h1 / h2 两级，禁止 h3 及更深**（详见 `report_style_spec.md §1.2`）。一节点多到要开 h3 时，把这节拆成两个 h1
-- 每个 h2 子标题就是该段的结论，如「财政视角，油气占财政收入 30%-90% 的三梯度」。不写「财政视角」这种空标题
-- 段落开头一句话就抛具体结论，如「按各国官方口径，GCC 各国非油 GDP 占比已升至 65-80%」。不要「讨论 X 绕不开一个直觉性判断」「值得指出的是」这类抒情铺垫
-- **句子要短**。避免又臭又长的复杂句，一个长复合句拆成两到三个短句更好读。20 字以内的短句优先
-- **正文一律不加粗**。粗体仅用于「引领处」：标题（h1 / h2）、关键词标签、摘要 lead-in、表头、表内分类标签。正文论述性段落（包括 takeaway / 核心数字 / 关键判断）一律不加粗，关键信息靠句首结论、h2 标题、表格、可视化承担
-- 优先连续散文，谨慎用 bullet。bullet 只在三种情况下用：① 真正不同维度的并列；② 5 项以上的清单；③ 表格不便用而仍需视觉对比的清单。论述性内容必须用段落，不能拍碎成 bullet
-- 文献引用就近放在对应数据旁，不要把一连串名字（Hamilton 1983、Kilian 2009、Mohaddes-Pesaran 2017、Berument 2010、Cherif 2014…）堆在一段。「文献综述墙」普通读者读不下去
-- 段落要短，一段一个论点，一般 3-5 句。超过 5 句考虑拆段
-- 不写假设验证式语言。草稿里的「H1.2.2 强力支持」「假设、验证、证据」「子假设…」这类学术论文骨架，在主报告中全部删除
-- **不造比喻**。初稿容易借自创 metaphor（如「钢底」「叙事软着陆」「会计魔术」之类）取巧，但读者没有作者上下文，需要重读两遍才能理解，可读性打折。定稿前把每个自创 metaphor 换成方法论或行业通用术语，让没有背景的读者一次读懂，例如「钢底」改为「硬口径」、「叙事软着陆」改为「降标或重定义」。仅当引言或结语承担破题时，可保留少量已成共识的行业 metaphor（如 IMF 自用的 moving goalposts、Dutch disease），正文论述一律换硬术语
-- **摘要、引言、结语三段必须单独二轮重写**。这三段是「框口段」，承担读者的第一印象与最后印象。整稿一气写下来的版本通常碎、缺 insight、缺展望，读者读完抓不到 take-away。定稿前单独二轮重写这三段，目标有三：一是去掉抒情铺垫与碎碎念，二是加一条核心 insight（读者读完能带走的判断），三是引言补论证地图（这篇报告将论证什么、按什么顺序）、结语补展望（未来几年要看哪些变量）
+**Scope**: main report, derivations (Word, HTML, WeChat long-form), retrospective docs, and the text-expression parts of AI conversation replies. The main rules and sub-sections §7.1.1 / §7.1.2 / §7.1.3 share this scope. The AI also writes per these rules when conversing with the user, avoiding "→", "+", "half-width - as em-dash", "使得 / 不难看出 / 一定程度上" colloquial / AI-generated / academic residue.
 
-#### 7.1.1 中文长句节奏（实战学习自 DeepSeek 润色）
+- the target reader is an undergraduate-educated non-specialist with basic economics, also serving professional readers
+- **the report body has h1 / h2 only, no h3 and deeper** (see `report_style_spec.md §1.2`). When a section has too many points to need h3, split it into two h1
+- each h2 subtitle is that passage's conclusion, e.g. "Fiscal view, the three-tier 30%-90% oil-and-gas share of fiscal revenue". Do not write empty titles like "Fiscal view"
+- a paragraph leads with a specific conclusion, e.g. "By official calibrations, GCC non-oil GDP share has risen to 65-80%". No lyrical padding like "discussing X requires an intuitive judgement" / "it is worth noting"
+- **keep sentences short**. Avoid long, convoluted complex sentences; one long compound sentence split into two or three short ones reads better. Prefer sentences under 20 characters
+- **the body has zero bold**. Bold is for "lead-ins" only: titles (h1 / h2), keyword labels, abstract lead-in, table headers, in-table category labels. Argument paragraphs (incl. take-away / core numbers / key judgements) are never bold; key info is carried by the leading conclusion sentence, h2 titles, tables, visualisation
+- prefer continuous prose, use bullets cautiously. Bullets only in three cases: (1) genuinely different dimensions in parallel; (2) a 5+ item list; (3) a list needing visual comparison where a table is inconvenient. Argument content must be paragraphs, not smashed into bullets
+- place citations near the corresponding data, do not pile a string of names (Hamilton 1983, Kilian 2009, Mohaddes-Pesaran 2017, Berument 2010, Cherif 2014…) into one paragraph. A "literature-review wall" loses the lay reader
+- short paragraphs, one argument each, usually 3-5 sentences. Over 5 sentences consider splitting
+- no hypothesis-testing language. Academic-paper skeletons like "H1.2.2 strongly supports", "hypothesis, verify, evidence", "sub-hypothesis…" are all deleted in the main report
+- **no invented metaphors**. First drafts often borrow self-invented metaphors ("steel floor", "narrative soft-landing", "accounting magic") for shorthand, but the reader lacks the author's context and re-reads twice, reducing readability. Before finalising, replace each self-invented metaphor with a methodology or industry-standard term so the reader without context understands in one read, e.g. "steel floor" → "hard caliper", "narrative soft-landing" → "lowering or redefining". Only in the intro or conclusion as a hook may a few established industry metaphors stay (e.g. the IMF's own moving goalposts, Dutch disease); body argument uses hard terms
+- **the abstract, intro, conclusion must be separately rewritten in a second pass**. These three are "framing paragraphs" carrying the reader's first and last impression. The version written in one pass is usually fragmented, lacks insight, lacks outlook, and the reader cannot grasp a take-away. Before finalising, rewrite these three separately with three goals: (1) remove lyrical padding and rambling, (2) add one core insight (a judgement the reader walks away with), (3) the intro adds an argument map (what this report argues, in what order), the conclusion adds an outlook (which variables to watch in coming years)
 
-「句子要短」的本意是不写复杂从句，**不是**「同一论点的支撑细节也用句号断开」。Claude 初稿的常见反模式是把一个论点的论据与 takeaway 切成多个独立短句，节奏过碎；与之并存的另一反模式是用「→」「/」「+」等技术符号代替书面连词，节奏快但读者要 mental-decode 一次。下面 7 条是 v1 经 DS 润色与后续实战积累的可执行细则，写初稿时直接遵循：
+#### 7.1.1 Chinese long-sentence rhythm (learned from DeepSeek polishing)
 
-1. **同主题支撑句用逗号 / 分号续接**，不用句号。`「升至 30%。这是真改革。」` 改为 `「升至 30%，这是真改革。」`
-2. **多源 / 多项列举用「主句：项 1，项 2，项 3。」一气展开**，不要碎成「四个数字。项 1。项 2。项 3。」
-3. **「这是 X / 这意味着 Y」式独立短句嵌入化**：takeaway 用逗号续到前句，与论据连成一气，不另起一句。同类转述词如「也就是说 / 换句话说 / 简言之 / 总之」按此处理
-4. **数字单位规范**：`ppts` → 「个百分点」；表年限 / 计数的小数字（≤ 10）用汉字「九年」「四年」「五项」；表占比 / 年份 / 金额仍用阿拉伯数字（`76%`、`2024 年`、`\$92`）
-5. **书面化连接词偏好**：「原因是」→「原因在于」；「亮点是 / 制约是」→「亮点在于 / 制约在于」；「而不是」→「而非」；「已经」→「已」；「悄悄」→「悄然」；「升到」→「升至」；「降到」→「降至」
-6. **三项以上并列论点起头加序号**：「第一... 第二... 第三...」让读者跟得上节奏；两项时仍用「一是 / 二是」或「一方面 / 另一方面」
-7. **不用「→」「+」「/」「∴」「vs」等技术符号代替连词**。这类符号在 todo / 笔记 / 对话里节奏快，写进研报正文读者要 mental-decode 一次，可读性显著下降。「A → B」改为「A 引致 B」或「A 之后 B」；「A + B」改为「A 与 B」或「A 加上 B」；「A / B」改为「A 或 B」；「A vs B」改为「A 与 B 的对照」。列举用整句承接而非「项 1 / 项 2 / 项 3」结构。初稿可临时用符号占位，定稿前 grep 全部替换为完整书面表达
+"Keep sentences short" means not writing complex clauses, **not** "break the same argument's supporting detail with periods". Claude's common first-draft anti-pattern is cutting an argument's evidence and take-away into multiple independent short sentences, too choppy; a co-existing anti-pattern is using technical symbols like "→", "/", "+" for written connectives, fast but forcing the reader to mental-decode. The 7 rules below are executable details distilled from DS polishing + field practice; follow them directly when writing the first draft:
 
-§7.1 主规则（短句 / 不抒情 / 正文一律不加粗）仍优先。本细则只在「同主题展开节奏」这一点上做精化。
+1. **continue same-theme supporting sentences with commas / semicolons**, not periods. `「升至 30%。这是真改革。」` → `「升至 30%，这是真改革。」`
+2. **list multiple sources / items in "主句：项 1，项 2，项 3。" one go**, not "four numbers. item 1. item 2. item 3."
+3. **embed "这是 X / 这意味着 Y" independent short sentences**: continue the take-away into the previous sentence with a comma, joined with the evidence, not a new sentence. Similar phrases like "也就是说 / 换句话说 / 简言之 / 总之" handled the same
+4. **number-unit standards**: `ppts` → "个百分点"; small numbers (≤ 10) for years / counts in Chinese characters "九年" "四年" "五项"; shares / years / amounts still in Arabic numerals (`76%`, `2024 年`, `\$92`)
+5. **written-register connective preference**: "原因是" → "原因在于"; "亮点是 / 制约是" → "亮点在于 / 制约在于"; "而不是" → "而非"; "已经" → "已"; "悄悄" → "悄然"; "升到" → "升至"; "降到" → "降至"
+6. **3+ parallel arguments lead with numbers**: "第一... 第二... 第三..." so the reader keeps the rhythm; two items still "一是 / 二是" or "一方面 / 另一方面"
+7. **no technical symbols like "→" "+" "/" "∴" "vs" for connectives**. These are fast in todos / notes / chat but force a mental-decode in report prose, sharply reducing readability. "A → B" → "A 引致 B" or "A 之后 B"; "A + B" → "A 与 B" or "A 加上 B"; "A / B" → "A 或 B"; "A vs B" → "A 与 B 的对照". List with full sentences, not "项 1 / 项 2 / 项 3". The first draft may use symbols as placeholders; grep-replace all with full written expressions before finalising
 
-#### 7.1.2 框口段专项规范（摘要 + 引言 + 结语）
+§7.1 main rules (short sentences / no padding / zero body bold) still take priority. This sub-section only refines the "same-theme expansion rhythm".
 
-§7.1 主规则末条要求摘要、引言、结语三段单独二轮重写。本节给具体结构模板与必含元素，让 step 8 / step 9b 之后的二轮重写有明确目标。
+#### 7.1.2 Framing-paragraph spec (abstract + intro + conclusion)
 
-##### 摘要
+The last §7.1 main rule requires rewriting the abstract, intro, conclusion in a second pass. This section gives the structure templates and mandatory elements, so the second-pass rewrite after step 8 / step 9b has a clear target.
 
-- **长度**：300-500 字，3 段加关键词行
-- **结构**：
-  - **段 1 题旨与切入点**：1 句话点出研究对象，1-2 句话给关键背景数字
-  - **段 2 核心证据与 take-away**：2-3 句话铺核心论证（本研究框架与关键发现）
-  - **段 3 关键词行**：`**关键词**：` 5-7 个具体名词，用 `|` 分隔（详见 spec §1.4）
-- **反模式**：
-  - 把摘要写成正文目录
-  - 「本研究将 ...」预告式（应直接给结论而非预告）
-  - 摘要里挂学术 hypothesis 编号
-  - 段间出现「另外」「此外」「同时」（说明 take-away 没收口）
+##### Abstract
 
-##### 引言
+- **length**: 300-500 characters, 3 paragraphs + keyword line
+- **structure**:
+  - **para 1 topic and angle**: 1 sentence naming the research object, 1-2 sentences of key background numbers
+  - **para 2 core evidence and take-away**: 2-3 sentences laying out the core argument (this study's framework and key findings)
+  - **para 3 keyword line**: `**关键词**：` 5-7 concrete nouns, separated by `|` (see spec §1.4)
+- **anti-patterns**:
+  - writing the abstract as a body TOC
+  - "this study will…" preview style (give the conclusion, not a preview)
+  - hanging an academic hypothesis number in the abstract
+  - "另外" "此外" "同时" between paragraphs (means the take-away did not close)
 
-- **长度**：2-3 段
-- **结构**：
-  - **段 1 现象铺陈**：为什么这个问题值得研究，给反差或张力
-  - **段 2 论证地图**：「本研究将 ... 第一章 ... 第二章 ... 结语综合 ...」明示论证路径，让读者读到第三章还知道在哪
-  - **段 3 与既有研究的关系（可选）**：本研究与现有文献的 contrast 或 contribution
-- **反模式**：
-  - 把引言写成长背景，三段全是历史而不交代论证地图
-  - 用「众所周知」「不可否认」「在此背景下」等空话起头
-  - 论证地图写成「希望」「试图」等模糊承诺
+##### Intro
 
-##### 结语
+- **length**: 2-3 paragraphs
+- **structure**:
+  - **para 1 phenomenon setup**: why this question is worth studying, give a contrast or tension
+  - **para 2 argument map**: "this study will … chapter 1 … chapter 2 … the conclusion synthesises …" make the argument path explicit, so the reader at chapter 3 still knows where they are
+  - **para 3 relation to existing research (optional)**: this study's contrast or contribution vs the literature
+- **anti-patterns**:
+  - writing the intro as a long background, three paragraphs all history without an argument map
+  - opening with empty phrases like "众所周知" "不可否认" "在此背景下"
+  - writing the argument map as vague promises like "希望" "试图"
 
-- **长度**：2 段
-- **结构**：
-  - **段 1 核心 take-away 收束**：用 1 句话句首结论，1-2 句话证据浓缩
-  - **段 2 展望**：未来几年要看哪些关键变量，给读者一个 forward-looking 框架
-- **反模式**：
-  - 结语写成「上文已述 ...」纯总结
-  - 只复述前文不给新判断或展望
-  - 结语短到一段甚至一句（信息密度不够则不如不写结语）
+##### Conclusion
 
-##### 二轮重写的执行时点
+- **length**: 2 paragraphs
+- **structure**:
+  - **para 1 core take-away wrap-up**: 1-sentence leading conclusion, 1-2 sentences of condensed evidence
+  - **para 2 outlook**: which key variables to watch in coming years, a forward-looking frame for the reader
+- **anti-patterns**:
+  - writing the conclusion as a pure "as stated above…" summary
+  - only restating without a new judgement or outlook
+  - a conclusion so short it is one paragraph or one sentence (if info density is low, better no conclusion)
 
-step 8 一气连写整稿时这三段往往最弱，因为论证流尚在成型中。step 8 收尾或 step 9b 整合完之后**单独抽时间重写这三段**，不与正文同步迭代。每段重写后过一遍上方反模式列表，命中即返工。
+##### Timing of the second-pass rewrite
 
-#### 7.1.3 中文书面化对照表
+In step 8's one-continuous-pass draft these three are usually weakest, because the argument flow is still forming. After step 8 wrap-up or step 9b integration, **separately rewrite these three**, not iterating in sync with the body. After each rewrite, run the anti-pattern list above and rework on a hit.
 
-§7.1.1 第 5 条「书面化连接词偏好」给了几个对照，本节扩展为完整对照表。Claude 写初稿时直接按右列写，省去 step 9 文字润色环节。表分三类。
+#### 7.1.3 Chinese written-register lookup table
 
-##### 类 1：口语 → 书面
+§7.1.1 rule 5 "written-register connective preference" gave a few; this section expands it into a full table. Claude writes the right column directly in the first draft, saving the step-9 text-polish stage. Three categories.
 
-| 口语 | 书面 | 说明 |
+##### Category 1: colloquial → written
+
+| colloquial | written | note |
 |---|---|---|
-| 使得 | 使、让 | 「使得」是「使」的累赘 |
-| 采取了 | 采、采用 | 删冗余「了」 |
-| 进行了 X | 直接动词（X） | 「进行了研究」改为「研究」 |
-| 给出了 X | 给 X、提出 X | 删冗余「了」 |
+| 使得 | 使、让 | "使得" is a redundant "使" |
+| 采取了 | 采、采用 | delete redundant "了" |
+| 进行了 X | direct verb (X) | "进行了研究" → "研究" |
+| 给出了 X | 给 X、提出 X | delete redundant "了" |
 | 实现了 X | 达成 X | |
-| 「了」「过」等无意义助词 | 不影响时态的位置一律删 | 例：「数据公布了之后」改「数据公布之后」 |
+| "了" "过" meaningless particles | delete where tense is unaffected | e.g. "数据公布了之后" → "数据公布之后" |
 
-##### 类 2：学术腔 → 平实
+##### Category 2: academic tone → plain
 
-| 学术腔 | 平实 | 说明 |
+| academic | plain | note |
 |---|---|---|
 | 就 X 问题进行了深入研究 | 深入研究了 X、详查了 X | |
 | 具有重要意义 | 重要、关键 | |
-| 做出了重要贡献 | 重要 | 评价性话语在研报中删 |
-| 在某种程度上 | 删，或具体说哪种程度 | |
-| 一定意义上 | 删 | |
-| 综上所述 | 综合上述、总的来看 | 「所述」累赘 |
-| 不难看出 | 删，直接说结论 | 「不难看出」是 AI 抒情铺垫 |
+| 做出了重要贡献 | 重要 | evaluative phrasing deleted in reports |
+| 在某种程度上 | delete, or specify which degree | |
+| 一定意义上 | delete | |
+| 综上所述 | 综合上述、总的来看 | "所述" redundant |
+| 不难看出 | delete, give the conclusion | "不难看出" is AI lyrical padding |
 | 总而言之 | 总之 | |
 
-##### 类 3：模糊 → 精确
+##### Category 3: vague → precise
 
-| 模糊 | 精确 | 说明 |
+| vague | precise | note |
 |---|---|---|
-| 很大程度上 | 删，或换数字 | 没数字支撑就别用 |
-| 相对较高 / 较低 | 替换为具体数字或具体比较对象 | 「相对」指相对什么必须明示 |
-| 一般来说、通常 | 在精确描述场合删 | 描述统计学规律时保留 |
-| 大致、大约 | 给具体区间（如「30-40%」） | |
-| 部分、一些 | 给具体比例或数量 | 「部分国家」改「N 国中的 M 国」 |
+| 很大程度上 | delete, or use a number | no number support, do not use |
+| 相对较高 / 较低 | replace with a concrete number or comparison object | "relative" to what must be explicit |
+| 一般来说、通常 | delete in precise contexts | keep when describing a statistical regularity |
+| 大致、大约 | give a concrete range (e.g. "30-40%") | |
+| 部分、一些 | give a concrete proportion or count | "部分国家" → "M of N countries" |
 
-##### 适用范围
+##### Scope
 
-本对照表适用于研报正文、派生稿（Word、HTML、公众号长稿等）、复盘文档。**AI 对话回复中也按本表写**，避免「使得 / 进行了 / 不难看出 / 一定程度上」等口语腔与学术腔残留。
+This lookup table applies to report body, derivations (Word, HTML, WeChat long-form), retrospective docs. **The AI also writes per this table in conversation replies**, avoiding "使得 / 进行了 / 不难看出 / 一定程度上" colloquial and academic residue.
 
-### 7.2 标点与字符（适用所有写作场景）
+### 7.2 Punctuation and characters (all writing scenarios)
 
-适用范围包括主报告、派生稿、复盘文件、本框架文件本身、AI 对话回复。
+Scope includes the main report, derivations, retrospective files, this framework file itself, and AI conversation replies.
 
-**总原则**：正文写作中一切「典型 AI 生成痕迹」一律禁用，包括破折号、中文冒号代句号、半角 `-` 当破折号、emoji、技术运算符号（详见 §7.1.1 第 7 条）。这类符号让读者在 mental model 中识别为「AI 写的」，可读性与可信度同时打折。下方逐条列出。
+**General principle**: in writing, all "typical AI-generated traces" are forbidden, including the em-dash, Chinese colon as period, half-width `-` as em-dash, emoji, technical operators (see §7.1.1 rule 7). These make the reader recognise "AI-written" in their mental model, reducing readability and credibility. Listed item by item below.
 
-- **绝对不用破折号 `——`**，没有例外。理由有两个，一是视觉笨重，二是用破折号往往是因为没想清楚句子结构、把两个独立小句强行焊在一起。改用句号断句、过渡词（「值得注意的是」「换句话说」「原因是…」）、括号 `（…）`
-- **半角连字符 `-` 仅限范围号与复合词使用**。合法场景：数字范围（`30-90%`、`2016-2030`、`Q1-Q3`）、英文复合词（`single-bar`、`McKinsey-style`）。**禁止**用半角 `-` 替代破折号或当连接词，例：`「这是真改革 - 也是政治宣示」` 是 AI 生成痕迹，改为 `「这是真改革，也是政治宣示」` 或 `「这是真改革。也是政治宣示」`
-- **少用中文冒号 `：`**。能用句号断句就用句号。冒号容易拖出长句尾巴，读者读到后半段已忘前半段。仅在「明确举例 / 列举」「正式定义」时用，不要用冒号代替句号
-- 中文引号统一用「」角引号。例外是 YAML 字段、英文术语、代码、URL 用 ASCII `"..."`
-- 不用 emoji 与特殊符号（✅ ❌ ⏳ 🔍 ⚠️ 🏷️ 等），它们在 xelatex 输出中要么被吞掉、要么变成豆腐块。状态用纯文字（已验证 / 未开始 / 调研中 / 已证伪 / 部分支持）
+- **never use the em-dash `——`**, no exception. Two reasons: visually clumsy, and using an em-dash often means the sentence structure was not thought through, welding two independent clauses together. Use periods, transition words ("值得注意的是" "换句话说" "原因是…"), or parentheses `（…）`
+- **the half-width hyphen `-` is only for ranges and compound words**. Legal: number ranges (`30-90%`, `2016-2030`, `Q1-Q3`), English compounds (`single-bar`, `McKinsey-style`). **Forbidden** to use half-width `-` as an em-dash or connective, e.g. `「这是真改革 - 也是政治宣示」` is an AI trace, change to `「这是真改革，也是政治宣示」` or `「这是真改革。也是政治宣示」`
+- **use Chinese colons `：` sparingly**. Break with a period when you can. A colon drags out a long sentence tail and the reader forgets the first half by the second. Use only for "explicit example / list" or "formal definition", not as a period substitute
+- use Chinese corner quotes 「」 uniformly. Exceptions: YAML fields, English terms, code, URLs use ASCII `"..."`
+- no emoji or special symbols (✅ ❌ ⏳ 🔍 ⚠️ 🏷️ etc.); in xelatex output they are either swallowed or become tofu boxes. Use plain text for status (verified / not started / researching / falsified / partly supported)
 
-### 7.3 引用
+### 7.3 Citation
 
-- 任何事实性陈述（机构定义、历史事件、数字）都应有引用，格式 `[@key]`
-- 多个引用并列：`[@key1; @key2]`
-- 引用条目统一加到 `references.bib`，每条要含 `url` + `urldate`
-- 机构出版物用 `@misc`，期刊文章用 `@article`，专著用 `@book`
-- 每条 bib 必须有 `year` 字段。网页 / 数据库类来源用 `urldate` 的年份作为 `year`，避免渲染出 `(Author, 不详)`
-- 作者字段不要嵌括号缩写。`{{Full Name (Acronym)}}` 会渲染成嵌套括号。规则：知名缩写（如 UNDP、ILO、IMF、OECD、ECB 等机构）只写缩写当作者名，其他写全名不加括号
+- any factual statement (institutional definition, historical event, number) should have a citation, format `[@key]`
+- multiple citations in parallel: `[@key1; @key2]`
+- citation entries go uniformly into `references.bib`, each with `url` + `urldate`
+- institutional publications use `@misc`, journal articles `@article`, monographs `@book`
+- each bib must have a `year` field. Web / database sources use the `urldate` year as `year`, avoiding rendering `(Author, n.d.)`
+- do not embed parenthetical acronyms in the author field. `{{Full Name (Acronym)}}` renders nested parentheses. Rule: well-known acronyms (UNDP, ILO, IMF, OECD, ECB) write the acronym only as the author name, others write the full name without parentheses
 
-### 7.4 写作前 grep self-check 工具化清单
+### 7.4 Pre-writing grep self-check tooled list
 
-draft v1 完成、修订版交付、派生稿交付前必须 grep 核对。命令以 `draft.qmd` 为例，实际替换为项目主报告文件名。
+Before draft v1 is done, before revisions are delivered, before derivations are delivered, grep verification is mandatory. Commands use `draft.qmd` as the example; replace with the actual main-report filename.
 
-| 红线 | 检查命令 | 应为 |
+**Evidence requirement (anti "formality self-check")**: when claiming the self-check passed, you **must paste the numbers from the last actual grep / count output**; a verbal "all clear" is not allowed. This applies to the count-gate rows below as much as to the language redlines.
+
+| Redline | Check command | Expected |
 |---|---|---|
-| 破折号 `——` | `grep -c "——" draft.qmd` | 0 |
-| 标题手写 §N 前缀（Quarto number-sections 自动加，手写会叠加成「2 §1 ...」） | `grep -nE "^#{1,3} §" draft.qmd` | 0 行 |
-| 标题手写 A.N 前缀（附录） | `grep -nE "^## A\.[0-9]" draft.qmd` | 0 行 |
+| Em-dash `——` | `grep -c "——" draft.qmd` | 0 |
+| Hand-written §N title prefix (Quarto number-sections auto-adds, hand-writing stacks into "2 §1 ...") | `grep -nE "^#{1,3} §" draft.qmd` | 0 lines |
+| Hand-written A.N title prefix (appendix) | `grep -nE "^## A\.[0-9]" draft.qmd` | 0 lines |
 | Emoji | `grep -cP "[\x{1F300}-\x{1F9FF}\x{2600}-\x{27BF}]" draft.qmd` | 0 |
-| h3 及更深标题（研报正文仅两级） | `grep -nE "^#{3,}" draft.qmd` | 0 行 |
-| 正文粗体（仅引领处可加） | `grep -c "\*\*" draft.qmd` | 接近 0，仅 `**关键词**` 等引领处保留（详见 §7.1） |
-| 中文冒号「：」 | `grep -c "：" draft.qmd` | 控制在句号数 5-10% |
-| 抒情铺垫高频词 | `grep -nE "实际上\|事实上\|值得指出\|值得注意\|众所周知\|不可否认\|毫无疑问\|需要指出\|客观地讲\|不难看出\|在此背景下\|在这一过程中" draft.qmd` | 命中即抽检删，详见 §7.1 |
-| h2 空标题反模式（学术造作） | `grep -nE "^## .*(关于\|讨论\|探究\|浅析\|思考\|现状与挑战\|视角$)" draft.qmd` | 0 行（h2 必须是结论性短句，详见 §7.1） |
-| 半角 `-` 当破折号（AI 生成痕迹） | `grep -nE " - " draft.qmd` | 抽检，合法只剩范围号与英文复合词，作连接词或破折号一律改逗号 / 句号，详见 §7.2 |
-| 技术符号代连词（「→」「+」「/」「∴」「vs」） | `grep -nE "→\|∴" draft.qmd` 与抽检 `+` `/` `vs` | 替换为完整书面表达，详见 §7.1.1 第 7 条 |
-| 自创比喻 | 抽检 | 换为方法论或行业通用术语，详见 §7.1 |
-| 学术腔与口语腔高频词 | `grep -nE "使得\|进行了\|做出了\|具有重要意义\|一定程度上\|一定意义上\|综上所述\|总而言之" draft.qmd` | 命中即按 §7.1.3 对照表替换 |
-| 模糊量化词（无数字支撑） | `grep -nE "很大程度上\|相对较高\|相对较低\|大致\|大约\|一些\|部分" draft.qmd` | 抽检，无数字支撑全删或替换为具体数字，详见 §7.1.3 |
-| 框口段（摘要 / 引言 / 结语）是否二轮重写 | 抽检三段是否符合 §7.1.2 结构 | 摘要 3 段加关键词、引言含论证地图、结语含展望 |
-| 渲染后目录序号 | 打开 PDF 翻目录页 | 编号连续无重复 |
-| Quarto 渲染 | `quarto render draft.qmd` | 成功，无 mathtext / dimension 错误 |
+| Unescaped dollar sign `$` (**mandatory for English drafts**; LaTeX treats `$` as a math delimiter, unescaped = render failure) | `grep -nP "(?<!\\\\)\\$" draft.qmd` | 0 (write body amounts as `\$`, e.g. `\$1.5 billion`) |
+| h3 and deeper titles (body two levels only) | `grep -nE "^#{3,}" draft.qmd` | 0 lines |
+| Body bold (lead-ins only) | `grep -c "\*\*" draft.qmd` | near 0, only `**关键词**` and other lead-ins kept (see §7.1) |
+| Chinese colon `：` | `grep -c "：" draft.qmd`, **first deduct the "来源：/注：" label colons inside figsource / tblsource blocks** (2 mandatory colons per chart, many charts push the ratio over; count only body prose colons). English drafts skip this item | keep at 5-10% of body period count |
+| Lyrical-padding high-frequency words | `grep -nE "实际上\|事实上\|值得指出\|值得注意\|众所周知\|不可否认\|毫无疑问\|需要指出\|客观地讲\|不难看出\|在此背景下\|在这一过程中" draft.qmd` | spot-check and delete on hit, see §7.1 |
+| h2 empty-title anti-pattern | `grep -nE "^## .*(关于\|讨论\|探究\|浅析\|思考\|现状与挑战\|视角$)" draft.qmd` | 0 lines (h2 must be conclusive short sentences, see §7.1) |
+| Half-width `-` as em-dash (AI trace) | `grep -nE " - " draft.qmd` | spot-check, legal use only ranges and English compounds; change connective/em-dash uses to comma / period, see §7.2 |
+| Technical symbols as conjunctions ("→" "+" "/" "∴" "vs") | `grep -nE "→\|∴" draft.qmd` and spot-check `+` `/` `vs` | replace with full written expressions, see §7.1.1 rule 7 |
+| Self-invented metaphor | spot-check | replace with methodology or industry-standard terms, see §7.1 |
+| Academic / colloquial high-frequency words | `grep -nE "使得\|进行了\|做出了\|具有重要意义\|一定程度上\|一定意义上\|综上所述\|总而言之" draft.qmd` | replace per §7.1.3 table on hit |
+| Vague quantifiers (no number support) | `grep -nE "很大程度上\|相对较高\|相对较低\|大致\|大约\|一些\|部分" draft.qmd` | spot-check, delete or replace with concrete numbers if unsupported, see §7.1.3 |
+| Framing paragraphs (abstract / intro / conclusion) rewritten | spot-check the three against §7.1.2 structure | abstract 3 paras + keywords, intro has argument map, conclusion has outlook |
+| Rendered TOC numbering | open the PDF TOC page | numbering continuous, no duplicates |
+| Quarto render | `quarto render draft.qmd` | success, no mathtext / dimension errors |
+| **page-count floor** (completeness, see step 4) | `pdfinfo draft.pdf \| grep -i Pages` (poppler) | heavy band 30-40; **< 25 = stop, go back to step 5/6/7, do not declare done** |
+| **chart-count floor** | count embedded charts, e.g. `grep -cE "^!\[" draft.qmd` | heavy band 25-35, and **≥ the signed step-6 contract**; **< 20 = stop** |
+| **word-count floor** | English `wc -w draft.qmd`; Chinese count characters | ≈ 15k words / 1.5万字; clearly below = stop |
 
-self-check 失败时回到原段修订，不在派生品上 patch。每个项目脚手架阶段把这张表抄到项目级 CLAUDE.md 写作前自检段，红线值按项目特化调整。
+When self-check fails, go back to the source paragraph to revise, do not patch the derivative. At each project's scaffolding stage, copy this table into the project CLAUDE.md pre-writing self-check section, adjusting redline values per project.
+
+**The last three rows are a completeness (count) gate, not a language redline.** They exist because the field failure mode for heavy is shipping a "formally complete but thin" draft. **Paste the actual measured numbers** when you report the draft done. Below floor = not done: go back to step 5 (more search) / 6 (more chapters) / 7 (more charts), do **not** pad with lyrical filler or fabricate (§5.2). The signed step-6 outline contract is the per-project floor; the 30-40 page / 25-35 chart / 15k word band is the framework floor. If the real material honestly cannot reach the band, say so to the user explicitly — but landing far below it almost always means the search / outline was too shallow.
 
 ---
 
-## 八、文档与图表规范
+## 8. Document & chart standards
 
-文档版式（字体、字号、页边距、章节换页、加粗）、图表设计原则（FT chart-doctor 五原则）、图表制作规则（一图一脚本、PDF / JPG / `_clean.jpg` 三格式输出、调色板、不重叠、2000px 上限）、视觉检查、默认值（Quarto YAML 模板、字号表、调色板速查）、`chart_template` 接口契约、publication-style HTML 派生稿规范（§七）——以上所有内容见同目录 `report_style_spec.md`。实现代码在同目录 `chart_template.py`。
+Document layout (fonts, sizes, margins, chapter page breaks, bold), chart design principles (the 5 FT chart-doctor principles), chart production rules (one script per chart, PDF / JPG / `_clean.jpg` triple output, palette, no overlap, 2000px cap), visual check, defaults (Quarto YAML template, font-size table, palette quick-reference), the `chart_template` interface contract, the publication-style HTML derivation spec (§7) — all in the same-dir `report_style_spec.md`. The implementation code is in the same-dir `chart_template.py`.
 
-项目级 CLAUDE.md 在「沿用 workflow 默认」段确认调色板、字号等本项目具体取值；覆盖默认时需在「与框架的偏离」段登记理由。
+The project CLAUDE.md confirms this project's specific palette, font sizes in the "inherit workflow defaults" section; overriding a default requires a reason in the "deviations from the framework" section.
 
-## 九、派生产出转换表（伴生）
+## 9. Derivation conversion table (companion)
 
-主报告 qmd → Word docx / publication-style HTML / 公众号 JPG 切页 / 其他派生形态的标准化转换规则。这张表本身 domain-agnostic，每个项目可以增列特化。
+Standardised conversion rules for main-report qmd → Word docx / publication-style HTML / WeChat JPG slices / other derivations. The table is domain-agnostic; each project can add specialised rows.
 
-| 主报告里的元素 | Word docx 派生（10b）| publication-style HTML 派生（10c）| 公众号 JPG 切页（10d）|
+| Element in main report | Word docx (10b) | publication-style HTML (10c) | WeChat JPG slices (10d) |
 |---|---|---|---|
-| 生成方式 | `quarto render draft.qmd --to docx`，Pandoc 自动 | 拷 skill template 手动填 + Live Preview 调段 | 把 10c PDF 用 `pdftoppm -jpeg -r 200` 切逐页 |
-| `[@cite-key]` Pandoc 引用 | 自动渲染为参考文献条目 | 保留参考文献页（`.page.references`） | 跟随 10c |
-| 假设编号 / 子假设 / 「方向性证据」/「lower bound」 | 保留（Word 受众接受口径辨析） | 保留 | 跟随 10c |
-| 长口径辨析 | 保留 | 保留 | 跟随 10c |
-| 表（`tbl-colwidths` / footnotesize 注） | Pandoc 自动转 Word 原生表 | 用 `<table class="report-table">` 重写 | 跟随 10c |
-| figsource / tblsource 自定义 LaTeX env | **在 docx 中失效**（LaTeX 专属），简单方案：忽略；干净方案：在 qmd 里改 markdown raw 双 output 兼容 | 用 `.exhibit-source` / `.table-source` 写 | 跟随 10c |
-| 「——」破折号 | 保留（Word 受众接受） | 一律不用 | 跟随 10c |
-| 「」角引号 | 保留 | 保留 | 跟随 10c |
-| emoji | **不用**（与正文规范一致）| **不用** | 跟随 10c |
-| 图嵌入 | Pandoc 自动嵌入 PDF / JPG | `<figure class="exhibit">` 模板，img src 用 `fig_*_clean.jpg`（不要 `fig_*.jpg` 否则双标题；见 spec §3.3 / §7.4） | 跟随 10c |
-| 章节扉页 | h1 标题 + 分页符 | `.chapter-opener` 大字 banner | 跟随 10c |
-| 封面 | 无（或用 reference.docx 模板自定义） | `.page.cover` 全屏 gradient | 跟随 10c |
-| 作者署名 | 文末一行（YAML `author` 字段自动） | 独立作者页 `.page.authors`，本地头像 img（skill 自带 `scripts/author.jpg` 占位） | 跟随 10c |
+| generation | `quarto render draft.qmd --to docx`, Pandoc auto | copy skill template, fill manually + Live Preview tuning | slice the 10c PDF with `pdftoppm -jpeg -r 200` per page |
+| `[@cite-key]` Pandoc citation | auto-rendered as a reference entry | keep the references page (`.page.references`) | follows 10c |
+| hypothesis numbers / sub-hypotheses / "directional evidence" / "lower bound" | keep (Word audience accepts caliper analysis) | keep | follows 10c |
+| long caliper analysis | keep | keep | follows 10c |
+| table (`tbl-colwidths` / footnotesize note) | Pandoc auto-converts to a native Word table | rewrite with `<table class="report-table">` | follows 10c |
+| figsource / tblsource custom LaTeX env | **fails in docx** (LaTeX-only), simple: ignore; clean: change to markdown raw in the qmd for dual-output | use `.exhibit-source` / `.table-source` | follows 10c |
+| em-dash `——` | keep (Word audience accepts) | never use | follows 10c |
+| corner quotes 「」 | keep | keep | follows 10c |
+| emoji | **none** (consistent with body standards) | **none** | follows 10c |
+| figure embedding | Pandoc auto-embeds PDF / JPG | `<figure class="exhibit">` template, img src uses `fig_*_clean.jpg` (not `fig_*.jpg`, else double title; see spec §3.3 / §7.4) | follows 10c |
+| chapter title page | h1 title + page break | `.chapter-opener` large banner | follows 10c |
+| cover | none (or custom via reference.docx template) | `.page.cover` full-screen gradient | follows 10c |
+| author byline | one line at the end (YAML `author` field auto) | a separate author page `.page.authors`, local headshot img (skill-bundled `scripts/author.jpg` placeholder) | follows 10c |
 
-**派生后停一停**：每个子步派生稿落盘后**告知用户**，不主动做后续步骤（发布、配图、校对）。
+**Pause after derivation**: after each sub-step derivation lands, **tell the user** and do not proactively do follow-up (publishing, image work, proofreading).
 
-**publication-style HTML 的特殊纪律**：内容稳定后才做（步骤 9 sign off 之后），qmd 是真相之源 HTML 是派生，不在 HTML 上做内容修订；HTML 模板细则见 `report_style_spec.md §七`。
+**Special discipline for publication-style HTML**: do it only after the content is stable (after step 9 sign-off); the qmd is the source of truth, HTML is a derivative, no content revision on the HTML; HTML template details in `report_style_spec.md §7`.
 
 ---
 
-## 十、复盘格式
+## 10. Retrospective format
 
-### 10.1 路径与文件
+### 10.1 Path and file
 
-- 所有复盘条目集中在一个文件，**路径 `9_retrospective/retrospective.md`**（与 §十一 目录结构对齐）
-- 第一次需要追加时主动创建文件，不要散落
+- all retrospective entries in one file, **path `9_retrospective/retrospective.md`** (aligned with the §11 directory structure)
+- create the file proactively on the first append, do not scatter
 
-### 10.2 三段式格式
+### 10.2 Three-part format
 
-每条记录用如下三段式（不用 H3 标题，用 `### YYYY-MM-DD §<节号> <一句话标题>` 作为锚点）：
+Each entry uses the three-part format below (no H3 titles; use `### YYYY-MM-DD §<section> <one-line title>` as the anchor):
 
 ```markdown
-### 2026-MM-DD §X.Y <一句话标题>
+### 2026-MM-DD §X.Y <one-line title>
 
-**踩坑**：具体描述问题，含触发场景、错误现象 / 错误数字 / 错误结论。
+**Pitfall**: describe the problem specifically, incl. trigger scenario, error symptom / wrong number / wrong conclusion.
 
-**处理**：本次怎么解决的，含工具 / 数据 / 方法的调整。如有代码 / 数据落盘，给出路径。
+**Handling**: how it was solved this time, incl. tool / data / method adjustments. If code / data landed, give the path.
 
-**是否沉淀**：① 已沉淀到 CLAUDE.md §<某段>，规则原文摘录；② 暂不沉淀（一次性问题）；③ 待观察（再遇到一次再沉淀）。三选一。
+**Promote?**: (1) promoted to CLAUDE.md §<section>, rule verbatim excerpt; (2) not promoted for now (one-off); (3) to watch (promote after one more occurrence). Pick one of three.
 ```
 
-**第三栏强制三选一**：必须明确回答「这值不值得变成跨对话规则」，避免复盘退化成日记。三选一也是质量门：如果三个都选不出来，说明这条复盘没想清楚。
+**Column three is a mandatory three-way choice**: you must explicitly answer "is this worth a cross-conversation rule", avoiding the retrospective degrading into a diary. The three-way choice is also a quality gate: if none of the three can be chosen, this retrospective was not thought through.
 
-### 10.3 触发条件
+### 10.3 Trigger conditions
 
-- 每个 section 综合后立即追加（不要等「集中复盘」）
-- 用户在对话中明确说「这是个坑 / 教训 / 经验」时，立即追加
-- AI 自己识别出一类反复出现的问题时，立即追加
-- 每次发生 CLAUDE.md 沉淀时，在复盘文件中同步登记一行
+- append right after each section is synthesised (do not wait for a "consolidated retrospective")
+- append immediately when the user explicitly says "this is a pitfall / lesson / experience"
+- append immediately when the AI identifies a recurring class of problem
+- log one line in the retrospective each time a CLAUDE.md entry is made
 
 ---
 
-## 十一、目录结构
+## 11. Directory structure
 
-**设计原则**：
+**Design principles**:
 
-1. **每个 `N_<name>/` 文件夹放一个与文件夹同名的「成果 md」**（`topic.md` / `research.md` / `outline.md` / `data.md` / `scripts.md` / `figures.md` / `draft.md` / `retrospective.md`）。该 md 既是产出本身，也是文件夹用途说明
-2. **过程 / 备忘材料统一进 `_process/`**（仅 `1_topic/` `2_research/` `3_outline/` `7_draft/` 需要；`5_scripts/` `6_figures/` 不设 `_process/`，迭代由 git 管理）
-3. **并列子文件夹用 `1_` `2_` `3_` 编号**（如 `4_data/1_raw/` + `2_processed/`、`8_publication/1_word/` + `2_HTML/` + `3_wechat_pages/`）；只有一个子文件夹时不编号
-4. **PDF 不分深浅**，全部平铺到 `2_research/pdfs/`，重要性靠 `research.md` 字段标注（核心 / 参考）
-5. **目录编号与十一步骨架对应**：步骤 1/3/4 → `1_topic/`，步骤 2/5 → `2_research/`，步骤 7 拆为 `4_data/` + `5_scripts/` + `6_figures/`，步骤 8/9 → `7_draft/`
+1. **each `N_<name>/` folder holds a "deliverable md" of the same name** (`topic.md` / `research.md` / `outline.md` / `data.md` / `scripts.md` / `figures.md` / `draft.md` / `retrospective.md`). This md is both the output and the folder's purpose statement
+2. **process / memo material goes into `_process/`** (only `1_topic/` `2_research/` `3_outline/` `7_draft/` need it; `5_scripts/` `6_figures/` have no `_process/`, iteration managed by git)
+3. **parallel subfolders numbered `1_` `2_` `3_`** (e.g. `4_data/1_raw/` + `2_processed/`, `8_publication/1_word/` + `2_HTML/` + `3_wechat_pages/`); a single subfolder is not numbered
+4. **PDFs are not split by depth**, all flat in `2_research/pdfs/`, importance marked by `research.md` fields (core / reference)
+5. **directory numbering maps to the 11-step skeleton**: steps 1/3/4 → `1_topic/`, steps 2/5 → `2_research/`, step 7 split into `4_data/` + `5_scripts/` + `6_figures/`, steps 8/9 → `7_draft/`
 
 ```
-项目根/
-├── CLAUDE.md                         项目级宪法（不变的约定）
-├── _state.md                         工作流状态面板（步骤切换时更新；模板见 §十二）
-├── _quarto.yml                       Quarto 全项目配置（如适用）
+project root/
+├── CLAUDE.md                         project constitution (unchanging conventions)
+├── _state.md                         workflow state panel (updated on step switch; template in §12)
+├── _quarto.yml                       Quarto project config (if applicable)
 │
-├── heavy-research/                       工作流三件套（跨项目复用的种子，整文件夹拷过去即用）
-│   ├── workflow.md                   过程纪律（本文档）
-│   ├── report_style_spec.md          视觉规范 + chart_template 接口契约
-│   └── chart_template.py             绘图实现代码（PALETTE + setup_style + save_fig + legend_above）
+├── analyst-research/                 the three-piece set (cross-project seed, copy the whole folder)
+│   ├── workflow_heavy.md             process discipline (this document)
+│   ├── report_style_spec.md          visual spec + chart_template interface contract
+│   └── chart_template.py             chart implementation (PALETTE + setup_style + save_fig + legend_above)
 │
-├── 1_topic/                          步骤 1 + 3 + 4：话题确认
-│   ├── topic.md                      [成果] 用户签字版
-│   └── _process/                     [过程] AI 建议的候选方向、对话备忘
+├── 1_topic/                          steps 1 + 3 + 4: topic confirmation
+│   ├── topic.md                      [deliverable] user-signed version
+│   └── _process/                     [process] AI-suggested candidate directions, conversation memos
 │
-├── 2_research/                       步骤 2 + 5：资料搜集
-│   ├── research.md                   [成果] 统一台账（七类来源覆盖 + 重要性 / 路径 / 字段 / 频率）
-│   ├── pdfs/                         全文 PDF 平铺，命名 `<编号> <机构> <标题>.pdf`
-│   └── _process/                     [过程] 多 LLM 平行搜索原始稿
+├── 2_research/                       steps 2 + 5: material gathering
+│   ├── research.md                   [deliverable] unified ledger (seven-class coverage + importance / path / fields / frequency)
+│   ├── pdfs/                         full-text PDFs flat, named `<n> <institution> <title>.pdf`
+│   └── _process/                     [process] multi-LLM parallel search originals
 │
-├── 3_outline/                        步骤 6：详细 outline
-│   ├── outline.md                    [成果] draft → 步骤 7 后回填为 final
-│   └── _process/                     [过程] 多 LLM brainstorm 图表清单候选
+├── 3_outline/                        step 6: detailed outline
+│   ├── outline.md                    [deliverable] draft → backfilled to final after step 7
+│   └── _process/                     [process] multi-LLM brainstorm chart-list candidates
 │
-├── 4_data/                           步骤 7：数据底稿
-│   ├── data.md                       [成果] 数据档案索引（每个 CSV 的来源 / 口径 / 字段 / 单位）
-│   ├── 1_raw/                        原始下载，不动
-│   └── 2_processed/                  校验后工作版本，命名 sN-M_<topic>.csv
+├── 4_data/                           step 7: data drafts
+│   ├── data.md                       [deliverable] data archive index (each CSV's source / caliper / fields / units)
+│   ├── 1_raw/                        raw downloads, untouched
+│   └── 2_processed/                  validated working version, named sN-M_<topic>.csv
 │
-├── 5_scripts/                        步骤 7：脚本
-│   ├── scripts.md                    [成果] 脚本索引（每个脚本的用途 / 输入 / 输出 / 依赖）
-│   ├── _path.py                      4 行 sys.path 注入，让本目录脚本能 import heavy-research/scripts/chart_template
-│   └── make_fig_*.py                 一图一脚本（chart_template 在 heavy-research/，不在本目录）
+├── 5_scripts/                        step 7: scripts
+│   ├── scripts.md                    [deliverable] script index (each script's purpose / input / output / dependencies)
+│   ├── _path.py                      sys.path injection so scripts here can import analyst-research/scripts/chart_template
+│   └── make_fig_*.py                 one script per chart (chart_template is in analyst-research/, not here)
 │
-├── 6_figures/                        步骤 7：图表
-│   ├── figures.md                    [成果] 图索引（每张图的所属节、数据源、对应脚本、口径 caveat）
-│   ├── fig_N_M_<topic>.pdf           图 PDF（给 qmd 嵌入）
-│   ├── fig_N_M_<topic>.jpg           图 JPG（带烧入 title/source/note，自包含分发）
-│   └── fig_N_M_<topic>_clean.jpg     图 clean JPG（裸图栅格，给 publication-style HTML 嵌入）
+├── 6_figures/                        step 7: charts
+│   ├── figures.md                    [deliverable] figure index (each figure's section, data source, script, caliper caveat)
+│   ├── fig_N_M_<topic>.pdf           figure PDF (for qmd embedding)
+│   ├── fig_N_M_<topic>.jpg           figure JPG (burn-in title/source/note, self-contained distribution)
+│   └── fig_N_M_<topic>_clean.jpg     figure clean JPG (bare raster, for publication-style HTML embedding)
 │
-├── 7_draft/                          步骤 8 + 9：写作 + 精修
-│   ├── draft.md                      [成果] 主报告（用 Quarto 时扩展名为 `draft.qmd`，按工具栈定）
-│   ├── references.bib                [成果] Pandoc 引用库
-│   └── _process/                     [过程] 节内迭代稿、DeepSeek 文字加工 v1.5、Claude 整合 v2 中间稿、multi-LLM critique 原稿（详见 §11 `_process/` 内容指南）
+├── 7_draft/                          steps 8 + 9: writing + refining
+│   ├── draft.md                      [deliverable] main report (extension `draft.qmd` when using Quarto)
+│   ├── references.bib                [deliverable] Pandoc citation library
+│   └── _process/                     [process] per-section iterations, DeepSeek text v1.5, Claude integration v2 interim, multi-LLM critique originals (see the §11 `_process/` guide)
 │
-├── 8_publication/                    步骤 10：定稿派生（主报告 PDF 留在 7_draft/，不在此处复制）
-│   ├── 1_word/                       10b Word docx 派生（Pandoc 自动生成，给客户审阅或批注）
-│   ├── 2_HTML/                       10c publication-style HTML + PDF（consulting / FT 长稿风格，可选派生；规范见 spec §七）
-│   └── 3_wechat_pages/               10d 公众号 JPG 切页（10c PDF 切逐页，可选派生；规范见 spec §7.9）
+├── 8_publication/                    step 10: final derivations (main PDF stays in 7_draft/, not copied here)
+│   ├── 1_word/                       10b Word docx (Pandoc auto, for client review / annotation)
+│   ├── 2_HTML/                       10c publication-style HTML + PDF (consulting / FT long-form, optional; spec §7)
+│   └── 3_wechat_pages/               10d WeChat JPG slices (10c PDF per page, optional; spec §7.9)
 │
-└── 9_retrospective/                  步骤 11：复盘
-    └── retrospective.md              [成果] 三段式复盘（复盘本身即过程产物，不再设 _process/）
+└── 9_retrospective/                  step 11: retrospective
+    └── retrospective.md              [deliverable] three-part retrospective (the retrospective is itself a process artifact, no _process/)
 ```
 
-**步骤 ↔ 目录映射表**：
+**Step ↔ directory map**:
 
-| 步骤 | 目录 | 关键产出 |
+| Step | Directory | Key output |
 |---|---|---|
-| 1 初步话题 | `1_topic/` | 对话内话题描述（不必单独建文件） |
-| 2 广搜 | `2_research/_process/` + `research.md` 起稿 | 资料台账草稿（七类来源覆盖） |
-| 3 AI 建议方向 | `1_topic/_process/` | 2-3 个候选方向 |
-| 4 确认话题 | `1_topic/topic.md` | 用户签字版 |
-| 5 补搜 | `2_research/pdfs/` + `research.md` 完稿 | 全文 PDF + 完整台账 |
+| 1 initial topic | `1_topic/` | topic description in conversation (no separate file needed) |
+| 2 broad search | `2_research/_process/` + `research.md` draft | material ledger draft (seven-class coverage) |
+| 3 AI suggests directions | `1_topic/_process/` | 2-3 candidate directions |
+| 4 confirm topic | `1_topic/topic.md` | user-signed version |
+| 5 supplementary search | `2_research/pdfs/` + `research.md` complete | full-text PDFs + complete ledger |
 | 6 outline draft | `3_outline/outline.md` | outline draft |
-| 7 图表前置 | `4_data/data.md` + `5_scripts/scripts.md` + `6_figures/figures.md` | 三索引 + outline final |
-| 8 draft 写作 | `7_draft/draft.md` | 主报告各节 |
-| 9 精修 | `7_draft/_process/` + 修订 | v2 / v3 主报告 |
-| 10 定稿派生 | `7_draft/` + `8_publication/{1_word,2_HTML,3_wechat_pages}/` | PDF + Word + 可选 HTML + 可选 公众号 JPG |
-| 11 复盘 | `9_retrospective/retrospective.md` | 三段式条目 |
+| 7 charts first | `4_data/data.md` + `5_scripts/scripts.md` + `6_figures/figures.md` | three indices + outline final |
+| 8 draft writing | `7_draft/draft.md` | main report sections |
+| 9 refine | `7_draft/_process/` + revisions | v2 / v3 main report |
+| 10 finalise derive | `7_draft/` + `8_publication/{1_word,2_HTML,3_wechat_pages}/` | PDF + Word + optional HTML + optional WeChat JPG |
+| 11 retrospective | `9_retrospective/retrospective.md` | three-part entries |
 
-**`_process/` 内容指南**（哪些文件进、命名约定）：
+**`_process/` content guide** (what goes in, naming):
 
-| 目录 | 应放内容 | 命名约定 |
+| Directory | What goes in | Naming |
 |---|---|---|
-| `1_topic/_process/` | 步骤 3 AI 建议的 2-3 个候选方向、用户与 AI 的话题讨论备忘 | `_options.md`（方向候选清单）+ 对话备忘按需 |
-| `2_research/_process/` | 步骤 2 多 LLM 平行搜索原始稿（Claude / GPT / DS 各自的资料台账） | `research_<llm>.md`（如 `research_gpt.md`） |
-| `3_outline/_process/` | 步骤 6 多 LLM brainstorm 的图表清单候选；同步骤产出的 outline 候选 | `outline_<llm>.md` / `figures_brainstorm_<llm>.md` |
-| `7_draft/_process/` | 步骤 8 各节迭代稿、DeepSeek 文字加工的 v1.5、Claude 整合的 v2 中间稿；步骤 9 multi-LLM critique 原稿（GPT/DS critique）+ Claude 综合时的逐条决策记录 | `draft_<vX>_<who>.qmd`（如 `draft_v1_claude.qmd` / `draft_v15_deepseek.qmd` / `draft_v2_claude.qmd`）；critique 用 `critique_<llm>.md`（如 `critique_gpt.md`）；决策记录 `critique_decisions.md` |
+| `1_topic/_process/` | step 3 AI candidate directions, user-AI topic discussion memos | `_options.md` (direction candidates) + memos as needed |
+| `2_research/_process/` | step 2 multi-LLM parallel search originals (Claude / GPT / DS each ledger) | `research_<llm>.md` (e.g. `research_gpt.md`) |
+| `3_outline/_process/` | step 6 multi-LLM brainstorm chart-list candidates; outline candidates | `outline_<llm>.md` / `figures_brainstorm_<llm>.md` |
+| `7_draft/_process/` | step 8 per-section iterations, DeepSeek text v1.5, Claude integration v2 interim; step 9 multi-LLM critique originals (GPT/DS critique) + Claude's per-item decision log | `draft_<vX>_<who>.qmd` (e.g. `draft_v1_claude.qmd` / `draft_v15_deepseek.qmd` / `draft_v2_claude.qmd`); critique `critique_<llm>.md` (e.g. `critique_gpt.md`); decisions `critique_decisions.md` |
 
-通用规则：
+General rules:
 
-- **`_process/` 是过程材料区，不对外**。最新的对外可用版本永远是父目录的成果 md（`topic.md` / `outline.md` / `draft.qmd` 等）
-- **每次大改前先 cp 一份到 `_process/`**（如 `cp 7_draft/draft.qmd 7_draft/_process/draft_v1_claude.qmd`），再原地改
-- **多 LLM 并发时各家产出只进自己的文件**，不直接覆盖共享成果 md。综合者（Claude）整合后才更新成果 md
-- `5_scripts/` `6_figures/` 不设 `_process/`：脚本与图的迭代由 git 管理，留中间稿反而混乱
+- **`_process/` is the process-material area, not external-facing**. The latest shippable version is always the parent dir's deliverable md (`topic.md` / `outline.md` / `draft.qmd`)
+- **cp a copy to `_process/` before each big change** (e.g. `cp 7_draft/draft.qmd 7_draft/_process/draft_v1_claude.qmd`), then edit in place
+- **under multi-LLM concurrency each LLM produces only into its own file**, not directly overwriting the shared deliverable md. The synthesiser (Claude) updates the deliverable md after integration
+- `5_scripts/` `6_figures/` have no `_process/`: script and chart iteration is git-managed; keeping interim drafts is confusing
 
-**各成果 md 的最小骨架**（脚手架阶段直接建空文件 + 一段用途说明，后续步骤填充）：
+**Minimal skeleton of each deliverable md** (scaffold stage creates an empty file + a purpose line, filled by later steps):
 
-| 文件 | 最小骨架 |
+| File | Minimal skeleton |
 |---|---|
-| `1_topic/topic.md` | 题目 / 研究问题 / 目标读者 / 产出形态 / 章节骨架（h2 草稿） |
-| `2_research/research.md` | 七节对应附录 A 的 A.1-A.7 来源类别，每节列已找到的资料（编号 / 类型 / 机构 / 标题 / 年份 / PDF 路径 / 重要性 / 关键字段 / 获取方式） |
-| `3_outline/outline.md` | h1 / h2 章节骨架（标题为结论性）+ 每节研究子问题、take-away、计划图表、关键引用。研报正文仅两级，禁止 h3 |
-| `4_data/data.md` | 表格：CSV 文件名 / 来源 / 口径 / 字段 / 单位 / 时间范围 / 处理脚本 |
-| `5_scripts/scripts.md` | 表格：脚本文件名 / 用途 / 输入数据 / 输出（图 / CSV）/ 依赖（包 / 模板） |
-| `6_figures/figures.md` | 表格：图编号 / 节归属 / 标题 / 数据源 / 出图脚本 / 口径 caveat |
-| `7_draft/draft.md` | 主报告正文（按 outline 章节逐节写入），含引用 `[@cite]` |
-| `9_retrospective/retrospective.md` | 三段式复盘条目，按 §九 格式追加 |
+| `1_topic/topic.md` | title / research question / target audience / output form / chapter skeleton (h2 draft) |
+| `2_research/research.md` | seven sections matching appendix A's A.1-A.7 classes, each listing found material (number / type / institution / title / year / PDF path / importance / key fields / acquisition method) |
+| `3_outline/outline.md` | h1 / h2 chapter skeleton (conclusive titles) + per-section research sub-question, take-away, planned charts, key citations. Body two levels only, no h3 |
+| `4_data/data.md` | table: CSV filename / source / caliper / fields / units / time range / processing script |
+| `5_scripts/scripts.md` | table: script filename / purpose / input data / output (chart / CSV) / dependencies (package / template) |
+| `6_figures/figures.md` | table: figure number / section / title / data source / script / caliper caveat |
+| `7_draft/draft.md` | main report body (per outline chapters), with `[@cite]` citations |
+| `9_retrospective/retrospective.md` | three-part retrospective entries, appended per the §10 format |
 
-**关于 PDF 不分深浅**：曾考虑过 `deep/`（结构性论证）+ `shallow/`（背景参考）两层设计，但实战中边界模糊（同一份 IMF 报告，初读是背景、深用时变核心）。改为统一平铺，由 `research.md` 的「重要性」字段标注。`research.md` 推荐字段：
+**On "PDFs not split by depth"**: a `deep/` (structural argument) + `shallow/` (background reference) two-layer design was considered, but the boundary is fuzzy in practice (the same IMF report is background on first read, core when used deeply). Changed to a flat layout, with importance marked by the `research.md` "importance" field. Recommended `research.md` fields:
 
-| 字段 | 示例 |
+| Field | Example |
 |---|---|
-| 编号 | `06` |
-| 类型 | 文献 / 数据集 |
-| 机构 | IMF |
-| 标题 | GCC Policy Paper 2024 |
-| 年份 | 2024 |
-| PDF 路径 | `pdfs/06 IMF GCC Policy Paper 2024.pdf` |
-| 重要性 | 核心（核心论点引用 / 关键数字 / 方法论借鉴）/ 参考（背景说明 / 一次性引用） |
-| 字段或关键数字 | 财政平衡油价、油价-GDP 弹性 |
-| 获取方式 | 官网下载 / NOTES.md 占位 |
+| number | `06` |
+| type | document / dataset |
+| institution | IMF |
+| title | GCC Policy Paper 2024 |
+| year | 2024 |
+| PDF path | `pdfs/06 IMF GCC Policy Paper 2024.pdf` |
+| importance | core (core-argument citation / key number / methodology borrowed) / reference (background / one-off citation) |
+| field or key number | fiscal-breakeven oil price, oil-price-GDP elasticity |
+| acquisition | official download / NOTES.md placeholder |
 
-**说明**：
-- 具体路径以项目级 CLAUDE.md 为准，本节是基线。如项目使用其他工具栈（Word + Excel 替代 Quarto + Python），目录名可本地化但**编号顺序保持不变**
-- `_process/` 是过程材料归档，发布时不必清理但可以打包压缩
-- 主报告 PDF 直接在 `7_draft/draft.pdf` 查看与分发，不再在 `8_publication/` 重复一份；冻结版本号通过 git tag 或文件名后缀（`draft_v3.pdf`）管理
-- `5_scripts/` 与 `6_figures/` 不设 `_process/`：脚本和图本身即产出，没有「过程材料」概念。脚本的迭代版本由 git 管理
+**Notes**:
+- specific paths follow the project CLAUDE.md; this section is the baseline. If the project uses another toolchain (Word + Excel instead of Quarto + Python), dir names can be localised but **the numbering order stays the same**
+- `_process/` is process-material archive; need not be cleaned at publication but can be zipped
+- the main PDF is viewed and distributed directly at `7_draft/draft.pdf`, not duplicated in `8_publication/`; the frozen version is managed by git tag or filename suffix (`draft_v3.pdf`)
+- `5_scripts/` and `6_figures/` have no `_process/`: scripts and charts are themselves the output, no "process material" concept. Script iteration is git-managed
 
 ---
 
-## 十二、`_state.md` 模板
+## 12. `_state.md` template
 
-`_state.md` 是项目根目录下的**唯一**进度文件，任何 LLM / 用户进入项目第一眼看它。它的存在解决一个核心问题：**新会话如何快速接住上下文**。
+`_state.md` is the **only** progress file in the project root; any LLM / user entering the project looks here first. It solves one core problem: **how a new session quickly picks up context**.
 
-### 12.1 责任分离
+### 12.1 Separation of responsibility
 
-- `CLAUDE.md` = 项目级**规则**（不变的约定，如写作风格、Python 环境、文件组织）
-- `_state.md` = 项目级**状态**（变化中，每次步骤切换更新）
-- 各阶段子目录下的 `topic.md` / `research.md` / `outline.md` / `data.md` / `scripts.md` / `figures.md` / `draft.md` / `retrospective.md` = **内容**（产出物本身，不是状态）
+- `CLAUDE.md` = project-level **rules** (unchanging conventions: writing style, Python environment, file organisation)
+- `_state.md` = project-level **state** (changing, updated on each step switch)
+- the `topic.md` / `research.md` / `outline.md` / `data.md` / `scripts.md` / `figures.md` / `draft.md` / `retrospective.md` in each stage subdir = **content** (the output itself, not state)
 
-三者不要混。状态文件出现规则、产出文件出现状态，都是污染。
+Do not mix the three. Rules appearing in the state file, or state appearing in the output file, are both pollution.
 
-### 12.2 模板（直接复制到新项目根目录）
+### 12.2 Template (copy directly to a new project root)
 
 ```markdown
-# 项目级进度面板 · _state.md
+# Project progress panel · _state.md
 
-> 项目级**唯一**进度文件。任何 LLM / 用户进入项目第一眼看这里。
-> 责任分离：CLAUDE.md = 规则，本文件 = 状态，子目录文件 = 内容。
-
----
-
-## ▶ 当前位置（一眼可见）
-
-\`\`\`
-[当前步骤] 步骤 N <名称>
-[起止]    YYYY-MM-DD ~ 进行中
-[阻塞]    （如有，简述阻塞原因；无写「无」）
-
-[x] 1 topic         已落锁（topic.md，YYYY-MM-DD 用户签字）
-[x] 2 research      已落锁（research.md + pdfs/ N 份 PDF）
-[x] 3 outline       outline.md draft（待步骤 7 完成后形成 final）
-[>] 4-6 数据脚本图表 进行中（已完成 N / M 张图表）
-[ ] 7 draft         未启动
-[ ] 8 publication   未启动
-[~] 9 retrospective 背景活动（已追加 N 条）
-\`\`\`
-
-状态符号：`[x]` 已完成 / `[>]` 进行中 / `[~]` 背景活动（贯穿性，如复盘）/ `[ ]` 未启动 / `[!]` 阻塞
-
-**下一步操作**：（一句话说明本步要做什么，谁来做）
-
-**硬停点状态**：（如等待用户审阅，注明审什么；无硬停时写「无」）
+> The project-level **only** progress file. Any LLM / user entering the project looks here first.
+> Separation of responsibility: CLAUDE.md = rules, this file = state, subdir files = content.
 
 ---
 
-## 关键交付物索引
+## ▶ Current position (at a glance)
 
-| 步骤 | 关键产出 | 过程材料 |
+\`\`\`
+[current step] step N <name>
+[span]        YYYY-MM-DD ~ in progress
+[blocker]     (if any, brief reason; "none" if not)
+
+[x] 1 topic         locked (topic.md, YYYY-MM-DD user signed)
+[x] 2 research      locked (research.md + pdfs/ N PDFs)
+[x] 3 outline       outline.md draft (final after step 7)
+[>] 4-6 data scripts charts  in progress (completed N / M charts)
+[ ] 7 draft         not started
+[ ] 8 publication   not started
+[~] 9 retrospective background activity (N entries appended)
+\`\`\`
+
+Status symbols: `[x]` done / `[>]` in progress / `[~]` background activity (cross-cutting, e.g. retrospective) / `[ ]` not started / `[!]` blocked
+
+**Next action**: (one sentence on what this step does, who does it)
+
+**Hard-stop status**: (if awaiting user review, note what; "none" if no hard stop)
+
+---
+
+## Key deliverable index
+
+| Step | Key output | Process material |
 |---|---|---|
 | 1 topic | [topic.md](1_topic/topic.md) | [_process/](1_topic/_process/) |
 | 2 research | [research.md](2_research/research.md) · [pdfs/](2_research/pdfs/) | [_process/](2_research/_process/) |
 | 3 outline | [outline.md](3_outline/outline.md) | [_process/](3_outline/_process/) |
-| 4-6 数据/脚本/图表 | [data.md](4_data/data.md) · [scripts.md](5_scripts/scripts.md) · [figures.md](6_figures/figures.md) | [1_raw/](4_data/1_raw/) |
+| 4-6 data/scripts/charts | [data.md](4_data/data.md) · [scripts.md](5_scripts/scripts.md) · [figures.md](6_figures/figures.md) | [1_raw/](4_data/1_raw/) |
 | 7 draft | [draft.md](7_draft/draft.md) · [references.bib](7_draft/references.bib) | [_process/](7_draft/_process/) |
-| 8 publication | [1_word/](8_publication/1_word/) · [2_HTML/](8_publication/2_HTML/) · [3_wechat_pages/](8_publication/3_wechat_pages/) | 主报告 PDF 见 [7_draft/draft.pdf](7_draft/) |
+| 8 publication | [1_word/](8_publication/1_word/) · [2_HTML/](8_publication/2_HTML/) · [3_wechat_pages/](8_publication/3_wechat_pages/) | main PDF at [7_draft/draft.pdf](7_draft/) |
 | 9 retrospective | [retrospective.md](9_retrospective/retrospective.md) | — |
 
 ---
 
-## 跨阶段悬而未决项
+## Cross-stage open items
 
-待办池：影响多个步骤、不属于当前步骤的事项。当前步骤完成时检查这里有没有该一并处理的。
+A to-do pool: items affecting multiple steps, not belonging to the current step. Check here when the current step completes.
 
-- [ ] 待办 1（影响步骤 X / Y）
-- [ ] 待办 2
+- [ ] item 1 (affects steps X / Y)
+- [ ] item 2
 
 ---
 
-## git 时间线（最近 10 commit）
+## git timeline (last 10 commits)
 
 \`\`\`
-（粘贴 git log --oneline -10 输出）
+(paste git log --oneline -10 output)
 \`\`\`
 
-打 tag 的里程碑：步骤完成签字落锁、版本冻结、定稿。
+Tagged milestones: step-completion sign-off lock, version freeze, finalisation.
 
 ---
 
-## 维护规则
+## Maintenance rules
 
-- 每个步骤切换时由触发者（LLM 或用户）更新「▶ 当前位置」段
-- 重要里程碑（步骤完成、用户签字落锁）必须能 git tag + 同步本文件
-- 「关键交付物索引」只放文件路径，不展开细节（细节放在产出文件里）
-- 「git 时间线」截最近 10 commit，便于一眼看动态
-- 多 LLM 并发期各家**只在自己的 `_process/<llm>/` 子目录产出**，不直接修改本文件，由综合者（Claude）在 Round 结束统一更新
+- the trigger (LLM or user) updates the "▶ Current position" section on each step switch
+- key milestones (step completion, user sign-off lock) must be git-taggable + synced here
+- the "Key deliverable index" holds only file paths, no details (details in the output files)
+- the "git timeline" shows the last 10 commits for a quick view of activity
+- under multi-LLM concurrency each LLM produces only into its own `_process/<llm>/` subdir, not editing this file directly; the synthesiser (Claude) updates it at the end of each round
 
 ---
 
-## 修订历史
+## Revision history
 
-| 时间 | 操作者 | 操作 |
+| Time | Operator | Action |
 |---|---|---|
-| YYYY-MM-DD | Claude / 用户 | 初始化 _state.md |
+| YYYY-MM-DD | Claude / user | initialise _state.md |
 ```
 
-### 12.3 何时更新
+### 12.3 When to update
 
-| 触发场景 | 更新哪些段 |
+| Trigger | Which section to update |
 |---|---|
-| 步骤切换（如 6 → 7） | 「▶ 当前位置」+「关键交付物索引」对应行 |
-| 用户签字硬停落锁 | 「▶ 当前位置」+ git tag |
-| 跨阶段问题被识别 | 「跨阶段悬而未决项」追加 |
-| 关键 commit 完成 | 「git 时间线」刷新 |
-| 阻塞发生或解除 | 「▶ 当前位置 → 阻塞」段 |
+| step switch (e.g. 6 → 7) | "▶ Current position" + matching "Key deliverable index" row |
+| user sign-off hard-stop lock | "▶ Current position" + git tag |
+| a cross-stage problem identified | append to "Cross-stage open items" |
+| a key commit done | refresh "git timeline" |
+| a blocker occurs or clears | "▶ Current position → blocker" section |
 
-### 12.4 与 CLAUDE.md 的边界判断
+### 12.4 Boundary judgement vs CLAUDE.md
 
-如果一条信息**不会随步骤推进而变化**（如「本项目使用 Quarto + xelatex 渲染」「正文不用破折号」），写进 CLAUDE.md。
+If a piece of info **does not change as steps advance** (e.g. "this project renders with Quarto + xelatex", "no em-dash in the body"), it goes into CLAUDE.md.
 
-如果一条信息**会随步骤推进而变化**（如「当前在步骤 6」「等待用户审 outline」「待办池有 3 项」），写进 `_state.md`。
+If it **changes as steps advance** (e.g. "currently at step 6", "awaiting user review of the outline", "3 items in the to-do pool"), it goes into `_state.md`.
 
-经验法则：写之前问自己「这条信息一周后还成立吗？」。是 → CLAUDE.md；否 → `_state.md`。
+Rule of thumb: ask "will this still hold a week from now?" Yes → CLAUDE.md; No → `_state.md`.
 
 
-## 十三、本框架的未解决问题
+## 13. Open questions of this framework
 
-留给未来项目验证的开放问题：
+Open questions left for future projects to validate:
 
-1. **多 LLM 协作的实际收益**：步骤 2 / 5 / 6 / 9 都设计了多 LLM，但每多一家成本都上升（切换 LLM、维护并发产出、综合）。在哪些步骤多 LLM 真正显著优于单 LLM？需要在后续项目中持续观察并记录边际收益。
+1. **Actual benefit of multi-LLM collaboration**: steps 2 / 5 / 6 / 9 all design multi-LLM, but each extra LLM raises cost (switching, maintaining parallel output, synthesis). In which steps is multi-LLM genuinely significantly better than single-LLM? Needs continued observation and recording of marginal benefit.
 
-2. **图表前置的迭代深度**：步骤 6 ↔ 7 是双向反馈，但来回迭代几轮才合理？在简单项目可能 1 轮，复杂项目可能 3-4 轮。需要观察。
+2. **Iteration depth of charts-first**: steps 6 ↔ 7 are bidirectional, but how many rounds is reasonable? Maybe 1 for a simple project, 3-4 for a complex one. Needs observation.
 
-3. **派生形态的标准化范围**：§九 转换表目前规定了主报告 → Word docx / publication-style HTML / 公众号 JPG 切页。LinkedIn / 邮件简报 / 行内分享版 / 公众号 md 等的转换规则需要新项目验证后补全。
+3. **Standardisation scope of derivations**: the §9 conversion table currently covers main report → Word docx / publication-style HTML / WeChat JPG slices. Conversion rules for LinkedIn / email brief / in-firm version / WeChat md need new-project validation.
 
-4. **写作规范模板的可移植性**：§七 的规则源自中文研报场景，英文研报需要做哪些适配？跨语言研报（中英双版）有什么特别约定？目前未知。
+4. **Portability of the writing-standards template**: §7 rules originate from the Chinese-report scenario; what adaptations do English reports need? What special conventions for bilingual (Chinese-English) reports? Currently unknown. (Partly addressed in v0.7: the skill is now bilingual and English-report-aware; see SKILL.md "Language policy".)
 
-5. **复盘文件何时拆分**：单文件追加适合中短期项目（半年内），长期项目可能需要按年份 / 主题拆分。拆分阈值待观察。
+5. **When to split the retrospective file**: a single appended file suits short-to-medium projects (within half a year); a long project may need year / topic splits. The split threshold needs observation.
 
 ---
 
-## 附录 A：广搜资源清单
+## Appendix A: broad-search resource list
 
-步骤 2 广搜阶段，AI 应**全覆盖以下七类来源**，不限于已熟悉的几个。本附录给出每类的代表入口，AI 在新项目可以直接照单检索。
+At the step 2 broad search, the AI should **fully cover the seven source classes below**, not just the few it knows. This appendix gives a representative entry per class, which the AI can search down the list in a new project.
 
-### A.1 国际机构与多边组织
+### A.1 international organisations & multilaterals
 
-宏观与跨国对比的「金标准」来源，方法论扎实，全文公开。
+The "gold standard" for macro and cross-country comparison, methodologically solid, fully public.
 
-- **IMF**：World Economic Outlook（WEO）、Article IV Consultation、Working Papers、Policy Papers、Selected Issues Papers，入口 [imf.org/publications](https://www.imf.org/publications)、[elibrary.imf.org](https://www.elibrary.imf.org)
-- **World Bank**：Open Knowledge Repository（[openknowledge.worldbank.org](https://openknowledge.worldbank.org)）、World Development Indicators（[databank.worldbank.org](https://databank.worldbank.org)）、Country Studies
-- **IEA**：World Energy Outlook、Country Profiles、能源数据（[iea.org](https://www.iea.org)）
-- **IRENA**：可再生能源
-- **OECD**、**BIS**（国际清算银行，金融稳定与跨境资本流）、**UN Comtrade**（贸易）、**UNCTAD**（投资）、**WTO**
-- 区域开发银行：ADB（亚洲）、AfDB（非洲）、Arab Monetary Fund、IDB（伊斯兰开发银行）、ESCAP、ECLAC
+- **IMF**: World Economic Outlook (WEO), Article IV Consultation, Working Papers, Policy Papers, Selected Issues Papers, via [imf.org/publications](https://www.imf.org/publications), [elibrary.imf.org](https://www.elibrary.imf.org)
+- **World Bank**: Open Knowledge Repository ([openknowledge.worldbank.org](https://openknowledge.worldbank.org)), World Development Indicators ([databank.worldbank.org](https://databank.worldbank.org)), Country Studies
+- **IEA**: World Energy Outlook, Country Profiles, energy data ([iea.org](https://www.iea.org))
+- **IRENA**: renewables
+- **OECD**, **BIS** (Bank for International Settlements, financial stability and cross-border capital flows), **UN Comtrade** (trade), **UNCTAD** (investment), **WTO**
+- regional development banks: ADB (Asia), AfDB (Africa), Arab Monetary Fund, IDB (Islamic Development Bank), ESCAP, ECLAC
 
-### A.2 主权 / 政府 / 央行 / 监管机构
+### A.2 sovereign / government / central bank / regulators
 
-一手数据与政策文本，比二手转述准确。
+Primary data and policy text, more accurate than second-hand paraphrase.
 
-- **央行**：货币政策、外汇储备、银行业、跨境资本流
-- **国家统计局**：GDP、人口、产业结构、CPI、就业（口径以本国为准）
-- **财政部**：预算、财政收入、政府债务
-- **主权财富基金**：年度报告（SWFI 数据库 / 各 SWF 官网）
-- **行业监管机构**：能源、金融、电信、地产等本国监管者
-- **SEC EDGAR**：13F 主权基金披露、上市公司申报（[sec.gov/edgar](https://www.sec.gov/edgar)）
+- **central banks**: monetary policy, FX reserves, banking, cross-border capital flows
+- **statistics offices**: GDP, population, industry structure, CPI, employment (caliper per the country)
+- **finance ministries**: budget, fiscal revenue, government debt
+- **sovereign wealth funds**: annual reports (SWFI database / each SWF site)
+- **sector regulators**: energy, finance, telecom, real estate
+- **SEC EDGAR**: 13F sovereign-fund disclosures, listed-company filings ([sec.gov/edgar](https://www.sec.gov/edgar))
 
-### A.3 学术与智库
+### A.3 academic & think tank
 
-理论框架与文献综述的来源。
+Sources for theoretical frameworks and literature reviews.
 
-- 学术：**NBER Working Papers**、**SSRN**、**Google Scholar**、JSTOR、ScienceDirect
-- 顶刊：AER、QJE、JFE、RFS、JPE、JF、JIE 等
-- 智库：Brookings、Peterson IIE、Atlantic Council、CSIS、Chatham House、CFR、IISS、Carnegie Endowment
+- academic: **NBER Working Papers**, **SSRN**, **Google Scholar**, JSTOR, ScienceDirect
+- top journals: AER, QJE, JFE, RFS, JPE, JF, JIE
+- think tanks: Brookings, Peterson IIE, Atlantic Council, CSIS, Chatham House, CFR, IISS, Carnegie Endowment
 
-### A.4 投行 Research 与咨询机构
+### A.4 investment-bank research & consulting
 
-行业 / 公司 / 国别的最新动态，方法论可能没学术严谨但时效性强。
+The latest on industry / company / country, methodologically less rigorous than academia but timely.
 
-- 国际投行：Goldman Sachs、JPMorgan、Morgan Stanley、Citi、HSBC、BofA、UBS、Credit Suisse 等的 Country Outlook / Sector Reports（多数需要订阅，但摘要常通过媒体流出）
-- 中资投行：中金、中信建投、招商证券、海通、华泰、国君等的海外研究与跨境策略。**caveat**：中资投行海外国别研究走 `market-research-skills:verifying` skill 的「资源类别保留，但非 primary source 白名单」处置，引用其转述的 IMF / GS / JPM 数字时必须回溯到原始机构，不要把中资投行报告作为引用中介
-- 咨询：McKinsey、BCG、Oliver Wyman、Bain、Deloitte、PwC、EY、Accenture 的行业 white papers（多数公开）
+- international banks: Goldman Sachs, JPMorgan, Morgan Stanley, Citi, HSBC, BofA, UBS, Credit Suisse Country Outlooks / Sector Reports (mostly subscription, but summaries often leak via media)
+- Chinese banks: CICC, CSC, China Merchants Securities, Haitong, Huatai, Guotai Junan overseas research and cross-border strategy. **caveat**: Chinese-bank overseas country research goes through the `market-research-skills:verifying` skill's "resource class kept, but not a primary-source whitelist" handling; when citing their paraphrase of IMF / GS / JPM numbers, trace back to the original institution, do not use the Chinese-bank report as a citation intermediary
+- consulting: McKinsey, BCG, Oliver Wyman, Bain, Deloitte, PwC, EY, Accenture industry white papers (mostly public)
 
-### A.5 主流财经媒体
+### A.5 mainstream financial media
 
-事件、人物、动态的及时来源。
+Timely sources for events, people, dynamics.
 
-- **中文**：财新、华尔街见闻、第一财经、经济观察报、21世纪经济报道、彭博中国、FT 中文网、WSJ 中文网
-- **英文**：Bloomberg、Reuters、Financial Times、Wall Street Journal、The Economist、NYT、Forbes、Fortune
-- **区域专业**：MEED（中东）、Argus / Platts（能源）、Lloyd's List（航运）、TradeWinds（航运）、Variety（媒体）、Modern Healthcare（医疗）等
+- **Chinese**: Caixin, Wallstreetcn, Yicai, Economic Observer, 21st Century Business Herald, Bloomberg China, FT Chinese, WSJ Chinese
+- **English**: Bloomberg, Reuters, Financial Times, Wall Street Journal, The Economist, NYT, Forbes, Fortune
+- **regional specialist**: MEED (Middle East), Argus / Platts (energy), Lloyd's List (shipping), TradeWinds (shipping), Variety (media), Modern Healthcare (healthcare)
 
-### A.6 公众号 / 行业社群（中文世界）
+### A.6 WeChat / industry communities (Chinese world)
 
-中文世界的深度分析与一手观察，常比英文转述更早 / 更准。
+Chinese-world deep analysis and primary observation, often earlier / more accurate than English paraphrase.
 
-- 财经类公众号：华尔街见闻、智本社、券商中国、扑克投资家、阿尔法工场
-- 区域类：海湾札记类的小众但深入的账号
-- 行业类：能源、地产、消费、科技、医疗各有垂直号
-- 行内分享群、领英专业作者、Substack 独立分析师
+- finance public accounts: Wallstreetcn, Zhibenshe, Securities China, Poker Investor, Alpha Works
+- regional: niche but deep Gulf-focused accounts
+- industry: energy, real estate, consumer, tech, healthcare verticals each have accounts
+- in-firm sharing groups, LinkedIn professional authors, Substack independent analysts
 
-### A.7 数据库（程序化访问）
+### A.7 databases (programmatic access)
 
-本项目可用的数据库 MCP 与 skill：
+Database MCPs and skills available to this project:
 
-- **iFind MCP**（同花顺）：A 股 / 港股 / 中国宏观 / 行业数据。本项目 A 股优先用此
-- **OpenBB MCP**：宏观、股票、ETF、加密等多资产
-- **`financial-data-sources` skill**：FRED（美国宏观）、World Bank / IMF / OECD / Eurostat / ECB（跨国宏观）、SEC EDGAR（含 13F 主权基金披露）、yfinance（美股 / 港股 / 全球行情）、AKShare / Baostock / Tushare（A 股 / 港股 / 中国宏观）、CoinGecko（加密货币）
+- **iFind MCP** (THS): A-shares / HK / China macro / industry data. A-shares prefer this
+- **OpenBB MCP**: multi-asset macro, equities, ETF, crypto
+- **`financial-data-sources` skill**: FRED (US macro), World Bank / IMF / OECD / Eurostat / ECB (cross-country macro), SEC EDGAR (incl. 13F sovereign-fund disclosures), yfinance (US / HK / global quotes), AKShare / Baostock / Tushare (A-shares / HK / China macro), CoinGecko (crypto)
 
-外部（如可达，多为付费）：Wind、Bloomberg、Refinitiv（Eikon）、Capital IQ、PitchBook、FactSet、CEIC、CapitalLine
+External (if reachable, mostly paid): Wind, Bloomberg, Refinitiv (Eikon), Capital IQ, PitchBook, FactSet, CEIC, CapitalLine
 
-### A.8 中英文并重原则
+### A.8 both-languages principle
 
-中英文资料覆盖必须并重：
-- 国际机构 / 投行 / 咨询的官方报告主要英文，中文摘要常见于中资研究与中文媒体
-- 中国 / 中东 / 非洲等区域的本地数据与政策动态，中文一手资料常比英文转述更准
-- 政策文件原文常有官方多语版本（如中东国家发展规划同时出阿拉伯文与英文），必要时双版对照
-- 多 LLM 平行搜分工：Claude 偏英文学术与投行，DeepSeek 偏中文与区域语境，GPT 平衡
+Chinese and English coverage must be balanced:
+- official reports from international orgs / banks / consulting are mostly English, Chinese summaries common in Chinese-bank research and Chinese media
+- local data and policy dynamics for China / Middle East / Africa are often more accurate in Chinese primary material than English paraphrase
+- policy-document originals often have official multilingual versions (e.g. Middle East development plans in both Arabic and English), cross-checked when needed
+- multi-LLM parallel-search division: Claude leans English academic and bank, DeepSeek Chinese and regional context, GPT balanced
 
-### A.9 来源覆盖自检
+### A.9 source-coverage self-check
 
-步骤 2 完成时 AI **必须自查** A.1-A.7 七类是否各检索过。任一类完全没搜过，须补做后再进步骤 3。在 `2_research/research.md` 顶部留一段「来源覆盖自检表」记录每类是否已查。
+At the end of step 2 the AI **must self-check** whether each of A.1-A.7 was searched. Any class not searched at all must be done before step 3. Leave a "source-coverage self-check table" at the top of `2_research/research.md` recording each class.
 
-**自检表 example template**（直接拷到 research.md 顶部，状态列按 §7.2 用纯文字）：
+**Self-check table example template** (copy to the top of research.md, status column in plain text per §7.2):
 
 ```markdown
-## 来源覆盖自检（步骤 2 完成时填）
+## Source-coverage self-check (fill at step 2 completion)
 
-| 类别 | 状态 | 关键资料 |
+| Class | Status | Key material |
 |---|---|---|
-| A.1 国际机构 | 已查 | IMF Article IV / World Bank Country Update / IEA |
-| A.2 主权 / 政府 / 央行 | 已查 | 央行 FSR / 财政部 Budget / 主权基金 AR |
-| A.3 学术与智库 | 已查 | NBER WP / Brookings / Carnegie |
-| A.4 投行 + 咨询 | 已查 | GS Country Outlook / McKinsey white paper |
-| A.5 主流财经媒体 | 已查 | Bloomberg / Reuters / FT |
-| A.6 公众号 / 行业社群 | 已查 | 华尔街见闻 / 智本社 等 |
-| A.7 数据库 | 已查 | iFind MCP / financial-data-sources skill |
+| A.1 international orgs | done | IMF Article IV / World Bank Country Update / IEA |
+| A.2 sovereign / government / central bank | done | central-bank FSR / finance-ministry Budget / SWF AR |
+| A.3 academic & think tank | done | NBER WP / Brookings / Carnegie |
+| A.4 investment banks + consulting | done | GS Country Outlook / McKinsey white paper |
+| A.5 mainstream financial media | done | Bloomberg / Reuters / FT |
+| A.6 WeChat / industry communities | done | Wallstreetcn / Zhibenshe etc. |
+| A.7 databases | done | iFind MCP / financial-data-sources skill |
 ```
 
-任一类没搜或只搜了一两个示例就交差，标「未查」或「待补」，进 step 3 前必须补到「已查」。
+Any class not searched, or only one or two examples searched, mark "not searched" or "to fill"; it must reach "done" before step 3.

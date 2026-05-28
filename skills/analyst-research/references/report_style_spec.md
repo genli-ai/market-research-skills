@@ -1,351 +1,353 @@
-# 研报视觉规范 v1.0
+# Report visual spec
 
-> 跨项目通用的报告与图表视觉规范。本文件与 `workflow.md`（过程纪律）+ `chart_template.py`（实现代码）三件套配套使用。
+> English is the authoritative version; the Chinese mirror is `report_style_spec.zh.md`.
+> Cross-project report and chart visual spec. Used as a three-piece set with `workflow_heavy.md` (process discipline) + `chart_template.py` (implementation code).
 >
-> 与 `chart_template.py` 的边界：本文件讲「为什么这么定 + 接口契约」，code 讲「具体怎么实现」。HEX 与 rcParams 的真值在 code 里（`PALETTE` dict + `setup_style()` rcParams），本文件 §5 的对照表仅为人工速查，**真值漂移时以 code 为准**。
+> Boundary with `chart_template.py`: this file explains "why it is set this way + the interface contract"; the code is "how it is implemented". The true HEX and rcParams are in the code (`PALETTE` dict + `setup_style()` rcParams); the §5 lookup tables here are a human quick-reference, and **on drift the code wins**.
 >
-> 设计灵感：**Financial Times chart-doctor**（github.com/Financial-Times/chart-doctor）开源规范。FT 的金融研报视觉化是行业标杆，原则简洁可复刻。本文档吸收其设计哲学，结合中文研报场景调整。
+> Design inspiration: the **Financial Times chart-doctor** (github.com/Financial-Times/chart-doctor) open-source spec. FT's financial-report visualisation is the industry benchmark, principles simple to replicate. This document absorbs its design philosophy, adjusted for the Chinese-report scenario.
 >
-> 项目级 CLAUDE.md 可覆盖本文档默认值（覆盖时需在「与框架的偏离」段登记理由）。
+> The project-level CLAUDE.md may override the defaults here (register the reason in the "deviations from the framework" section when overriding).
 >
-> 本文档同时作为 `heavy-research` skill 的 `references/report_style_spec.md`。在 skill 中三件套分层位于 `references/`（本文档、workflow.md）与 `scripts/`（chart_template.py）；在用户研报项目里三件套扁平位于 `heavy-research/`。下方所有引用其他两个三件套文件时按文件名直引，不带路径，两种结构都能解析。
+> This document also serves as the analyst-research skill's `references/report_style_spec.md`. In the skill the three-piece set is layered in `references/` (this doc, workflow files) and `scripts/` (chart_template.py); in a user project the three-piece set is flat in `analyst-research/`. All references to the other two files below use the filename without a path, so both structures resolve.
 
 ---
 
 ## Quick start
 
-**给新项目脚手架阶段的 AI 与人**：本节是「开始画图前必读」摘要。完整规则在 §一-§六。
+**For the AI and human at a new project's scaffolding stage**: this section is the "must-read before charting" summary. Full rules in §1-§6.
 
-### 三件套关系
+### Three-piece-set relationship
 
-| 文件 | 位置 | 角色 |
+| File | Location | Role |
 |---|---|---|
-| `SKILL.md` | `heavy-research/` | skill 入口（frontmatter + 加载顺序） |
-| `workflow.md` | `heavy-research/references/` | 过程纪律：十一步骨架、多 LLM 分工、复盘格式 |
-| `report_style_spec.md` | `heavy-research/references/` | 视觉规范（本文档）+ chart_template 接口契约 |
-| `chart_template.py` | `heavy-research/scripts/` | 绘图实现 single source of truth：`PALETTE`、`setup_style`、`save_fig`、`legend_above` |
-| `publication-style-template.html` | `heavy-research/scripts/` | publication HTML 模板（10c 可选派生用） |
-| `author.jpg` | `heavy-research/scripts/` | 作者头像 placeholder（10c 可选派生用） |
-| `_path.py` | `5_scripts/` | 4 行 sys.path 注入到 `../heavy-research/scripts/`。新项目脚手架阶段必须先建（内容见 §6.4 末尾） |
+| `SKILL.md` | `analyst-research/` | skill entry (frontmatter + load order) |
+| `workflow_heavy.md` | `analyst-research/references/` | process discipline: 11-step skeleton, multi-LLM division, retrospective format |
+| `report_style_spec.md` | `analyst-research/references/` | visual spec (this doc) + chart_template interface contract |
+| `chart_template.py` | `analyst-research/scripts/` | drawing implementation single source of truth: `PALETTE`, `setup_style`, `save_fig`, `legend_above` |
+| `publication-style-template.html` | `analyst-research/scripts/` | publication HTML template (optional 10c derivation) |
+| `author.jpg` | `analyst-research/scripts/` | author headshot placeholder (optional 10c derivation) |
+| `_path.py` | `5_scripts/` | sys.path injection to `../analyst-research/scripts/`. Must be created first at the new-project scaffold stage (content at §6.4 end) |
 
-### 绘图脚本硬规则
+### Hard rules for drawing scripts
 
-每个 `5_scripts/make_fig_*.py` 顶部 5 行 boilerplate 不可省：
+The 5-line boilerplate at the top of each `5_scripts/make_fig_*.py` is non-optional:
 
 ```python
-import _path  # noqa: F401  -- 把 heavy-research/scripts/ 加进 sys.path
+import _path  # noqa: F401  -- add analyst-research/scripts/ to sys.path
 from chart_template import setup_style, save_fig, PALETTE, FIG_W, DATA_PROC
 
 setup_style()
 ```
 
-落地约束：
+Landing constraints:
 
-1. **不允许在脚本里硬写 HEX 颜色**。颜色一律 `PALETTE["primary" / "secondary" / "tertiary" / "accent" / ...]` 引用（语义见 §5.3）
-2. **不允许在脚本里 override matplotlib rcParams**。字体、字号、spine、网格、tick 全部由 `setup_style()` 统一设定
-3. **figsize 宽度必须锁定 `FIG_W`**：`figsize=(FIG_W, h)`，h 自由（一般 3-4 inch）。手写 `figsize=(10, 5)` 等会让图被 Quarto 缩到 textwidth、字号一并缩水（§3.12）
-4. **一图一 plot，禁止并列子图**：`plt.subplots(1, 2, ...)` 等任何并列布局都禁止（§3.7）。多 plot 需求拆成多张独立图
-5. **Legend 放 plot 上方水平排开、以 image 为基准居中**：默认用 `legend_above(ax, ncol=N, mode="centered")`（**不要**直接写 `bbox_to_anchor=(0.5, 1.02)`——那是 plot 中点不是 image 中点）；项多 / 单 accent 突出图用 `mode="image_left"`。不允许 legend 覆盖 plot / 与图形元素重叠 / 垂直堆叠（§3.8）
-6. **出图只走 `save_fig` 接口**。它自动产 PDF（嵌 Quarto）+ JPG（带烧入 title / source / note，独立分发）+ `_clean.jpg`（裸图栅格，供 publication-style HTML 嵌入）**三格式**，JPG 长边自动 ≤ 2000px（§3.11）。**表格不走图片管线、直接写 markdown 表（§3.9）**
-7. **PDF 是裸图 / JPG 自包含 / `_clean.jpg` 是裸图栅格**，三者承载不同内容（§3.3）。`save_fig(fig, fig_id, title=, source=, note=)` 一次调用同时管三份
+1. **No hardcoded HEX colours in scripts.** Colours always reference `PALETTE["primary" / "secondary" / "tertiary" / "accent" / ...]` (semantics in §5.3).
+2. **No overriding matplotlib rcParams in scripts.** Fonts, sizes, spines, grid, ticks are all set uniformly by `setup_style()`.
+3. **figsize width must be locked to `FIG_W`**: `figsize=(FIG_W, h)`, h free (usually 3-4 inch). Hand-writing `figsize=(10, 5)` etc. makes Quarto shrink the chart to textwidth and shrink the font with it (§3.12).
+4. **One plot per chart, no side-by-side subplots**: `plt.subplots(1, 2, ...)` and any side-by-side layout is forbidden (§3.7). Split multi-plot needs into multiple independent charts.
+5. **Legend above the plot, horizontal, centered on the image**: default `legend_above(ax, ncol=N, mode="centered")` (**do not** write `bbox_to_anchor=(0.5, 1.02)` directly — that is the plot midpoint, not the image midpoint); use `mode="image_left"` for many-item / single-accent charts. The legend must not cover the plot / overlap graphic elements / stack vertically (§3.8).
+6. **Output only via `save_fig`**. It auto-produces PDF (for Quarto embedding) + JPG (with burn-in title / source / note, independent distribution) + `_clean.jpg` (bare raster, for publication-style HTML embedding), **three formats**, JPG long edge auto ≤ 2000px (§3.11). **Tables do not go through the image pipeline; write markdown tables directly (§3.9).** Pass `clean=False` to skip `_clean.jpg` (medium / light).
+7. **PDF is bare / JPG is self-contained / `_clean.jpg` is a bare raster**, the three carry different content (§3.3). `save_fig(fig, fig_id, title=, source=, note=)` one call manages all three.
 
-完整 boilerplate 模板见 §6.4，接口契约见 §六。
+Full boilerplate template in §6.4, interface contract in §6.
 
-### 文档导航
+### Document navigation
 
-- §一 **文档版式**：QMD / 标题层级 / 字号统一 / 换页 / 加粗等
-- §二 **图表设计原则**：FT chart-doctor 五条（typography 两层 / chrome 最小 / single accent / 标题承担论点 / 数据 - 油墨比）
-- §三 **图表制作规则**：一图一脚本 / 三格式输出（PDF + JPG + _clean.jpg）/ 调色板 / 图例 / 子图 / 不重叠 / 2000px 上限
-- §四 **视觉检查**：AI 不做，用户自查
-- §五 **默认值速查**：Quarto YAML 标准头 / 字号字体表 / 调色板 HEX 表
-- §六 **chart_template 接口契约**：`setup_style` / `PALETTE` / `save_fig` / `legend_above` 怎么调 + 完整调用模板 + `_path.py` 内容
-- §七 **publication-style HTML 派生稿**（步骤 10 可选）：consulting / FT 长稿风格的 HTML → PDF 模板规范，1 div = 1 A4、in-HTML 页码、`_clean.jpg` 嵌入、手动平衡分页、浏览器手动保存 PDF、公众号 JPG 切页等
+- §1 **document layout**: QMD / heading levels / font-size unification / page breaks / bold
+- §2 **chart design principles**: the 5 FT chart-doctor rules (two-level typography / minimal chrome / single accent / title carries the argument / data-ink ratio)
+- §3 **chart production rules**: one script per chart / triple output (PDF + JPG + _clean.jpg) / palette / legend / subplots / no overlap / 2000px cap
+- §4 **visual check**: AI does not do it, the user self-checks
+- §5 **default quick-reference**: Quarto YAML standard header / font-size and font table / palette HEX table
+- §6 **chart_template interface contract**: how to call `setup_style` / `PALETTE` / `save_fig` / `legend_above` + full call template + `_path.py` content
+- §7 **publication-style HTML derivation** (step 10 optional): consulting / FT long-form HTML → PDF template spec, 1 div = 1 A4, in-HTML page numbers, `_clean.jpg` embedding, manual page balancing, manual browser PDF save, WeChat JPG slicing
+- §8 **AI disclosure footer** (mandatory in each PDF): bilingual templates
 
 ---
 
-## 一、文档版式
+## 1. Document layout
 
-### 1.1 默认格式
+### 1.1 Default format
 
-主报告默认 **QMD**（Quarto markdown）渲染 PDF。MD 仅用于复盘、过程笔记、状态文件。MD 不进入主报告交付路径。
+The main report defaults to **QMD** (Quarto markdown) rendering PDF. MD is only for retrospectives, process notes, state files. MD does not enter the main-report delivery path.
 
-**HTML 派生**（consulting / FT 长稿风格）按需做，规范见 §七；HTML 不替代 qmd 主报告，qmd 始终是真相之源。
+**HTML derivation** (consulting / FT long-form) is done as needed, spec in §7; HTML does not replace the qmd main report, the qmd is always the source of truth.
 
-### 1.2 标题层级
+### 1.2 Heading levels
 
-**适用对象**：**仅研报主报告 PDF**（`7_draft/draft.qmd` 渲染版）。
+**Applies to**: **only the main-report PDF** (`7_draft/draft.qmd` rendered version).
 
-**不适用**：
+**Does not apply to**:
 
-1. **任何派生稿**（Word docx / 公众号长稿 / 邮件简报 / 推文 / Slack 长贴等）。派生平台有自己的层级和折叠机制（Word 受众接受多级编号，公众号目录靠加粗 + 编号，推文靠分段；不能套用主报告的 h1/h2 严格两级规则）
-2. **方法论文档**（`workflow.md` / `report_style_spec.md` 本文档 / 项目级 `CLAUDE.md`）
-3. **状态文件**（`_state.md`）
-4. **各阶段成果 md**（`topic.md` / `research.md` / `outline.md` / `data.md` / `scripts.md` / `figures.md` / `retrospective.md`）
-5. **过程材料**（`_process/` 下任何文件）
+1. **any derivation** (Word docx / WeChat long-form / email brief / tweets / Slack long posts). Derivation platforms have their own levels and folding (Word audiences accept multi-level numbering, WeChat TOC uses bold + numbers, tweets use paragraph breaks; do not apply the main report's strict h1/h2 two-level rule)
+2. **methodology docs** (`workflow_heavy.md` / this `report_style_spec.md` / project `CLAUDE.md`)
+3. **state files** (`_state.md`)
+4. **stage deliverable mds** (`topic.md` / `research.md` / `outline.md` / `data.md` / `scripts.md` / `figures.md` / `retrospective.md`)
+5. **process material** (anything under `_process/`)
 
-以上这些都需要 h3+ 做跳读骨架，不受本规则约束。
+These all need h3+ as a skim skeleton, not bound by this rule.
 
-**研报正文仅两级：h1 大节 / h2 小节**。**禁止 h3 及更深**。三级标题让目录冗长、读者迷路。如果一节有多个子点，让段首结论句承担分层。
+**The report body has two levels only: h1 sections / h2 subsections. No h3 and deeper.** Three-level titles make the TOC verbose and the reader lost. If a section has multiple sub-points, let the leading conclusion sentence carry the layering.
 
-如果一节确实点多到需要 h3 才说清，那是结构问题，应该把这一节拆成两个 h2，而不是开 h3。
+If a section truly has so many points it needs h3, that is a structure problem; split it into two h2, not open an h3.
 
-### 1.3 标题文字
+### 1.3 Heading text
 
-- **主标题 ≤ 15 字**。可读性优先，完整性靠副标题补
-- **副标题字号 = 主标题字号**，副标题内容不重复主标题已有限定词
-- **节标题（h1）≤ 12 字**。论点性短句，不抒情，不堆砌「评估 / 探究 / 浅析」
-- 节标题不要重复主标题。主报告题为「X 政策真效果评估」时，§1 再写「X 政策中的真效果问题」就是反例
-- **不要手写 §N / N.N / A.N 前缀**。Quarto `number-sections` 自动加，手写叠加变「2 §1 真依赖度」
+- **main title ≤ 15 chars**. Readability first, completeness via the subtitle
+- **subtitle font size = main title size**, the subtitle does not repeat the main title's qualifiers
+- **section title (h1) ≤ 12 chars**. An argumentative short phrase, not lyrical, no "assessment / exploration / brief analysis" padding
+- the section title does not repeat the main title. If the report is "X policy real-effect assessment", §1 writing "the real-effect problem in X policy" is a counter-example
+- **do not hand-write §N / N.N / A.N prefixes**. Quarto `number-sections` auto-adds them; hand-writing stacks into "2 §1 real dependence"
 
-### 1.4 字号统一
+### 1.4 Font-size unification
 
-主报告 PDF **6 档字号：18 / 16 / 14 / 12 / 11 / 10 pt**。中文字体一律 Songti SC，英文字体一律 Times New Roman，阿拉伯字体一律 Noto Sans Arabic。
+The main-report PDF uses **6 font sizes: 18 / 16 / 14 / 12 / 11 / 10 pt**. The Chinese font is uniformly Songti SC, English uniformly Times New Roman, Arabic uniformly Noto Sans Arabic.
 
-| 元素 | 字号 | 字重 |
+| Element | Size | Weight |
 |---|---|---|
-| 主标题（封面） | 18pt | 加粗 |
-| 副标题（封面） | 16pt | 常规 |
-| 目录 / 图目录 / 表目录 标题 | 14pt | 加粗 |
-| h1 节标题 | 14pt | 加粗 |
-| h2 小节标题 | 12pt | 加粗 |
-| 正文段落 | 11pt | 常规 |
-| 作者 / 日期 | 11pt | 常规 |
-| 摘要标题「摘要」 | 14pt | 加粗居中（与目录三标题同档）|
-| 摘要正文 | 11pt | 常规 |
-| 关键词行（abstract 末尾「**关键词**：...」） | 11pt | 「关键词」三字加粗，列表常规 |
-| 目录 / 图目录 / 表目录 条目 | 11pt | 常规 |
-| 行内引用 `[@key]` 渲染后 | 11pt | 常规 |
-| 图 caption / 表 caption | 11pt | 常规 italic |
-| 表头 | 11pt | 加粗 |
-| 表体 | 11pt | 常规 |
-| 行内注 / 脚注 | 11pt | 常规 italic |
-| 参考文献条目 | 11pt | 常规 |
-| **图下来源 / 注** (`::: {.figure-source}`) | **10pt** | 常规，灰度 |
-| **表下来源 / 注** (`::: {.table-source}`) | **10pt** | 常规，灰度 |
+| main title (cover) | 18pt | bold |
+| subtitle (cover) | 16pt | regular |
+| TOC / LoF / LoT titles | 14pt | bold |
+| h1 section title | 14pt | bold |
+| h2 subsection title | 12pt | bold |
+| body paragraph | 11pt | regular |
+| author / date | 11pt | regular |
+| abstract title "Abstract" | 14pt | bold centered (same tier as the three TOC titles) |
+| abstract body | 11pt | regular |
+| keyword line (abstract end "**Keywords**: ...") | 11pt | "Keywords" bold, list regular |
+| TOC / LoF / LoT entries | 11pt | regular |
+| inline citation `[@key]` rendered | 11pt | regular |
+| figure caption / table caption | 11pt | regular italic |
+| table header | 11pt | bold |
+| table body | 11pt | regular |
+| inline note / footnote | 11pt | regular italic |
+| reference entry | 11pt | regular |
+| **figure source / note** (`::: {.figure-source}`) | **10pt** | regular, grey |
+| **table source / note** (`::: {.table-source}`) | **10pt** | regular, grey |
 
-**字号选型逻辑**：
+**Size-selection logic**:
 
-- **11pt 是基线**。所有 body-like 元素（正文 / 摘要 / 作者 / 目录条目 / 引用 / 表 caption / 表头 / 表体 / 脚注 / 参考文献）一律 11pt。视觉上跨元素读起来等同正文一档，简化层级
-- **12pt = h2 小节标题**，唯一小节级强调
-- **14pt = h1 节标题 + 目录 / 图目录 / 表目录标题**，大节级强调
-- **18pt = 主标题**，唯一封面顶级，加粗
-- **16pt = 副标题**，仅次于主标题，常规字重；与主标题用「字号差 2pt + 字重」两层手段共同区分
-- **10pt = 图下 / 表下来源与注**。专供 `::: {.figure-source}` 与 `::: {.table-source}` 块，比正文小一档实现视觉降级。图 / 表 caption（出现在图 / 表上方）仍 11pt 与正文齐平，只有 source / note（出现在图 / 表下方）降到 10pt
-- **不引入 9pt**。9pt 在 PDF 阅读尺寸下接近可读极限，不必要的层级
+- **11pt is the baseline**. All body-like elements (body / abstract / author / TOC entries / citations / table caption / table header / table body / footnotes / references) are 11pt. Reading uniformly as one body tier simplifies hierarchy
+- **12pt = h2 subsection title**, the only subsection-level emphasis
+- **14pt = h1 section title + TOC / LoF / LoT titles**, section-level emphasis
+- **18pt = main title**, the only cover top tier, bold
+- **16pt = subtitle**, second only to the main title, regular weight; distinguished from the main title by "2pt size diff + weight"
+- **10pt = figure / table source and note**. For `::: {.figure-source}` and `::: {.table-source}` only, one tier below body for visual demotion. The figure / table caption (above the figure / table) stays 11pt level with body; only the source / note (below) drops to 10pt
+- **no 9pt**. 9pt is near the readable limit at PDF reading size, an unnecessary tier
 
-实现见 §5.1 YAML 头与 include-in-header；本表是目标值，渲染后用 PDF reader 抽样校验。
+Implementation in §5.1 YAML header and include-in-header; this table is the target, sample-checked with a PDF reader after rendering.
 
-**关键词约定**：
+**Keyword convention**:
 
-**不使用** Quarto / pandoc 的 YAML 顶层 `keywords:` 字段——它只写到 PDF 元数据（hyperref 的 `pdfkeywords`，仅 Acrobat 文件属性面板可见），**不渲染为可见文本**，对内部投研报告无价值。保留它反而引起误解（看到 YAML 写了 keywords 但 PDF 上没显示）。
+**Do not use** Quarto / pandoc's top-level YAML `keywords:` field — it writes only to PDF metadata (hyperref's `pdfkeywords`, visible only in the Acrobat file-properties panel), **not rendered as visible text**, no value for an internal investment report. Keeping it actually causes confusion (the YAML has keywords but the PDF shows none).
 
-**做法**：在 `abstract:` YAML 字段的摘要文本末尾另起一段加内联关键词行：
+**Practice**: add an inline keyword line at the end of the abstract text in the `abstract:` YAML field:
 
 ```yaml
 abstract: |
-  ... 摘要正文 ...
+  ... abstract body ...
 
-  **关键词**：核心主题 | 国家或地区 | 关键政策 | 关键机构 | ...
+  **Keywords**: core theme | country or region | key policy | key institution | ...
 ```
 
-关键词之间用 ` | ` 分隔，避免与中文顿号、英文逗号在视觉上混淆。「关键词」三字加粗，列表常规。
+Keywords separated by ` | `, avoiding visual confusion with Chinese / English commas. "Keywords" bold, list regular.
 
-**关键词选择规范**：
+**Keyword-selection spec**:
 
-- **数量**：5-7 个
-- **必含五类**（按顺序）：① 研究对象（如某政策名、某主权基金）② 核心议题或事件 ③ 关键机构 ④ 研究方法或视角 ⑤ 地域或时间锚点
-- **全部具体名词**，避免抽象词（如「经济」「分析」「研究」「问题」「挑战」「思考」）
-- **避免概括性词组**（如「经济多元化」可接受，「全球经济一体化」太宽泛）
-- **首字母大小写**：英文专名按官方写法（IMF、PIF 全大写，NEOM 全大写，Vision 2030 含数字）；中文专名按通用译法
+- **count**: 5-7
+- **must include five classes** (in order): (1) research object (a policy name, a sovereign fund) (2) core issue or event (3) key institution (4) research method or angle (5) geographic or time anchor
+- **all concrete nouns**, avoid abstractions ("economy" "analysis" "research" "problem" "challenge" "thinking")
+- **avoid sweeping phrases** ("economic diversification" acceptable, "global economic integration" too broad)
+- **capitalisation**: English proper names per official form (IMF, PIF all-caps, NEOM all-caps, Vision 2030 with the number); Chinese proper names per common translation
 
-**例外**：若研报要进学术数据库 / 检索系统，需要 PDF 元数据 indexing 时再补 YAML `keywords:` 字段，并接受「YAML + 内联」两份要手动同步的代价。
+**Exception**: if the report enters an academic database / indexing system needing PDF-metadata indexing, add the YAML `keywords:` field and accept the cost of manually syncing the "YAML + inline" two copies.
 
-### 1.5 段首缩进与段间距
+### 1.5 First-line indent and paragraph spacing
 
-**全文统一无首段缩进，包括摘要与正文**。覆盖 ctexart 的默认 `\parindent=2em`，显式设 `\parindent=0pt`。
+**No first-line indent throughout, incl. abstract and body.** Override ctexart's default `\parindent=2em`, set `\parindent=0pt` explicitly.
 
-无缩进时段间必须加视觉空白，否则段落粘成一团。默认 `\parskip=0.5em`（半行高，自动跟字号缩放）。
+Without indent, paragraphs need visual whitespace or they clump. Default `\parskip=0.5em` (half a line, auto-scaling with font size).
 
-ctexart 摘要环境也跟随同一规则，不另设例外。实现见 §5.1 YAML 头。
+The ctexart abstract environment follows the same rule, no exception. Implementation in §5.1 YAML header.
 
-### 1.6 页边距
+### 1.6 Margins
 
-全文统一。**摘要 / 目录 / 索引页页边距 = 正文页边距**。标准上下 25mm、左右 20mm。
+Uniform throughout. **Abstract / TOC / index page margins = body margins.** Standard top/bottom 25mm, left/right 20mm.
 
-### 1.7 换页规则
+### 1.7 Page-break rules
 
-以下位置**强制换页**（其他位置按 LaTeX 自然分页流动）：
+**Forced page breaks** at the following positions (others flow by natural LaTeX pagination):
 
-| 位置 | 实现方式 |
+| Position | Implementation |
 |---|---|
-| 封面 | `\maketitle` 默认 `\thispagestyle{empty}` |
-| **目录开始前** | LaTeX `\AtBeginDocument` + `\pretocmd{\tableofcontents}{\clearpage}`（见 §5.1）|
-| **图索引开始前** | LaTeX `\AtBeginDocument` + `\pretocmd{\listoffigures}{\clearpage}`（见 §5.1）|
-| **表索引开始前** | LaTeX `\AtBeginDocument` + `\pretocmd{\listoftables}{\clearpage}`（见 §5.1）|
-| **表索引结束后**（进入正文前） | LaTeX `\AtBeginDocument` + `\apptocmd{\listoftables}{\clearpage}`（见 §5.1）|
-| **附录开始前** | qmd 正文里在附录 H1 标题前手写 `{{< pagebreak >}}` |
-| **参考文献开始前** | qmd 正文里在 `# 参考文献` 前手写 `{{< pagebreak >}}` |
+| cover | `\maketitle` defaults to `\thispagestyle{empty}` |
+| **before the TOC** | LaTeX `\AtBeginDocument` + `\pretocmd{\tableofcontents}{\clearpage}` (see §5.1) |
+| **before the LoF** | LaTeX `\AtBeginDocument` + `\pretocmd{\listoffigures}{\clearpage}` (see §5.1) |
+| **before the LoT** | LaTeX `\AtBeginDocument` + `\pretocmd{\listoftables}{\clearpage}` (see §5.1) |
+| **after the LoT** (entering the body) | LaTeX `\AtBeginDocument` + `\apptocmd{\listoftables}{\clearpage}` (see §5.1) |
+| **before an appendix** | hand-write `{{< pagebreak >}}` before the appendix H1 in the qmd body |
+| **before references** | hand-write `{{< pagebreak >}}` before `# References` in the qmd body |
 
-**布局结果**：封面 + 摘要（合页）→ 目录（独立）→ 图索引（独立）→ 表索引（独立）→ 正文 → 附录（独立）→ 参考文献（独立）。每个「导航类」区块都独立成页，避免标题与内容分离。
+**Layout result**: cover + abstract (one page) → TOC (standalone) → LoF (standalone) → LoT (standalone) → body → appendix (standalone) → references (standalone). Each "navigation" block is standalone, avoiding title-content separation.
 
-**为什么图索引 / 表索引前需要强制换页**：tocloft 用 `\begin{center}...\end{center}` 居中标题时（见 §1.8），标题在垂直模式下作为独立段落，LaTeX 会按分页规则把「孤立标题」推到前一页底部、内容到下一页，导致标题与条目分离。`\clearpage` 强制 LoF / LoT 从新页开始，保证标题与条目同页。这是工程上的妥协，不是审美选择。
+**Why the LoF / LoT need a forced break**: when tocloft centres the title with `\begin{center}...\end{center}` (see §1.8), the title in vertical mode is a standalone paragraph, and LaTeX pushes the "orphan title" to the bottom of the previous page with the content on the next, separating title and content. `\clearpage` forces the LoF / LoT to start on a new page, keeping title and entries together. This is an engineering compromise, not an aesthetic choice.
 
-### 1.8 图 / 表索引
+### 1.8 LoF / LoT
 
-- 图索引（List of Figures）和表索引（List of Tables）**两者都必须有**
-- 编号**连续**：图 1 / 图 2 / ... / 图 N，表 1 / 表 2 / ... / 表 M
-- **不允许节内编号**（图 1.1 / 表 6.1 这种）
-- Quarto `lof: true` + `lot: true` 自动生成两索引
-- **三个索引标题（目录 / 图目录 / 表目录）统一居中**——直接覆盖 tocloft 的 `\@cftmaketoctitle` / `\@cftmakeloftitle` / `\@cftmakelottitle` 三个 hook，标题用 `\begin{center}...\end{center}` 强制居中（见 §5.1）。**不要用 tocloft 自带的 `\hfill` 前后包夹法**——它在 article 模式 + 标题接在前文段落（如摘要）之后时不可靠，常偏移到右侧
-- **图索引 / 表索引开始前强制换页**——`\begin{center}` 居中触发标题作为独立段落，LaTeX 会把孤立标题推到前一页底部、内容到下一页。`\clearpage` 在 LoF / LoT 前面强制换页，保证标题与条目同页（见 §1.7）
-- **表索引结束后强制换页进正文**（与 §1.7 一致）
-- 实现汇总——`\AtBeginDocument` + `\pretocmd{\listoffigures}{\clearpage}` + `\pretocmd{\listoftables}{\clearpage}` + `\apptocmd{\listoftables}{\clearpage}`（见 §5.1）
+- the List of Figures and List of Tables **must both exist**
+- numbering **continuous**: Figure 1 / Figure 2 / ... / Figure N, Table 1 / ... / Table M
+- **no in-section numbering** (Figure 1.1 / Table 6.1)
+- Quarto `lof: true` + `lot: true` auto-generates both
+- **the three index titles (TOC / LoF / LoT) are uniformly centered** — directly override tocloft's `\@cftmaketoctitle` / `\@cftmakeloftitle` / `\@cftmakelottitle` hooks, forcing the title centered with `\begin{center}...\end{center}` (see §5.1). **Do not use tocloft's built-in `\hfill` wrap method** — unreliable in article mode when the title follows preceding text (like an abstract), often offset right
+- **forced break before the LoF / LoT** — `\begin{center}` centering triggers the title as a standalone paragraph, LaTeX pushes the orphan title to the previous page bottom. `\clearpage` before LoF / LoT forces the break, keeping title and entries together (see §1.7)
+- **forced break after the LoT entering the body** (consistent with §1.7)
+- implementation summary — `\AtBeginDocument` + `\pretocmd{\listoffigures}{\clearpage}` + `\pretocmd{\listoftables}{\clearpage}` + `\apptocmd{\listoftables}{\clearpage}` (see §5.1)
 
-**重要踩坑**：tocloft 在 `\AtBeginDocument` 里重定义 `\listoffigures` / `\listoftables`，所以 patch 必须也包在 `\AtBeginDocument` 中、且依靠 hook FIFO 顺序在 tocloft 之后跑——否则 patch 会被 tocloft 的重定义覆盖。直接 preamble 里 `\let + \renewcommand` 或不包 `\AtBeginDocument` 的 `\apptocmd` / `\pretocmd` **不生效**。
+**Key pitfall**: tocloft redefines `\listoffigures` / `\listoftables` inside `\AtBeginDocument`, so the patch must also be wrapped in `\AtBeginDocument` and rely on hook FIFO order to run after tocloft — otherwise the patch is overwritten by tocloft's redefinition. A bare `\let + \renewcommand` in the preamble, or `\apptocmd` / `\pretocmd` not wrapped in `\AtBeginDocument`, **does not take effect**.
 
-### 1.9 节间无分割线
+### 1.9 No dividers between sections
 
-节与节之间不画 `---` / `\hrule` / `***` 等横线。章节由换页或空行分隔即可。
+No `---` / `\hrule` / `***` horizontal rules between sections. Sections are separated by page breaks or blank lines.
 
-### 1.10 加粗使用
+### 1.10 Bold usage
 
-**理想是正文零加粗**。强调通过句首结论句、h2 标题、表格行高亮、图突出色承担。如必须加粗，仅限：术语首次定义、单点强调。**每段加粗 ≤ 1 处，每节加粗 ≤ 3 处**。
+**The ideal is zero bold in the body.** Emphasis is carried by the leading conclusion sentence, h2 titles, table row highlights, the chart accent colour. If bold is necessary, only: first definition of a term, single-point emphasis. **≤ 1 bold per paragraph, ≤ 3 bold per section.**
 
-### 1.11 页眉页脚
+### 1.11 Header / footer
 
-**全文无页眉**。**页尾仅居中显示页码**。
+**No header throughout.** **The footer shows only a centered page number.**
 
-实现：`\pagestyle{plain}` 覆盖 ctex `chinese-article` scheme 默认的 `\pagestyle{headings}`（后者会在页眉显示 `\rightmark` 即上一节标题名 + 页码，索引溢出页常出现「图索引 N」等遗留信息）。
+Implementation: `\pagestyle{plain}` overrides the ctex `chinese-article` scheme default `\pagestyle{headings}` (the latter shows `\rightmark`, i.e. the previous section title + page number, in the header; index overflow pages often show leftover "List of Figures N" etc.).
 
-封面页由 `\maketitle` 自动设 `\thispagestyle{empty}` 抑制页码，无需额外配置。
+The cover page is auto-set to `\thispagestyle{empty}` by `\maketitle` to suppress the page number, no extra config.
 
-理由：① 中文投研报告读者扫的是结构（看目录与章节标题就够），不需要每页页眉重复章节名；② headings 样式在索引溢出页会显示上一章遗留的 `\rightmark`，造成「图索引」「目录」等字样错位出现；③ 简化即美。
-
----
-
-## 二、图表设计原则（FT chart-doctor inspired）
-
-五条原则按重要性排。具体 HEX 值统一在 §5.3 配色，本节只讲原则不列颜色。
-
-### 2.1 typography 两层级差
-
-字体层级靠**字号 + 颜色**承担，**不靠字重**（FT 标题用 regular 字重）：
-
-| 元素 | 字号 | 字重 | 颜色 |
-|---|---|---|---|
-| 图标题（JPG 内） | 14pt | 常规（regular） | text |
-| 轴标签 / 来源 / 注 | 9pt | 常规 | text_light |
-
-**只有一级标题**，不要副标题。论点压进主标题（如「重新基期化后名义 +14% / 非油 +20%」）。
-
-### 2.2 chrome minimalism
-
-最大化数据 - 油墨比（Tufte 原则 + FT 实操）：
-
-- 去 top / right spine
-- **保留 bottom + left spine**（白底下需要可见横纵坐标）。FT 原版用 cream bg 配「无左 spine」，本项目用白底（嵌入 Quarto 白纸），恢复左 spine 提供视觉边界
-- spine 颜色：axis 色（FT 暖深灰 `#66605C`，见 §5.3）
-- 刻度线可见（white bg 上看得清）
-- baseline（0 / 参考线，baseline 色）
-- 网格仅 y 轴方向（FT 实际把 y 轴 tick line 拉满 plot 宽度形成横线），白底下略加深
-
-### 2.3 single accent 原则
-
-一张图**只允许一个数据元素用 accent 色突出**，其他元素全用 primary / neutral / tertiary。accent 用在「真正想让读者看的那个」。
-
-反例：5 个柱用 5 个不同颜色，读者眼睛飘。正例：5 个柱全用 tertiary，最高那个用 accent，读者立刻知道你想强调谁。
-
-FT 原话：「make sure the blue line is on top as this is the primary line colour」。
-
-### 2.4 标题承担论点
-
-- **标题写「事实 + 数字」**：「机构 A 与机构 B 的某增速在某年拐开 1.5 个百分点」「政策动作后名义 GDP +14%」
-- 不写「X 国非油 GDP 增速」这种空泛标题
-- 读者扫标题就能拿走主要 take-away，无需读图
-
-### 2.5 数据 - 油墨比
-
-- 5 ticks 优于 10 ticks（少而精）
-- 整数优于小数（除非精度有意义）
-- 网格极淡或省略
-- 颜色饱和度低（饱和色让眼睛累）
-- 不必要的标签 / 边框 / 阴影 / 渐变全删
-- **不在柱间加变化率标签**（如「+14%」配箭头）。容易出错，且 FT 不这么做。变化率写进标题
+Reasons: (1) Chinese investment-report readers scan structure (TOC and section titles are enough), no need for a header repeating the section name each page; (2) the headings style shows the previous chapter's leftover `\rightmark` on index overflow pages, causing "List of Figures", "Contents" misplacements; (3) simplicity is beauty.
 
 ---
 
-## 三、图表制作规则
+## 2. Chart design principles (FT chart-doctor inspired)
 
-### 3.1 一图一脚本
+Five principles by importance. Specific HEX values are in §5.3; this section covers principles, not colours.
 
-每张图对应一个独立脚本，命名 `make_fig_<节号>_<编号>_<topic>.py`。
+### 2.1 Two-level typography
 
-不允许「一节一脚本生成多图」。理由：
+Font hierarchy is carried by **size + colour**, **not weight** (FT titles use regular weight):
 
-- 单图迭代时不必重跑整节
-- 单图脚本 ≤ 150 行，可读
-- 视觉问题定位精确
-- 失败不连坐
-
-例外：内容完全相同、仅参数不同的批量图（如各国分图）可合并到一个脚本循环出图。
-
-### 3.2 共用样式模板（chart_template.py）
-
-每个项目的 `heavy-research/scripts/chart_template.py` 是绘图样式 single source of truth。所有 `5_scripts/make_fig_*.py` 顶部 `import _path; from chart_template import setup_style, save_fig, PALETTE`（`_path.py` 见 §6.4）。保证字体、调色板、边距、网格、spine、字号、DPI、输出格式一致。**任何脚本不允许 override 这些样式**，除非用户明确批准。
-
-接口契约见 §六。
-
-### 3.3 PDF / JPG / clean-JPG 三输出 + 内容分离（核心）
-
-三个输出**故意承载不同内容**，对应三种嵌入场景：
-
-| 元素 | PDF 单图文件（裸图，给 qmd）| JPG（独立分发，自包含）| _clean.jpg（给 publication HTML）|
+| Element | Size | Weight | Colour |
 |---|---|---|---|
-| 图表核心 | 是 | 是 | 是 |
-| 标题（一级，承担论点）| 否（Quarto caption 提供）| 是。顶部 14pt 常规 text 色 | 否（HTML 模板提供）|
-| 来源 | 否（`\begin{figsource}` 环境提供）| 是。底部 9pt「来源：...」 | 否（HTML `.exhibit-source` 提供）|
-| 注 | 否（`\begin{figsource}` 环境提供）| 是。底部 9pt「注：...」 | 否（HTML `.exhibit-source` 提供）|
-| 文件后缀 | `fig_*.pdf` | `fig_*.jpg` | `fig_*_clean.jpg` |
+| chart title (in JPG) | 14pt | regular | text |
+| axis label / source / note | 9pt | regular | text_light |
 
-**关键纪律**：
+**Only one title level**, no subtitle. Press the argument into the main title (e.g. "after rebasing nominal +14% / non-oil +20%").
 
-- **单图 PDF 文件**（`6_figures/fig_*.pdf`）：永远是裸图。`chart_template.save_fig()` 不在 PDF 输出里嵌 title / source / note，避免与 Quarto caption 重复。**给 qmd 主报告嵌入**
-- **qmd 渲染的研报 PDF**：每个 `![](fig.pdf)` 引用**必须紧跟 `\begin{figsource}` 环境**；每个表的 `: caption {#tbl-id}` 后**必须紧跟 `\begin{tblsource}` 环境**。环境内填 source + note，渲染为 10pt 灰度（见 §1.4）
-- **JPG 独立分发**（`fig_*.jpg`）：自包含，title / source / note 一并嵌入，9pt 底部。**给公众号、社交分发等需要单图独立可读的场景**
-- **_clean.jpg**（`fig_*_clean.jpg`）：与 PDF 同步落地的栅格版，无烧入。**专供 publication-style HTML 嵌入**——HTML 模板已经提供 `.exhibit-title` / `.exhibit-source`，再嵌带烧入的标准 JPG 会出现双标题
-- **只有一级标题**，不要副标题。论点压进 title（如「重新基期化后名义 +14% / 非油 +20% / 油气 -5.7%」），符合 FT「标题承担论点」精神（§2.4）
-- **三输出由 `save_fig()` 一次性产出**，调用方不需要关心；脚本作者写 `save_fig(fig, fig_id, title=..., source=..., note=...)` 一次，三个文件同时落地
+### 2.2 Chrome minimalism
 
-**Quarto qmd 中的图引用范式**：
+Maximise the data-ink ratio (Tufte principle + FT practice):
+
+- remove top / right spine
+- **keep bottom + left spine** (on a white background the axes need to be visible). FT's original uses a cream bg with "no left spine"; this project uses white (embedding in Quarto white-paper PDF), restoring the left spine for a visual boundary
+- spine colour: axis colour (FT warm dark grey `#66605C`, see §5.3)
+- ticks visible (clear on a white bg)
+- baseline (0 / reference line, baseline colour)
+- grid only in the y direction (FT actually extends the y-axis tick line across the plot width into a horizontal line), slightly darkened on white
+
+### 2.3 Single accent principle
+
+A chart **allows only one data element in the accent colour** to stand out; all others in primary / neutral / tertiary. Use the accent on "the one you really want the reader to see".
+
+Counter-example: 5 bars in 5 different colours, the eye wanders. Positive example: all 5 bars in tertiary, the tallest in accent, the reader instantly knows who you emphasise.
+
+FT's words: "make sure the blue line is on top as this is the primary line colour".
+
+### 2.4 Title carries the argument
+
+- **the title states "fact + number"**: "institution A and B's growth diverge by 1.5 percentage points in year X" / "after the policy, nominal GDP +14%"
+- do not write a vague title like "X country non-oil GDP growth"
+- the reader gets the main take-away by scanning the title, no need to read the chart
+
+### 2.5 Data-ink ratio
+
+- 5 ticks beats 10 ticks (less is more)
+- integers beat decimals (unless precision matters)
+- grid very faint or omitted
+- low colour saturation (saturated colours tire the eye)
+- delete all unnecessary labels / borders / shadows / gradients
+- **no change-rate labels between bars** (e.g. "+14%" with an arrow). Error-prone, and FT does not do it. The change rate goes in the title
+
+---
+
+## 3. Chart production rules
+
+### 3.1 One script per chart
+
+Each chart corresponds to an independent script, named `make_fig_<section>_<n>_<topic>.py`.
+
+No "one section, one script generating multiple charts". Reasons:
+
+- a single-chart iteration does not need to re-run the whole section
+- a single-chart script ≤ 150 lines, readable
+- precise visual-problem location
+- no failure cascade
+
+Exception: identical-content, parameter-only batch charts (per-country sub-charts) can be merged into one looping script.
+
+### 3.2 Shared style template (chart_template.py)
+
+Each project's `analyst-research/scripts/chart_template.py` is the drawing-style single source of truth. All `5_scripts/make_fig_*.py` tops have `import _path; from chart_template import setup_style, save_fig, PALETTE` (`_path.py` in §6.4). This guarantees consistent fonts, palette, margins, grid, spines, sizes, DPI, output formats. **No script may override these styles** unless the user explicitly approves.
+
+Interface contract in §6.
+
+### 3.3 PDF / JPG / clean-JPG triple output + content separation (core)
+
+The three outputs **deliberately carry different content**, for three embedding scenarios:
+
+| Element | PDF single-chart file (bare, for qmd) | JPG (independent distribution, self-contained) | _clean.jpg (for publication HTML) |
+|---|---|---|---|
+| chart core | yes | yes | yes |
+| title (one level, carries the argument) | no (Quarto caption provides) | yes. top 14pt regular text colour | no (HTML template provides) |
+| source | no (`\begin{figsource}` provides) | yes. bottom 9pt "Source: ..." | no (HTML `.exhibit-source` provides) |
+| note | no (`\begin{figsource}` provides) | yes. bottom 9pt "Note: ..." | no (HTML `.exhibit-source` provides) |
+| file suffix | `fig_*.pdf` | `fig_*.jpg` | `fig_*_clean.jpg` |
+
+**Key discipline**:
+
+- **single-chart PDF** (`6_figures/fig_*.pdf`): always bare. `chart_template.save_fig()` does not embed title / source / note in the PDF output, avoiding duplication with the Quarto caption. **For main-report qmd embedding.**
+- **qmd-rendered report PDF**: each `![](fig.pdf)` reference **must be immediately followed by a `\begin{figsource}` environment**; each table's `: caption {#tbl-id}` **must be immediately followed by a `\begin{tblsource}` environment**. Fill source + note inside, rendered as 10pt grey (see §1.4)
+- **JPG independent distribution** (`fig_*.jpg`): self-contained, title / source / note all embedded, 9pt bottom. **For WeChat, social distribution, and scenarios needing a single self-readable chart.**
+- **_clean.jpg** (`fig_*_clean.jpg`): the no-burn-in raster landing with the PDF. **For publication-style HTML embedding** — the HTML template already provides `.exhibit-title` / `.exhibit-source`; embedding a burn-in JPG would double the title. (medium / light pass `clean=False` to skip generation.)
+- **only one title level**, no subtitle. Press the argument into the title (e.g. "after rebasing nominal +14% / non-oil +20% / oil-and-gas -5.7%"), per FT "title carries the argument" (§2.4)
+- **the three outputs produced in one `save_fig()` call**, the caller need not care; the script author writes `save_fig(fig, fig_id, title=..., source=..., note=...)` once and the three files land together
+
+**Quarto qmd figure reference pattern**:
 
 ```markdown
-![某指标 X 年与 Y 年对比](../6_figures/fig_1_1_topic.pdf){#fig-topic}
+![Metric X comparison, year X vs year Y](../6_figures/fig_1_1_topic.pdf){#fig-topic}
 
 \begin{figsource}
-来源：机构 A 年报 YYYY | 注：口径补充说明
+Source: institution A annual report YYYY | Note: caliper supplement
 \end{figsource}
 ```
 
-**Quarto qmd 中的表引用范式**：
+**Quarto qmd table reference pattern**:
 
 ```markdown
-| 指标 | 2016 | 2024 |
+| Metric | 2016 | 2024 |
 |---|---|---|
-| 某指标 (%) | 19.3 | 35.85 |
+| metric (%) | 19.3 | 35.85 |
 
-: 某指标 2016 与 2024 对照 {#tbl-topic}
+: Metric comparison 2016 vs 2024 {#tbl-topic}
 
 \begin{tblsource}
-来源：机构 B 年度报告 YYYY Table 1 | 注：口径补充说明
+Source: institution B annual report YYYY Table 1 | Note: caliper supplement
 \end{tblsource}
 ```
 
-**为什么用 raw LaTeX 而不是 `:::` div**：Pandoc 的 div 类映射在 LaTeX 输出端对带连字符的类名（如 `.figure-source`）有 escape 问题，且不同 Quarto / Pandoc 版本行为不一致。raw LaTeX 环境 100% 可靠。
+**Why raw LaTeX instead of a `:::` div**: Pandoc's div-class mapping has escape issues for hyphenated class names (`.figure-source`) on the LaTeX output side, with version-inconsistent behaviour across Quarto / Pandoc. A raw LaTeX environment is 100% reliable.
 
-**渲染规则实现**（在 `_quarto.yml` 的 `include-in-header` 区加 LaTeX）：
+**Render-rule implementation** (add the LaTeX in the `_quarto.yml` `include-in-header`):
 
 ```latex
-% figure-source / table-source 环境 10pt 灰度（spec §1.4 + §3.3）
+% figure-source / table-source environments 10pt grey (spec §1.4 + §3.3)
 \usepackage{xcolor}
 \definecolor{sourcegray}{gray}{0.4}
 \newenvironment{figsource}
@@ -356,93 +358,93 @@ FT 原话：「make sure the blue line is on top as this is the primary line col
   {\par\endgroup\medskip}
 ```
 
-**source / note 信息来自哪里**：直接 copy 自对应 `make_fig_*.py` 脚本里 `save_fig(source=..., note=...)` 的参数值。脚本里已写好的 source / note 字符串就是该图对外承认的来源 / 注。draft.qmd 写入 figure-source 块时**字符串与脚本保持一致**，不要在 qmd 里重写一遍（避免双源不一致）。
+**Where source / note info comes from**: copy directly from the matching `make_fig_*.py` script's `save_fig(source=..., note=...)` parameter values. The source / note strings written in the script are the figure's acknowledged source / note. When writing the figure-source block in draft.qmd, **keep the string consistent with the script**, do not rewrite it in the qmd (avoiding dual-source inconsistency).
 
-一份数据，三种用途。chart_template 管单图与 JPG，Quarto 管研报 PDF 内嵌，互不干扰。
+One data set, three uses. chart_template manages the single chart and JPG, Quarto manages report-PDF embedding, mutually non-interfering.
 
-### 3.4 图片内字体
+### 3.4 In-chart fonts
 
-- 中文字体 = 正文中文字体（如 Songti SC）
-- 英文字体 = 正文英文字体（如 Times New Roman）
-- 字号 ≥ 9pt（FT 印刷版下限），最大 ≤ 节标题字号
+- Chinese font = body Chinese font (e.g. Songti SC)
+- English font = body English font (e.g. Times New Roman)
+- size ≥ 9pt (FT print floor), max ≤ section-title size
 
-### 3.5 调色板
+### 3.5 Palette
 
-每个项目**先确定调色板再画图**（workflow 步骤 7 启动前定）。默认 FT 配色（完整 HEX + 语义见 §5.3）。
+Each project **fixes the palette before charting** (before workflow step 7 starts). Default FT palette (full HEX + semantics in §5.3).
 
-不允许任意配色，**不允许「大红配大绿」、彩虹色**。脚本不允许直接写颜色字符串，必须通过 `PALETTE` 接口引用。
+No arbitrary colours, **no "big red + big green", no rainbow**. Scripts may not write colour strings directly; reference via the `PALETTE` interface.
 
-### 3.6 图例语言一致性
+### 3.6 Legend language consistency
 
-- 整个报告主语言决定图例语言（中文研报 → 中文图例）
-- 例外：固定专业缩写（IMF / OECD / OPEC / GCC / GDP / FY / WACC / 各国央行与统计局 / 主权基金的常用缩写）保留英文
-- **图例不与数据元素重叠**
+- the report's main language decides the legend language (Chinese report → Chinese legend)
+- exception: fixed professional acronyms (IMF / OECD / OPEC / GCC / GDP / FY / WACC / common central-bank, statistics-office, sovereign-fund acronyms) keep English
+- **the legend does not overlap data elements**
 
-### 3.7 一图一 plot（禁止并列子图）（硬规则）
+### 3.7 One plot per chart (no side-by-side subplots) (hard rule)
 
-**`make_fig_*.py` 一律单 axes，禁止 `plt.subplots(1, 2, ...)` 等任何并列布局。**
+**`make_fig_*.py` is single-axes only; `plt.subplots(1, 2, ...)` and any side-by-side layout is forbidden.**
 
-**理由**：
+**Reasons**:
 
-- 并列子图带来一连串边缘问题：(a)(b) 子标题高度对齐、legend 不重叠某子图、双子图字号缩水、单边长 y-label 导致整体右移、(a)(b) 与 suptitle 视觉混乱
-- 单图获得完整 `FIG_W = 6.69 inch` 横向宽度，aspect ratio 更舒展，10pt 字号无需压缩
-- 派生（公众号 / Slack / 邮件）时每图独立分发，无需切割
-- chart_template 简化：去掉 multi-subplot 分支、`TOP_PAD_PDF_MULTI_IN`、`SUBPLOT_TITLE_EXTRA_IN`，跨项目零边缘 case
+- side-by-side subplots bring a chain of edge problems: (a)(b) subtitle height alignment, legend not overlapping a subplot, dual-subplot font shrink, single-side long y-label shifting everything right, (a)(b) vs suptitle visual confusion
+- a single chart gets the full `FIG_W = 6.69 inch` horizontal width, a more spacious aspect ratio, 10pt font without compression
+- on derivation (WeChat / Slack / email) each chart distributes independently, no slicing
+- chart_template simplification: removes the multi-subplot branch, `TOP_PAD_PDF_MULTI_IN`, `SUBPLOT_TITLE_EXTRA_IN`, zero edge cases across projects
 
-**表达「并列对比」的替代方案**：
+**Alternatives for "side-by-side comparison"**:
 
-| 原来想用并列子图 | 单图替代 |
+| Originally wanted side-by-side subplots | Single-chart alternative |
 |---|---|
-| 前 vs 后 / A vs B 同指标对比 | 分组柱（两色并列 bars）或时序双线 |
-| 不同指标的并列展示 | 拆成两张独立图，正文用「下图 ... 上图 ...」串联 |
-| 多区域 / 多国小多图 | 选最关键 1-2 国画明细图，其余进表格 |
-| 饼图 + 散点等异型组合 | 拆成两张独立图，各占一段 |
+| before vs after / A vs B same-metric comparison | grouped bars (two-colour bars) or dual time-series lines |
+| different metrics side by side | split into two independent charts, body says "the chart below ... the chart above ..." |
+| multi-region / multi-country small-multiples | draw the 1-2 most critical countries in detail, the rest in a table |
+| pie + scatter heterogeneous combo | split into two independent charts, one per passage |
 
-**实现约束**：`save_fig` 检测到 `len(fig.axes) > 1` 时会打印 warning，规范上不允许，强行运行虽然能渲染但视觉风险自担。
+**Implementation constraint**: `save_fig` prints a warning when it detects `len(fig.axes) > 1`; not allowed by spec, runs but visual risk is yours.
 
-### 3.8 元素不重叠（硬规则）
+### 3.8 No element overlap (hard rule)
 
-- 数据标签不与坐标轴 / 数据线 / 柱重叠
-- **数据标签 / annotation 文字颜色不与其下方任何 plot 元素同色**。同色会让文字字符落在同色柱内时直接「消失」（实战教训：accent 色注释正好压在 accent 色目标柱顶部、文字看不见）。两种合法处置：① 把文字挪到柱外的空白区；② 文字改成 `PALETTE["text"]`（黑）等中性色
-- **图例（legend）硬规则**（无例外，跨所有图统一）：
-  - 不覆盖在 plot 区域上（不占用数据空间）。**禁止** `loc="upper right" / "upper left" / "lower right" / "lower left" / "center" / "best"` 等任何把 legend 放进 plot 内的写法
-  - 不与数据线 / 柱 / 散点等图形元素重叠
-  - 不放在 plot 下方（`bbox_to_anchor` 的 y 不允许为负值）
-  - **必须水平排开（horizontal layout）**：`ncol` 取「图例项数」让所有项一行排开，**禁止**垂直堆叠。**ncol fallback**：若项的总宽估算 > image 宽（最宽项 × 项数 + spacing），一行装不下，退回 `ncol = ceil(N / 2)` 两行布局（避免 legend 被截）。判断很糙，先写 `ncol=N`，渲染发现溢出再降。实战案例：7 项 legend 含长项「市场驱动 (旅游 + 消费)」时，`ncol=7` 溢出右边，改 `ncol=4` 两行布局后正常
-  - **摆位以「整张图片」为基准、不是 plot 中点**。两种合法模式：
-    - ① **居中（默认）**：legend 中心落在 figure-x = 0.5（image center）。**不要**直接写 `bbox_to_anchor=(0.5, 1.02)`——那是 plot 中点，带长 y-tick label 的横向柱图里 plot 中点会偏右、legend 视觉上歪向右。便捷封装：`legend_above(ax, ncol=N, mode="centered")`，等价于 `ax.legend(loc="lower center", bbox_to_anchor=((0.5-pos.x0)/pos.width, 1.02), ncol=N, frameon=False)`（pos = ax.get_position()）
-    - ② **image-left（centered 装不下时的回退）**：项数极多 / 一行太宽时，居中会让 legend 在两边都超界；image-left 让 legend 从 figure 最左边开始（含 y-axis labels 区，**不**从 plot 内的 x=0 开始），把所有可用横向空间让给 legend。便捷封装：`legend_above(ax, ncol=N, mode="image_left")`，等价于 `ax.legend(loc="lower left", bbox_to_anchor=(-pos.x0/pos.width, 1.02), ncol=N, frameon=False)`。**默认仍用 centered，只在 centered 真的装不下时退到这里**
-  - **title 与 legend 之间留约一行空隙**：`save_fig` 自动检测 plot 顶端 legend（用 `leg.get_window_extent()` 量 legend 底沿是否 ≥ plot 顶沿），命中后 extra_top 自动 +`LEGEND_ABOVE_EXTRA_IN = 0.30 inch`，让 title 与 legend 视觉分离。**脚本作者无需手动调整**，照常调 `ax.legend(...)` 即可
-- 双 Y 轴的两组数据用不同 marker / 线型，且 legend 标 RHS / LHS
-- caption / 标题文字与轴 tick 不重叠
+- data labels do not overlap the axes / data lines / bars
+- **data-label / annotation text colour is not the same as any plot element below it**. Same colour makes the text "disappear" when a character falls on a same-colour bar (field lesson: an accent-colour annotation right on the accent-colour target bar top, text invisible). Two legal handlings: (1) move the text to blank space outside the bar; (2) change the text to `PALETTE["text"]` (black) or another neutral colour
+- **legend hard rules** (no exception, uniform across all charts):
+  - not covering the plot area (not occupying data space). **Forbidden** `loc="upper right" / "upper left" / "lower right" / "lower left" / "center" / "best"` and any in-plot legend placement
+  - not overlapping data lines / bars / scatter / graphic elements
+  - not below the plot (`bbox_to_anchor` y must not be negative)
+  - **must lay out horizontally**: `ncol` takes "number of legend items" so all items spread in one row, **no** vertical stacking. **ncol fallback**: if the total item width estimate > image width (widest item × count + spacing), one row does not fit, fall back to `ncol = ceil(N / 2)` two rows (avoiding legend clipping). The judgement is rough; write `ncol=N` first, drop on overflow. Field case: a 7-item legend with a long item "市场驱动 (旅游 + 消费)" overflowed right at `ncol=7`, fixed at `ncol=4` two rows
+  - **positioning is based on "the whole image", not the plot midpoint**. Two legal modes:
+    - (1) **centered (default)**: the legend centre at figure-x = 0.5 (image center). **Do not** write `bbox_to_anchor=(0.5, 1.02)` directly — that is the plot midpoint, and in a horizontal bar with long y-tick labels the plot midpoint shifts right, the legend visually skews right. Convenience wrapper: `legend_above(ax, ncol=N, mode="centered")`, equivalent to `ax.legend(loc="lower center", bbox_to_anchor=((0.5-pos.x0)/pos.width, 1.02), ncol=N, frameon=False)` (pos = ax.get_position())
+    - (2) **image-left (fallback when centered does not fit)**: with very many items / a row too wide, centered overflows both sides; image-left starts the legend from the figure's leftmost edge (incl. the y-axis label area, **not** the in-plot x=0), giving all available horizontal space to the legend. Convenience wrapper: `legend_above(ax, ncol=N, mode="image_left")`, equivalent to `ax.legend(loc="lower left", bbox_to_anchor=(-pos.x0/pos.width, 1.02), ncol=N, frameon=False)`. **Default stays centered, fall back here only when centered truly does not fit**
+  - **leave about one line of space between title and legend**: `save_fig` auto-detects a plot-top legend (measuring with `leg.get_window_extent()` whether the legend bottom is ≥ the plot top), and on a hit auto-adds extra_top +`LEGEND_ABOVE_EXTRA_IN = 0.30 inch` to separate title and legend visually. **The script author need not adjust manually**, just call `ax.legend(...)` as usual
+- dual-Y-axis data uses different markers / line styles, and the legend marks RHS / LHS
+- caption / title text does not overlap axis ticks
 
-### 3.9 表格直接写在正文里
+### 3.9 Tables written directly in the body
 
-**表格用 markdown / Quarto 原生表语法写在 qmd / md 里**，不走图片管线。读者可 ctrl+F 搜、可复制，Quarto 渲染 PDF 时跨页也按表格语义处理。
+**Tables use markdown / Quarto native table syntax in the qmd / md**, not the image pipeline. The reader can ctrl+F, copy, and Quarto handles cross-page tables by table semantics on PDF render.
 
-不再提供 `save_table` 把表渲成 PDF/JPG 图片——失去 ctrl+F / 复制、视觉一致性也不是足够强的理由让表脱离正文流。
+No `save_table` to render a table to a PDF/JPG image — losing ctrl+F / copy, and visual consistency is not a strong enough reason to take a table out of the body flow.
 
-### 3.10 不可用元素
+### 3.10 Unusable elements
 
-- 不用 ±、∓、≈、≤、≥ 等数学符号在图标题、轴标签、tick label（PDF 后端 mathtext 易报错）
-- 不用 emoji
-- 不用方框 / 特殊几何符号代替 1/2/3。直接写 1 / 2 / 3 或中文「一、二、三」
+- no ±, ∓, ≈, ≤, ≥ math symbols in chart titles, axis labels, tick labels (the PDF backend's mathtext errors easily)
+- no emoji
+- no box / special geometric symbols for 1/2/3. Write 1 / 2 / 3 or Chinese "一、二、三" directly
 
-### 3.11 JPG 像素上限（硬规则）
+### 3.11 JPG pixel cap (hard rule)
 
-**单张 JPG 长边 ≤ 2000px**。Anthropic API 多图请求对单张图有 2000px 长边硬上限，超过会拒绝整个对话。PDF 矢量不受此约束，本规则仅适用 JPG。
+**Single-JPG long edge ≤ 2000px.** The Anthropic API's multi-image request has a 2000px long-edge hard cap; exceeding rejects the whole conversation. The PDF vector is not bound by this; this rule applies to JPG only.
 
-实现：`save_fig` 内部按 `dpi = min(200, floor(2000 / max(fig_w_in, fig_h_in)))` 动态计算 JPG 的 dpi。脚本作者不需要手算，调 `save_fig` 即可。
+Implementation: `save_fig` dynamically computes the JPG dpi by `dpi = min(200, floor(2000 / max(fig_w_in, fig_h_in)))`. The script author need not compute; just call `save_fig`.
 
-校验：开发期任何脚本生成 JPG 后可 `sips -g pixelWidth -g pixelHeight 6_figures/*.jpg` 抽检长边。任何超过 2000 视为 bug，回 `chart_template.py` 修。
+Verification: during dev, after any script generates a JPG, sample-check the long edge with `sips -g pixelWidth -g pixelHeight 6_figures/*.jpg`. Any > 2000 is a bug, fix in `chart_template.py`.
 
-### 3.12 Figure 宽度锁定 FIG_W（硬规则）
+### 3.12 Lock figure width to FIG_W (hard rule)
 
-**所有 `make_fig_*.py` 必须用 `figsize=(FIG_W, h)`**——`FIG_W` 是 `chart_template.py` 导出的常量，值为 **6.69 inch**（= A4 21cm − 20mm × 2 边距）。高度 `h` 由作者按图型自由选（一般 3-4 inch）。
+**All `make_fig_*.py` must use `figsize=(FIG_W, h)`** — `FIG_W` is a constant exported by `chart_template.py`, value **6.69 inch** (= A4 21cm − 20mm × 2 margins). Height `h` free by chart type (usually 3-4 inch).
 
-**为什么必须锁定**：Quarto 把 PDF 矢量图嵌入正文时按 `\textwidth` 缩放。如果 `figsize.width > 6.69`，整张图（含字号）被等比缩小。matplotlib 里 10pt 字号到 PDF 上变 6-7pt，跟 §5.2 规范不符。锁定 `figsize.width = FIG_W = 6.69`，缩放比 = 1.0，**matplotlib rcParams 字号即 PDF 实际字号**。
+**Why it must be locked**: Quarto scales the embedded PDF vector chart to `\textwidth`. If `figsize.width > 6.69`, the whole chart (incl. font) is scaled down proportionally. matplotlib's 10pt becomes 6-7pt in the PDF, breaking §5.2 spec. Locking `figsize.width = FIG_W = 6.69` gives a scale ratio of 1.0, so **matplotlib rcParams font size = actual PDF font size**.
 
-**正例**：
+**Positive example**:
 
 ```python
 import _path  # noqa: F401
@@ -452,72 +454,72 @@ setup_style()
 fig, ax = plt.subplots(figsize=(FIG_W, 3.5))
 ```
 
-**反例**：`figsize=(10, 5)` / `figsize=(11, 4.8)` 等任何手写宽度。即使临时调试也不行——会在脚本里留下隐性 bug，下一次重渲染发现字号缩水。
+**Counter-example**: `figsize=(10, 5)` / `figsize=(11, 4.8)` or any hand-written width. Not even for temporary debugging — it leaves a hidden bug, and the next re-render finds the font shrunk.
 
-**高度参考值**：
+**Height reference values**:
 
-| 图型 | 推荐 h |
+| Chart type | Recommended h |
 |---|---|
-| 单子图柱 / 折线 | 3.0 - 3.5 |
-| 双子图横排 | 3.0 - 3.5 |
-| 时间线 / 多层结构图 | 3.5 - 4.5 |
-| 信息密集的四象限 / 热力图 | 3.5 - 4.0 |
+| single-subplot bar / line | 3.0 - 3.5 |
+| dual-subplot side by side | 3.0 - 3.5 |
+| timeline / multi-layer structure | 3.5 - 4.5 |
+| info-dense quadrant / heatmap | 3.5 - 4.0 |
 
-**subplots_adjust(left=…) 经验值**（带长 y-tick label 的横向柱图必须手动调，否则 label 被左边距切掉）：
+**`subplots_adjust(left=…)` empirical values** (horizontal bars with long y-tick labels must be tuned manually, or the label is clipped by the left margin):
 
-| y-tick label 最长字符数 | 推荐 left |
+| Longest y-tick label chars | Recommended left |
 |---|---|
-| ≤ 3 字（"2024"、"日本"）| 0.10（默认，不用调）|
-| 4-5 字（"建筑业"、"批零餐饮"）| 0.20 |
-| 6-10 字（"教育与医疗"、"某基金 AUM USD Bn"）| 0.22-0.28 |
-| 11+ 字 / 长英文项目名 | 0.30-0.34 |
+| ≤ 3 chars ("2024", "日本") | 0.10 (default, no tuning) |
+| 4-5 chars ("建筑业", "批零餐饮") | 0.20 |
+| 6-10 chars ("教育与医疗", "某基金 AUM USD Bn") | 0.22-0.28 |
+| 11+ chars / long English project names | 0.30-0.34 |
 
-调到刚好包住最长 label + 一字呼吸空间为止。**自检**：渲染后看 JPG 最左边的 y-tick label 是否完整（实战调试：从 0.22 开始切掉某 label 前缀，调到 0.34 才全显示）。
+Tune to just enclose the longest label + one char of breathing room. **Self-check**: after rendering, look at whether the leftmost y-tick label in the JPG is complete (field debug: clipped a label prefix at 0.22, fully shown only at 0.34).
 
-**PDF / JPG 尺寸关系**：
+**PDF / JPG size relationship**:
 
-| 输出 | 宽 | 高 |
+| Output | Width | Height |
 |---|---|---|
-| 调用方 figsize | `FIG_W = 6.69` | `h`（脚本指定）|
-| **PDF 输出** | `~6.4-6.7`（受 `bbox_inches='tight'` 影响略小于 6.69）| `~h ± 装饰` |
-| **JPG 输出** | `FIG_W + 2 × 0.30 = 7.29` | `h + extra_top + extra_bottom`（按 suptitle / source / note 实际行数加高）|
+| caller figsize | `FIG_W = 6.69` | `h` (script-specified) |
+| **PDF output** | `~6.4-6.7` (slightly < 6.69 due to `bbox_inches='tight'`) | `~h ± decoration` |
+| **JPG output** | `FIG_W + 2 × 0.30 = 7.29` | `h + extra_top + extra_bottom` (heightened by actual suptitle / source / note line count) |
 
-**Plot 主体绝对尺寸在 PDF 与 JPG 中完全一致**——JPG 只是把 plot 整体右移 0.30 inch、下移 `extra_bottom`，不压缩。这一约束让脚本作者控制 plot 的 aspect ratio（`figsize=(FIG_W, h)` 里 h 决定 plot 长宽比），JPG 的额外尺寸由 save_fig 按内容自动算。
+**The plot body's absolute size is identical in PDF and JPG** — the JPG just shifts the whole plot right 0.30 inch and down `extra_bottom`, no compression. This lets the script author control the plot aspect ratio (`figsize=(FIG_W, h)`, h sets the plot aspect), with the JPG's extra size auto-computed by save_fig by content.
 
-### 3.13 写图脚本自检 4 项
+### 3.13 4-item chart-script self-check
 
-每个新写或修改的 `make_fig_*.py` 在 commit 前必须自检以下 4 项，不通过的修脚本后重渲再提交。这 4 项是跨项目反复踩过的高频坑点，**不属于视觉检查**（视觉检查见 §四，AI 不做），而是脚本逻辑一致性 self-check。
+Each new or modified `make_fig_*.py` must self-check the 4 items below before commit; fix the script and re-render on a miss. These 4 are high-frequency cross-project pitfalls, **not visual checks** (visual check in §4, AI does not do it), but script-logic consistency self-checks.
 
-| 红线 | 应为 |
+| Redline | Expected |
 |---|---|
-| title 引用的数字与图内数据一致 | title 引用具体数字时，现场用 `df.loc[...].max()` 或 `argmax()` 等 f-string 插入，不要凭印象写；可选 `assert` fail-safe |
-| 数据标签 / annotation 颜色不与其下方 plot 元素同色 | accent 文字落在 accent 柱内会消失。annotation 默认走 text 色，accent 数据标签放白色或对比色 |
-| 横向柱图 y-tick label 完整显示 | 长 label 必须配 `subplots_adjust(left=...)`，经验值表见 §3.12 |
-| Legend 居中且水平排开 | 用 `legend_above(ax, ncol=N, mode="centered")`；ncol=N 装不下时回退 `ncol=ceil(N/2)` 两行 |
+| title number matches in-chart data | when title cites a specific number, f-string-insert via `df.loc[...].max()` or `argmax()`, do not write from impression; optional `assert` fail-safe |
+| data-label / annotation colour not same as the plot element below it | accent text on an accent bar disappears. annotation defaults to text colour, accent data labels in white or a contrast colour |
+| horizontal-bar y-tick labels fully shown | long labels need `subplots_adjust(left=...)`, empirical table in §3.12 |
+| legend centered and horizontal | use `legend_above(ax, ncol=N, mode="centered")`; fall back to `ncol=ceil(N/2)` two rows if it does not fit |
 
-视觉自查仍由用户做，见 §四。
-
----
-
-## 四、视觉检查
-
-**AI 不做视觉检查**。图渲染完后 AI 仅列出 JPG / PDF 路径，用户自己开来看。原因：① AI 视觉模型对中文字体识别不稳定会误判；② 多张图累积会触发 API 多图像素上限（见 §3.11）；③ 用户审美与论点强调点比 AI 准。
-
-不设 checklist 与硬停 gate。用户判定有问题再回退到具体脚本修。
+Visual self-check is still the user's, see §4.
 
 ---
 
-## 五、默认值与模板
+## 4. Visual check
 
-### 5.1 Quarto YAML 标准头（中文研报）
+**The AI does not do visual checks.** After rendering, the AI only lists the JPG / PDF paths; the user opens them. Reasons: (1) the AI's vision model is unstable on CJK fonts and misjudges; (2) many images hit the API pixel cap (§3.11); (3) the user's taste and emphasis judgement beat the AI's.
 
-项目级 `_quarto.yml`：
+No checklist, no hard-stop gate. The user goes back to the specific script to fix on finding a problem.
+
+---
+
+## 5. Defaults & templates
+
+### 5.1 Quarto YAML standard header (Chinese report)
+
+Project-level `_quarto.yml`:
 
 ```yaml
 lang: zh
 format:
-  # 10b Word docx 派生 (workflow §步骤 10b)：default 用 Pandoc 风格化模板即可，
-  # 如需项目品牌 Word 模板（字体 / 页眉 / 页脚），加：
+  # 10b Word docx derivation (workflow §step 10b): default Pandoc style is enough;
+  # for a project-branded Word template (fonts / header / footer), add:
   #   docx:
   #     reference-doc: reference.docx
   pdf:
@@ -542,21 +544,22 @@ format:
       - right=20mm
     include-in-header:
       text: |
-        % === 字体 ===
+        % === fonts ===
         \usepackage{fontspec}
         \setmainfont{Times New Roman}
         \setCJKmainfont{Songti SC}
         \newfontfamily\arabicfont[Script=Arabic]{Noto Sans Arabic}
 
-        % === 段首 / 段间距（见 §1.5）===
+        % === first-line indent / paragraph spacing (see §1.5) ===
         \setlength{\parindent}{0pt}
         \setlength{\parskip}{0.5em}
 
-        % === 字号 6 档强制对齐（18 / 16 / 14 / 12 / 11 / 10 pt，见 §1.4）===
-        % 主标题 18pt 加粗，副标题 16pt 常规，作者 / 日期 11pt
+        % === 6-size forced alignment (18 / 16 / 14 / 12 / 11 / 10 pt, see §1.4) ===
+        % main title 18pt bold, subtitle 16pt regular, author / date 11pt
         \usepackage{titling}
-        % \droptitle 控制主标题距页顶的距离；不能用 \pretitle{\vskip ...} 因为
-        % 页顶的 \vskip 会被 TeX 默认丢弃（vmode + 页起始处 glue 自动消化）
+        % \droptitle controls the main title's distance from the page top; cannot use
+        % \pretitle{\vskip ...} because a page-top \vskip is dropped by TeX default
+        % (vmode + page-start glue auto-consumed)
         \setlength{\droptitle}{4em}
         \pretitle{\begin{center}\fontsize{18}{22}\bfseries\selectfont}
         \posttitle{\par\end{center}\vskip 2em}
@@ -564,8 +567,8 @@ format:
         \postauthor{\par\end{center}}
         \predate{\begin{center}\fontsize{11}{14}\selectfont}
         \postdate{\par\end{center}\vskip 2em}
-        % 覆盖 Quarto/pandoc 默认 \subtitle（默认 \large ≈ 12pt 会降字号）
-        % \makeatletter 包必要，因 \@title 含 @ 需 letter catcode
+        % override Quarto/pandoc default \subtitle (default \large ≈ 12pt shrinks size)
+        % \makeatletter needed because \@title contains @ requiring letter catcode
         \usepackage{etoolbox}
         \makeatletter
         \providecommand{\subtitle}[1]{%
@@ -573,15 +576,16 @@ format:
         }
         \makeatother
 
-        % h1 节标题 14pt 加粗，h2 小节标题 12pt 加粗
+        % h1 section title 14pt bold, h2 subsection title 12pt bold
         \usepackage{titlesec}
         \titleformat{\section}{\fontsize{14}{17}\bfseries\selectfont}{\thesection}{1em}{}
         \titleformat{\subsection}{\fontsize{12}{15}\bfseries\selectfont}{\thesubsection}{1em}{}
 
-        % 目录 / 图目录 / 表目录：标题 14pt 加粗居中，条目 11pt 常规
-        % 实现：直接覆盖 \@cftmake?title 三个 hook，用 \begin{center}...\end{center}
-        % 包裹标题。理由：tocloft 自带的 \hfill 居中法在 article 模式 + 标题
-        % 接在前文段落（如摘要）之后时不可靠，常偏移到右侧
+        % TOC / LoF / LoT: title 14pt bold centered, entries 11pt regular
+        % implementation: directly override the three \@cftmake?title hooks, wrapping
+        % the title with \begin{center}...\end{center}. Reason: tocloft's built-in \hfill
+        % centering is unreliable in article mode when the title follows preceding text
+        % (like an abstract), often offset right
         \usepackage{tocloft}
         \renewcommand{\cfttoctitlefont}{\fontsize{14}{17}\bfseries\selectfont}
         \renewcommand{\cftloftitlefont}{\fontsize{14}{17}\bfseries\selectfont}
@@ -603,14 +607,14 @@ format:
           \begin{center}{\cftlottitlefont\listtablename}\end{center}%
           \cftmarklot\par\nobreak\vskip\cftafterlottitleskip\@afterheading}
         \makeatother
-        % 强制换页（§1.7 / §1.8）：
-        % - 目录前 \clearpage（让目录独立成页，不接在摘要后）
-        % - 图索引前 \clearpage（防标题孤立到上一页底部）
-        % - 表索引前 \clearpage（同上）
-        % - 表索引后 \clearpage（进入正文前）
-        % 注意：tocloft 在 \AtBeginDocument 里重定义 \tableofcontents / \listoffigures
-        % / \listoftables，所以 patch 必须也包在 \AtBeginDocument 中且在 tocloft 注册
-        % 之后才生效
+        % Forced breaks (§1.7 / §1.8):
+        % - \clearpage before TOC (standalone, not after the abstract)
+        % - \clearpage before LoF (prevents the orphan title to the previous page bottom)
+        % - \clearpage before LoT (same)
+        % - \clearpage after LoT (entering the body)
+        % Note: tocloft redefines \tableofcontents / \listoffigures / \listoftables inside
+        % \AtBeginDocument, so the patch must also be wrapped in \AtBeginDocument and take
+        % effect after tocloft registers
         \AtBeginDocument{%
           \pretocmd{\tableofcontents}{\clearpage}{}{}%
           \pretocmd{\listoffigures}{\clearpage}{}{}%
@@ -618,20 +622,20 @@ format:
           \apptocmd{\listoftables}{\clearpage}{}{}%
         }
 
-        % 全文无页眉，页尾居中页码（§1.11）
-        % 覆盖 ctex chinese-article scheme 默认的 \pagestyle{headings}
+        % No header throughout, centered footer page number (§1.11)
+        % overrides the ctex chinese-article scheme default \pagestyle{headings}
         \pagestyle{plain}
 
-        % 摘要：标题 14pt 加粗居中（与目录/图目录/表目录标题同档），正文 11pt 常规
+        % Abstract: title 14pt bold centered (same tier as TOC/LoF/LoT titles), body 11pt regular
         \renewenvironment{abstract}
           {\par\medskip{\centering\fontsize{14}{17}\bfseries\selectfont 摘要\par}\medskip\normalsize}
           {\par\medskip}
 
-        % 图 / 表 caption 11pt italic
+        % figure / table caption 11pt italic
         \usepackage{caption}
         \captionsetup{font={normalsize,it},labelfont={normalsize,bf,it}}
 
-        % 脚注 11pt（覆盖 LaTeX 默认 \footnotesize=9pt）
+        % footnote 11pt (override LaTeX default \footnotesize=9pt)
         \renewcommand\footnotesize{\fontsize{11}{14}\selectfont}
 execute:
   echo: false
@@ -640,78 +644,78 @@ execute:
   freeze: auto
 ```
 
-非中文项目按需替换 CJK 字体段、`documentclass`、`lang`。字号 4 档强制覆盖见 §1.4 表与 LaTeX 头注释。
+For a non-Chinese project, replace the CJK font block, `documentclass`, `lang` as needed (e.g. an English report uses `lang: en` and an English abstract title). The 6-size forced override is in the §1.4 table and LaTeX-header comments.
 
-### 5.2 图表内字号（chart_template 速查）
+### 5.2 In-chart font sizes (chart_template quick-reference)
 
-文档版式字号见 §1.4，不在本节重复。本节**仅列图表 JPG 内自含元素**，真值由 `chart_template.setup_style()` 设置。
+Document-layout sizes in §1.4, not repeated here. This section **only lists in-JPG self-contained elements**; the true values are set by `chart_template.setup_style()`.
 
-图内**仅两档字号**：12pt suptitle + 10pt 其它所有元素。简化层级，避免图内文字层次过多导致视觉碎片化。
+In-chart **only two sizes**: 12pt suptitle + 10pt everything else. Simplifies the hierarchy, avoiding visual fragmentation from too many in-chart text tiers.
 
-| 元素 | 中文 | 英文 | 字号 | 字重 | 颜色（见 §5.3）|
+| Element | Chinese | English | Size | Weight | Colour (see §5.3) |
 |---|---|---|---|---|---|
-| 图标题（JPG 内，suptitle）| Songti SC | Times New Roman | 12pt | **常规**（FT） | text |
-| 图内数据标签 / 强调注 | Songti SC | Times New Roman | 10pt | 常规 | text |
-| 轴文字 / 图例 / tick | Songti SC | Times New Roman | 10pt | 常规 | text_light |
-| 图内表体 | Songti SC | Times New Roman | 10pt | 常规 | text |
-| 图内表头 | Songti SC | Times New Roman | 10pt | 加粗 | text |
-| 图内来源 / 注 | Songti SC | Times New Roman | 10pt | 常规 italic | text_light |
+| chart title (in JPG, suptitle) | Songti SC | Times New Roman | 12pt | **regular** (FT) | text |
+| in-chart data label / emphasis note | Songti SC | Times New Roman | 10pt | regular | text |
+| axis text / legend / tick | Songti SC | Times New Roman | 10pt | regular | text_light |
+| in-chart table body | Songti SC | Times New Roman | 10pt | regular | text |
+| in-chart table header | Songti SC | Times New Roman | 10pt | bold | text |
+| in-chart source / note | Songti SC | Times New Roman | 10pt | regular italic | text_light |
 
-**字号对齐文档版式**：图标题 12pt = h2 小节标题；图内其它所有 10pt 与正文 11pt 拉开一档，避免图嵌入正文时图字喧宾夺主。中英文字体与正文严格一致。
+**Size alignment with document layout**: chart title 12pt = h2 subsection title; all other in-chart 10pt, one tier below body 11pt, so chart text does not dominate the body when embedded. In-chart fonts strictly match the body.
 
-**对齐与排版细节**（save_fig 实现，§6.3）：
+**Alignment and layout detail** (save_fig implementation, §6.3):
 
-- **三文本左对齐 PDF 左边缘**：title / 来源 / 注统一 `x_frac = JPG_HMARGIN_IN / fig_w_jpg`，即 JPG 中「PDF 原本左边界」位置。这条线 = 图最左可见内容（y-label 最左字）。可用宽度 = `fig_w_pdf = 6.69 inch`（PDF 整宽，覆盖 y-label 区 + plot 数据区），文字 wrap 到 PDF 右边缘
-- **JPG 左右各加 `JPG_HMARGIN_IN = 0.30 inch` 白边距**：JPG 总宽 = PDF 宽 + 2 × 0.30 = 7.29 inch。plot 在 JPG 中相对 PDF 整体右移 0.30 inch，绝对尺寸不变
-- **精确像素 wrap**（`_wrap_text_precise`）：用 matplotlib 渲染候选字串、量真实像素宽度，二分查找装得下的最长前缀。**唯一断行约束**是英文单词 / 数字不可拆两半（保护字符集 `[A-Za-z0-9.,%+\-]`）。中文字符可在任意位置断。**不再用字数估算 + 标点回断**——精确测量 + 仅词内保护，文字装到几乎贴 PDF 右边才换行
-- **续行悬挂缩进**：来源 / 注 wrap 到第二行时，用全角空格缩进 3 格（来源）/ 2 格（注），让续行对齐到「来源：」「注：」后的第一字位置
-- **plot 底 ↔ 来源之间多 1 行空白**（含在 save_fig 的常量 `PLOT_BOTTOM_GAP_IN = 0.45` 里）。一图一 plot 后不再需要为 (a)(b) 子标题预留额外顶部空间
+- **three texts left-aligned to the PDF left edge**: title / source / note uniformly `x_frac = JPG_HMARGIN_IN / fig_w_jpg`, i.e. the "PDF original left boundary" in the JPG. This line = the chart's leftmost visible content (y-label leftmost char). Usable width = `fig_w_pdf = 6.69 inch` (full PDF width, covering the y-label area + plot data area), text wraps to the PDF right edge
+- **JPG adds `JPG_HMARGIN_IN = 0.30 inch` whitespace on each side**: total JPG width = PDF width + 2 × 0.30 = 7.29 inch. The plot shifts 0.30 inch right vs the PDF, absolute size unchanged
+- **precise-pixel wrap** (`_wrap_text_precise`): renders the candidate string with matplotlib, measures the real pixel width, binary-searches the longest fitting prefix. **The only line-break constraint** is that English words / numbers cannot be split (protected charset `[A-Za-z0-9.,%+\-]`). Chinese characters break at any position. **No more char-count estimation + punctuation back-break** — precise measurement + word-only protection, text fits almost to the PDF right edge before wrapping
+- **continuation hanging indent**: when source / note wraps to a second line, indent with 3 full-width spaces (source) / 2 (note), aligning the continuation to the first char after "Source:" / "Note:"
+- **1 extra blank line between plot bottom ↔ source** (in the save_fig constant `PLOT_BOTTOM_GAP_IN = 0.45`). After one-plot-per-chart, no extra top space for (a)(b) subtitles
 
-ctexart 已默认 11pt + 中文标点压缩。**首段缩进被 §5.1 显式覆盖为零**，改用半行段间距分段（见 §1.5）。
+ctexart defaults to 11pt + Chinese-punctuation compression. **The first-line indent is explicitly overridden to zero by §5.1**, replaced by half-line paragraph spacing (§1.5).
 
-### 5.3 调色板（FT 配色快查表）
+### 5.3 Palette (FT colour quick-reference)
 
-**真值在 `chart_template.PALETTE` dict**。本表是 FT chart-doctor 默认值的人工速查，**项目级若覆盖 HEX 时，本表会与 code 漂移；以 code 为准**。
+**The true values are in `chart_template.PALETTE` dict.** This table is a human quick-reference of the FT chart-doctor defaults; **when the project overrides HEX, this table drifts from the code; the code wins.**
 
-| 接口名 | HEX（FT 默认）| 用途 |
+| Interface name | HEX (FT default) | Use |
 |---|---|---|
-| `primary` | `#0F5499` Oxford blue | 数据序列主色 / 当前主体 |
-| `secondary` | `#208FCE` Medium blue | 数据序列副色 / 对照 / 历史 |
-| `tertiary` | `#C2B7AF` Warm gray | 数据序列弱化 / 第三组 / 背景柱 |
-| `accent` | `#7F062E` Claret | **单点突出**（single accent 原则，§2.3）|
-| `accent_alt` | `#EB5E8D` Warm pink | 备选 accent |
-| `accent_light` | `#FCE2D1` Claret 浅化 | 表格 highlight 行底 |
-| `neutral` | `#66605C` Warm dark gray | 参考线 / 平均值 |
-| `grid` | `#D6D0CA` 浅暖灰 | y 轴横向网格线 |
-| `axis` | `#66605C` 暖深灰 | 横纵坐标 spine + tick |
-| `baseline` | `#999999` 中性灰 | 0 / 参考线 |
-| `bg` | `#FFFFFF` 白 | 图表背景（嵌入 Quarto 白纸 PDF） |
-| `text` | `#000000` 黑 | 主文字（标题） |
-| `text_light` | `#66605C` 暖深灰 | 副文字（轴 label / 来源 / 注 / legend） |
+| `primary` | `#0F5499` Oxford blue | main data series / current subject |
+| `secondary` | `#208FCE` Medium blue | secondary data series / comparison / historical |
+| `tertiary` | `#C2B7AF` Warm gray | weakened data series / third group / background bar |
+| `accent` | `#7F062E` Claret | **single-point emphasis** (single accent principle, §2.3) |
+| `accent_alt` | `#EB5E8D` Warm pink | alternative accent |
+| `accent_light` | `#FCE2D1` Claret light | table highlight row background |
+| `neutral` | `#66605C` Warm dark gray | reference line / average |
+| `grid` | `#D6D0CA` light warm gray | y-axis horizontal grid line |
+| `axis` | `#66605C` warm dark gray | axis spine + tick |
+| `baseline` | `#999999` neutral gray | 0 / reference line |
+| `bg` | `#FFFFFF` white | chart background (embedding in Quarto white-paper PDF) |
+| `text` | `#000000` black | main text (title) |
+| `text_light` | `#66605C` warm dark gray | secondary text (axis label / source / note / legend) |
 
-多系列扩展 `PALETTE_EXTENDED` 7 色（按 FT categorical_line 顺序）+ 单色递进 `PALETTE_SEQUENTIAL` 7 色，HEX 直接读 `chart_template.py`。
+Multi-series extension `PALETTE_EXTENDED` 7 colours (in FT categorical_line order) + single-colour progression `PALETTE_SEQUENTIAL` 7 colours, HEX read directly from `chart_template.py`.
 
-接口名 `PALETTE` 跨项目保留。HEX 值可项目覆盖（需在项目级 CLAUDE.md「与框架的偏离」段登记理由），脚本**不允许直接写颜色字符串**，必须通过 `PALETTE['xxx']` 引用。
+The interface name `PALETTE` is preserved cross-project. HEX values can be project-overridden (register the reason in the project CLAUDE.md "deviations from the framework" section); scripts **may not write colour strings directly**, must reference via `PALETTE['xxx']`.
 
 ---
 
-## 六、chart_template 接口契约
+## 6. chart_template interface contract
 
-实现见同目录 `chart_template.py`。本节只讲「外部脚本怎么调」。脚本编写者只需读本节，不必读 chart_template 源码。
+Implementation in the same-dir `chart_template.py`. This section covers "how an external script calls it". The script author only needs to read this section, not the chart_template source.
 
 ### 6.1 `setup_style()`
 
-无参数。每个绘图脚本顶部调用一次，配置 matplotlib 全局 rcParams（字体、颜色、spine、网格、线宽、tick、legend、输出 dpi 等）。
+No arguments. Call once at the top of each drawing script, configuring matplotlib global rcParams (fonts, colours, spines, grid, line width, ticks, legend, output dpi, etc.).
 
 ```python
-import _path  # noqa: F401  -- 见 §6.4
+import _path  # noqa: F401  -- see §6.4
 from chart_template import setup_style
 setup_style()
 ```
 
 ### 6.2 `PALETTE` / `PALETTE_EXTENDED` / `PALETTE_SEQUENTIAL`
 
-dict / list。颜色引用必须经此接口，不允许在脚本里硬写 HEX。
+dict / list. Colour references must go through this interface, no hardcoded HEX in scripts.
 
 ```python
 from chart_template import PALETTE
@@ -719,49 +723,50 @@ ax.bar(x, y, color=PALETTE["primary"])
 ax.axhline(0, color=PALETTE["baseline"])
 ```
 
-另外两个常量也从 `chart_template` 导出：
+Two more constants exported from `chart_template`:
 
-- `FIG_W = 6.69`（float, inch）：所有 `make_fig_*.py` 的 figsize 宽度必须用此常量，详见 §3.12
-- `DATA_PROC`（Path）：指向 `4_data/2_processed/`，避免脚本里硬写相对路径
+- `FIG_W = 6.69` (float, inch): the figsize width all `make_fig_*.py` must use, see §3.12
+- `DATA_PROC` (Path): points to `4_data/2_processed/`, avoiding hardcoded relative paths in scripts
 
-### 6.3 `save_fig(fig, fig_id, title=None, source=None, note=None, subdir="")`
+### 6.3 `save_fig(fig, fig_id, title=None, source=None, note=None, subdir="", lang="zh", clean=True)`
 
-PDF（裸图，给 qmd）+ JPG（带烧入，独立分发）+ `_clean.jpg`（裸图栅格，给 publication-style HTML）三输出。一次调用全部落地。
+PDF (bare, for qmd) + JPG (with burn-in, independent distribution) + `_clean.jpg` (bare raster, for publication-style HTML) triple output. One call, all land.
 
-| 参数 | 类型 | 说明 |
+| Param | Type | Description |
 |---|---|---|
-| `fig` | matplotlib Figure | 调用方组装好的 figure |
-| `fig_id` | str | 文件名前缀，如 `"fig_1_1_topic"` |
-| `title` | str / None | JPG 顶部一级标题；PDF 不写 |
-| `source` | str / None | JPG 底部「来源：...」单独一行；PDF 不写 |
-| `note` | str / None | JPG 底部「注：...」单独一行（来源下方）；PDF 不写 |
-| `subdir` | str | 子目录（默认直接落 `6_figures/`） |
+| `fig` | matplotlib Figure | the figure the caller assembled |
+| `fig_id` | str | filename prefix, e.g. `"fig_1_1_topic"` |
+| `title` | str / None | JPG top one-level title; not written to PDF |
+| `source` | str / None | JPG bottom "Source: ..." on its own line; not written to PDF |
+| `note` | str / None | JPG bottom "Note: ..." on its own line (below source); not written to PDF |
+| `subdir` | str | subdirectory (default lands directly in `6_figures/`) |
+| `clean` | bool | whether to generate `_clean.jpg` (default True, needed for heavy publication HTML). medium / light pass `clean=False` to skip |
 
-行为保证：
+Behaviour guarantees:
 
-- **PDF 用调用方 figsize**（`figsize=(FIG_W, h)`），保留 plot + 必要轴装饰 + 上方 / 下方 legend，**不画** suptitle / 来源 / 注（这些由 Quarto caption + `{.figure-source}` 块在 qmd 中提供）。一图一 plot 后无 (a)(b) 子标题
-- **PDF 顶部 padding 统一 0.10 inch**。一图一 plot（§3.7）后无 (a)(b) 子标题，不需要额外顶部预留
-- **PDF 用 `bbox_inches='tight'` 保存**：自动扩到包含所有可见内容（如 plot 下方 legend、长 y-label）。代价是 PDF 实际尺寸可能比 `figsize` 略小，Quarto 嵌入时按 textwidth 缩放（约 5% 放大），字号也对应放大。这是为了保证「legend in plot bottom」一类图的 legend 不被裁切而做的取舍
-- **JPG 三向扩展**：`figsize=(fig_w_pdf + 2 × JPG_HMARGIN_IN, fig_h_pdf + extra_top + extra_bottom)`，其中 `JPG_HMARGIN_IN = 0.30 inch` 是左右白边距，`extra_top` 容纳 suptitle 区，`extra_bottom` 容纳 source / note 区。**plot 主体绝对尺寸与 PDF 完全一致**——save_fig 通过 `fig.set_size_inches` + `subplots_adjust` 把 plot 整体右移、下移而非压缩
-- **三个文本左对齐 PDF 左边缘，右边 wrap 到 PDF 右边缘**：title / 来源 / 注 全部 `x_frac = JPG_HMARGIN_IN / fig_w_jpg`（= JPG 中 PDF 左边界），可用宽度 = `fig_w_pdf`（覆盖 y-label 区 + plot 数据区）。文字框跟图最左 / 最右对齐
-- **精确像素 wrap**：`_wrap_text_precise` 用 matplotlib 渲染候选文字、量真实像素宽度，二分查找装得下的最长前缀；**唯一断行约束**是英文单词 / 数字不可拆两半（保护 `[A-Za-z0-9.,%+\-]`）。中文字符可在任意位置断。续行悬挂缩进（来源 3 全角空格、注 2 全角空格）对齐到「来源：」「注：」后第一字位置
-- 这样设计的理由：① 脚本作者只关心 plot 本身的 aspect ratio（写 `figsize=(FIG_W, 3.5)` 就是想 plot 长这样），suptitle / source / note 的纵向空间由 save_fig 按内容动态加高，不压扁 plot；② 三文本对齐 PDF 边线，视觉框定一致；③ 精确 wrap 避免字数估算的右锯齿，文字尽量装满 PDF 整宽才换行
-- JPG 长边自动 ≤ 2000px（§3.11 硬规则）。在 fig_w_jpg ≈ 7.3 inch + dpi 动态计算下，长边 ~2000px 接近上限
-- **`_clean.jpg` 在 PDF 落地之后、JPG 加文本之前一起保存**：用 PDF 此时的 figsize + `bbox_inches='tight'` + `dpi=200` + 白底。`FIG_W=6.69` 下约 1338px 宽，远低于 2000px 上限。供 publication-style HTML 直接 `<img src>` 嵌入
+- **PDF uses the caller figsize** (`figsize=(FIG_W, h)`), keeping plot + necessary axis decoration + above/below legend, **not drawing** suptitle / source / note (provided by the Quarto caption + `{.figure-source}` block in the qmd). No (a)(b) subtitles after one-plot-per-chart
+- **PDF top padding uniformly 0.10 inch**. After one-plot-per-chart (§3.7) there are no (a)(b) subtitles, no extra top reserve needed
+- **PDF saved with `bbox_inches='tight'`**: auto-expands to include all visible content (plot-bottom legend, long y-label). The cost is the PDF actual size may be slightly < `figsize`; Quarto scales it to textwidth on embedding (about 5% enlargement), font scaling accordingly. This is the trade-off for not clipping a "legend in plot bottom" chart's legend
+- **JPG three-way expansion**: `figsize=(fig_w_pdf + 2 × JPG_HMARGIN_IN, fig_h_pdf + extra_top + extra_bottom)`, where `JPG_HMARGIN_IN = 0.30 inch` is the left/right whitespace, `extra_top` holds the suptitle area, `extra_bottom` holds the source / note area. **The plot body's absolute size is identical to the PDF** — save_fig shifts the plot right / down via `fig.set_size_inches` + `subplots_adjust`, not compresses
+- **three texts left-aligned to the PDF left edge, right-wrapping to the PDF right edge**: title / source / note all `x_frac = JPG_HMARGIN_IN / fig_w_jpg` (= the PDF left boundary in the JPG), usable width = `fig_w_pdf` (covering y-label area + plot data area). The text box aligns to the chart's leftmost / rightmost
+- **precise-pixel wrap**: `_wrap_text_precise` renders the candidate text with matplotlib, measures the real pixel width, binary-searches the longest fitting prefix; **the only line-break constraint** is that English words / numbers cannot be split (protect `[A-Za-z0-9.,%+\-]`). Chinese characters break anywhere. Continuation hanging indent (source 3 full-width spaces, note 2) aligns to the first char after "Source:" / "Note:"
+- design rationale: (1) the script author only cares about the plot's aspect ratio (writing `figsize=(FIG_W, 3.5)` is the desired plot shape), suptitle / source / note vertical space auto-heightened by save_fig by content, not squashing the plot; (2) the three texts align to the PDF edge for a consistent visual frame; (3) precise wrap avoids the right-edge jaggedness of char-count estimation, text fills almost the full PDF width before wrapping
+- JPG long edge auto ≤ 2000px (§3.11 hard rule). At fig_w_jpg ≈ 7.3 inch + dynamic dpi, the long edge is ~2000px near the cap
+- **`_clean.jpg` saved right after the PDF lands, before the JPG adds text** (when `clean=True`): using the PDF's then figsize + `bbox_inches='tight'` + `dpi=200` + white bg. At `FIG_W=6.69` about 1338px wide, well below the 2000px cap. For publication-style HTML direct `<img src>` embedding
 
-### 6.4 调用模板
+### 6.4 Call template
 
-每个 `5_scripts/make_fig_*.py` 顶部样板：
+Boilerplate at the top of each `5_scripts/make_fig_*.py`:
 
 ```python
-"""make_fig_<节号>_<编号>_<topic>.py · <一句话用途>
+"""make_fig_<section>_<n>_<topic>.py · <one-line purpose>
 
-输入：4_data/2_processed/<src>.csv
-输出：6_figures/<fig_id>.{pdf,jpg} + <fig_id>_clean.jpg
+Input: 4_data/2_processed/<src>.csv
+Output: 6_figures/<fig_id>.{pdf,jpg} + <fig_id>_clean.jpg
 """
 import pandas as pd
 import matplotlib.pyplot as plt
-import _path  # noqa: F401  -- 把 heavy-research/scripts/ 加进 sys.path
+import _path  # noqa: F401  -- add analyst-research/scripts/ to sys.path
 from chart_template import setup_style, save_fig, PALETTE, FIG_W, DATA_PROC
 
 setup_style()
@@ -769,13 +774,13 @@ setup_style()
 
 def main():
     df = pd.read_csv(DATA_PROC / "<src>.csv")
-    # 宽度必须锁定 FIG_W（详见 §3.12）；高度按图型自由选，参考表见 §3.12
+    # width must be locked to FIG_W (see §3.12); height free by chart type, table in §3.12
     fig, ax = plt.subplots(figsize=(FIG_W, 3.5))
     ax.bar(df["x"], df["y"], color=PALETTE["primary"])
     save_fig(fig, "fig_1_1_topic",
-             title="<事实 + 数字承担论点>",
-             source="<机构 + 年份 + 报告名>",
-             note="<可选>")
+             title="<fact + number carries the argument>",
+             source="<institution + year + report name>",
+             note="<optional>")
     plt.close(fig)
 
 
@@ -783,99 +788,99 @@ if __name__ == "__main__":
     main()
 ```
 
-**`_path.py` 必备**：路径见 `5_scripts/_path.py`，内容 4 行：
+**`_path.py` is required**: path `5_scripts/_path.py`, 4 lines:
 
 ```python
-"""把 heavy-research/scripts/ 加进 sys.path，让 5_scripts/ 的脚本能 import chart_template。"""
+"""Add analyst-research/scripts/ to sys.path so 5_scripts/ scripts can import chart_template."""
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "heavy-research" / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "analyst-research" / "scripts"))
 ```
 
-新项目脚手架阶段必须先建 `5_scripts/_path.py` 才能 import `chart_template`。
+At the new-project scaffold stage, `5_scripts/_path.py` must be created first to import `chart_template`.
 
 ---
 
-## 七、publication-style HTML 派生稿（步骤 10 可选派生）
+## 7. publication-style HTML derivation (step 10 optional derivation)
 
-主报告 qmd → PDF 走完后，可选择再做一份「consulting / FT 长稿风格」的 HTML → PDF，用于公众号长稿、客户分发、社交分享等需要更强视觉识别的场景。本节是该 HTML 模板的**规范**。skill 自带一份中性长稿风格的 HTML template 在 `scripts/publication-style-template.html`，下方所有规范都以此 template 为参照实现。
+After the main-report qmd → PDF is done, you can optionally make a "consulting / FT long-form style" HTML → PDF, for WeChat long-form, client distribution, social sharing, and other scenarios needing stronger visual identity. This section is the **spec** for that HTML template. The skill bundles a neutral long-form-style HTML template at `scripts/publication-style-template.html`; all specs below are implemented against this template.
 
-### 7.1 什么时候做、什么时候不做
+### 7.1 When to do, when not to
 
-**做的条件**：
+**Conditions to do**:
 
-- 主报告已经走完步骤 9（用户已 sign off）
-- 内容相对稳定，预期不再大改
-- 受众或场景需要更强视觉识别（咨询风、杂志风、社交分享）
+- the main report has finished step 9 (user signed off)
+- content is relatively stable, no big changes expected
+- the audience or scenario needs stronger visual identity (consulting style, magazine style, social sharing)
 
-**不要做的情况**：
+**When not to**:
 
-- 内容还在变（HTML 与 qmd 双源同步是隐性负担）
-- 时间紧或不必要时
-- 主报告 PDF 已满足受众期待
+- content still changing (HTML / qmd dual-source sync is a hidden burden)
+- time is tight or it is unnecessary
+- the main-report PDF already meets the audience's expectation
 
-**重要原则**：
+**Important principles**:
 
-- **qmd 是真相之源**。HTML 是派生品，内容从已签字的 qmd 抄过来，不在 HTML 上做内容修订
-- **HTML 模板不再用 builder 脚本反复重生成**。一次生成后转为手工维护，builder 脚本写完用过即删，避免重渲覆盖手工调整
+- **the qmd is the source of truth**. The HTML is a derivative, content copied from the signed qmd, no content revision on the HTML
+- **the HTML template is not regenerated repeatedly with a builder script**. After one generation, switch to manual maintenance; write the builder, use it once, delete it, avoiding re-render overwriting manual adjustments
 
-**模板起点（两种路径）**：
+**Template starting point (two paths)**:
 
-- **路径 A（default，推荐）**：skill 自带的 `scripts/publication-style-template.html` 是中性长稿风格的 ready-to-use 模板。step 10c 启动时把它拷到项目 `8_publication/2_HTML/<project>-publication-style.html`，按 §7.8 内容映射表填充各 page 内容，按 §7.3 在 VS Code Live Preview 里手动调段
-- **路径 B（替代风格）**：若要其他咨询风格的视觉差异化（如 BCG 绿色调、McKinsey 蓝调、Bain 红调等），可选调 `consulting-report-style` skill 生成替代模板，再按 §七 各子节微调（1 div = 1 A4、`_clean.jpg` 嵌入、页脚进 HTML 等纪律对所有风格通用）
+- **Path A (default, recommended)**: the skill-bundled `scripts/publication-style-template.html` is a neutral long-form ready-to-use template. At step 10c, copy it to project `8_publication/2_HTML/<project>-publication-style.html`, fill each page per the §7.8 content-mapping table, manually tune pages in VS Code Live Preview per §7.3
+- **Path B (alternative style)**: for other consulting-style differentiation (BCG green, McKinsey blue, Bain red), call the `consulting-report-style` skill to generate a substitute template, then fine-tune per §7 sub-sections (the 1 div = 1 A4, `_clean.jpg` embedding, footer-in-HTML disciplines are universal across styles)
 
-skill 自带 template 仅一份，目的是「ready-to-use 的起点 + 风格参照实现」。不维护多套风格在 skill 内部。
+The skill bundles only one template, as "a ready-to-use start + a style-reference implementation". It does not maintain multiple styles inside the skill.
 
-### 7.2 核心模型：1 div = 1 A4 page（WYSIWYG）
+### 7.2 Core model: 1 div = 1 A4 page (WYSIWYG)
 
-HTML → PDF 链路的核心纪律是 **「所见即所得」**：浏览器里 HTML 长什么样，PDF 里就长什么样，PDF 转换器不再叠加任何视觉元素。
+The core discipline of the HTML → PDF link is **"what you see is what you get"**: what the HTML looks like in the browser is what the PDF looks like, the PDF converter adds no visual elements.
 
-- 每个 `<div class="page">` 物理上就是一张 A4：`width: 210mm; height: 297mm; overflow: hidden`
-- `@page { size: 210mm 297mm; margin: 0; }` 锁定 PDF 页面尺寸
-- 页脚 / 页码 **必须放进 HTML 自己的 `<div class="page-footer">`**，不要用 `@page { @bottom-* }` 让 Chrome 在 PDF 阶段叠加
-- 页码用 CSS counter（`counter-reset: pagenum`/`counter-increment: pagenum`/`::before { content: counter(pagenum) }`），自动递增，封面和封底跳过
-- 浏览器手动保存 PDF 时（§7.6）必须关掉打印对话框的「页眉与页脚」选项，禁止浏览器自加
+- each `<div class="page">` is physically one A4: `width: 210mm; height: 297mm; overflow: hidden`
+- `@page { size: 210mm 297mm; margin: 0; }` locks the PDF page size
+- the footer / page number **must go into the HTML's own `<div class="page-footer">`**, not `@page { @bottom-* }` letting Chrome overlay it at the PDF stage
+- the page number uses a CSS counter (`counter-reset: pagenum`/`counter-increment: pagenum`/`::before { content: counter(pagenum) }`), auto-incrementing, cover and back-cover skipped
+- when manually saving the PDF in the browser (§7.6), turn off the print dialog's "headers and footers" option, forbidding browser auto-add
 
-**铁律**：任何视觉 / 版面调整 → 改 HTML → 浏览器立刻见。**绝不在 PDF 转换脚本里加视觉逻辑**——脚本职责仅是「转格式」。
+**Iron rule**: any visual / layout adjustment → edit the HTML → see immediately in the browser. **Never add visual logic in the PDF-conversion script** — the script's only job is "convert format".
 
-### 7.3 内容溢出的处理
+### 7.3 Handling content overflow
 
-固定高度 page div 没有自动分页，内容超界或留白都需要手动调。**没有可靠的自动重排办法**（paged.js 会改变页面模型且与 Chromium `--print-to-pdf` 偶有不一致，引入 JS 依赖不值）。
+A fixed-height page div has no auto-pagination; overflow or whitespace must be tuned manually. **There is no reliable auto-reflow** (paged.js changes the page model and is occasionally inconsistent with Chromium `--print-to-pdf`; a JS dependency is not worth it).
 
-**操作流程**：
+**Operating flow**:
 
-1. VS Code 装 **Live Preview** 扩展（`ms-vscode.live-server`），打开 HTML 右上角点「Open Preview to the Side」（`Cmd+Shift+V`），左边改代码 / 右边浏览器实时刷新
-2. 浏览器里逐页看：哪页超界、哪页留白
-3. VS Code 里 `Cmd+F` 搜该页特征文字，定位到对应 `<div class="page body-page">`
-4. **剪一段 `<p>` 或 `<figure>` 到下一页开头**（或反向把下一页开头的段抽到本页末尾）
-5. 保存 → 浏览器刷新 → 重新看
-6. **从前往后扫**：前页改完会影响后页的拥挤度，按页序连锁推平一次定型
+1. install the VS Code **Live Preview** extension (`ms-vscode.live-server`), open the HTML and click "Open Preview to the Side" (`Cmd+Shift+V`), edit code on the left / live-refresh browser on the right
+2. look page by page in the browser: which overflows, which has whitespace
+3. in VS Code `Cmd+F` the page's signature text to locate the matching `<div class="page body-page">`
+4. **cut a `<p>` or `<figure>` to the next page's start** (or pull the next page's start paragraph to this page's end)
+5. save → browser refreshes → re-look
+6. **scan front to back**: a front-page change affects the back pages' crowding, flatten in page order in one chained pass
 
-不推荐 WYSIWYG HTML 编辑器（如 BlueGriffon）：它们会重写你的 class 结构。**纯文本编辑器 + 浏览器预览**对这种自定义 CSS 模板最稳。
+A WYSIWYG HTML editor (BlueGriffon) is not recommended: it rewrites your class structure. **A plain-text editor + browser preview** is most stable for this custom CSS template.
 
-### 7.4 图表嵌入：用 `_clean.jpg` 不用 `.jpg`
+### 7.4 Figure embedding: use `_clean.jpg` not `.jpg`
 
-publication-style HTML 模板自己提供 `.exhibit-title` / `.exhibit-source` 区块。**必须用 `fig_*_clean.jpg`**——`fig_*.jpg` 已经把 title / source 烧进去，再嵌会出现「双标题 + 双来源」。
+The publication-style HTML template provides its own `.exhibit-title` / `.exhibit-source` blocks. **Must use `fig_*_clean.jpg`** — `fig_*.jpg` already burns in title / source, embedding it again gives "double title + double source".
 
 ```html
 <figure class="exhibit">
   <div class="exhibit-label">Exhibit 1</div>
-  <div class="exhibit-title">由 HTML 模板提供的标题</div>
+  <div class="exhibit-title">title provided by the HTML template</div>
   <div class="exhibit-figure">
     <img src="../../6_figures/fig_1_1_topic_clean.jpg" alt="...">
   </div>
-  <div class="exhibit-source"><strong>来源：</strong>...</div>
+  <div class="exhibit-source"><strong>Source:</strong> ...</div>
 </figure>
 ```
 
-`_clean.jpg` 由 `chart_template.save_fig()` 自动产出（§3.3 / §6.3），脚本作者不需要额外操作。
+`_clean.jpg` is auto-produced by `chart_template.save_fig()` (§3.3 / §6.3), the script author needs no extra action.
 
-### 7.5 封面 / 章节扉页 / 作者头像
+### 7.5 Cover / chapter title page / author headshot
 
-- **封面**：full-bleed gradient / photo bg + 标题大字 + 副标题 + 日期；accent bar 右下角，建议放在「独立研究报告」类 corner-mark 上方
-- **章节扉页**：banner 区放章中文 label（如「第一章」42pt）+ 英文 small-caps（「CHAPTER ONE」9pt）。不要在正文 body 里重复出现章号，banner 已经承担识别
-- **作者头像**：本地放一张 `Gen.jpg`（或 author name），CSS `<img>` 嵌入 `.author-headshot { border-radius: 50% }` 圆形剪裁。压到 1MB 以内（建议长边 ≤ 1200px）
-- **头像构图陷阱**：1:1 容器配 1:1 图时 CSS `object-fit` 无可裁剪空间。如果原图额头偏高被圆形剪掉，用 PIL 在图顶部加白边把脸下推：
+- **cover**: full-bleed gradient / photo bg + large title + subtitle + date; accent bar at the bottom-right, recommended above an "independent research report" corner-mark
+- **chapter title page**: the banner holds the chapter Chinese label (e.g. "第一章" 42pt) + English small-caps ("CHAPTER ONE" 9pt). Do not repeat the chapter number in the body, the banner already carries the identifier
+- **author headshot**: place a local `Gen.jpg` (or author name), embed with CSS `<img>` `.author-headshot { border-radius: 50% }` circular crop. Compress under 1MB (recommended long edge ≤ 1200px)
+- **headshot composition trap**: with a 1:1 container and a 1:1 image, CSS `object-fit` has no croppable space. If the original's high forehead is cut by the circle, use PIL to add white space at the top to push the face down:
   ```python
   from PIL import Image
   im = Image.open('Gen.jpg')
@@ -884,98 +889,98 @@ publication-style HTML 模板自己提供 `.exhibit-title` / `.exhibit-source` �
   new.save('Gen.jpg', 'JPEG', quality=85)
   ```
 
-### 7.6 HTML → PDF 转换
+### 7.6 HTML → PDF conversion
 
-直接在浏览器里手动保存即可，不要写脚本。Chrome 或 Safari 打开 HTML，Cmd+P 调出打印对话框，目标改「另存为 PDF」，关掉「页眉与页脚」，边距设「无」，保存到 `8_publication/2_HTML/`。配合 §7.2「页码进 HTML」与 §7.5「页脚 div」一起达到 WYSIWYG。
+Save manually in the browser, do not write a script. Open the HTML in Chrome or Safari, Cmd+P for the print dialog, change the target to "Save as PDF", turn off "headers and footers", margins "none", save to `8_publication/2_HTML/`. Combined with §7.2 "page number in HTML" and §7.5 "footer div" for WYSIWYG.
 
-手动保存的好处是零配置、零环境依赖，单次出版用最稳。命令行渲染器（headless Chrome `--print-to-pdf` / prince / weasyprint 等）只有在需要批量自动化或 CI 集成时才值得引入，首次出版不要走这条路。
+Manual save's advantage is zero config, zero environment dependency, most stable for a single publication. Command-line renderers (headless Chrome `--print-to-pdf` / prince / weasyprint) are worth introducing only for batch automation or CI integration; do not take this path for a first publication.
 
-### 7.7 目录约定
+### 7.7 Directory convention
 
-publication-style HTML + PDF 落在 `8_publication/2_HTML/`。三子目录按生成顺序编号：
+publication-style HTML + PDF land in `8_publication/2_HTML/`. Three subdirs numbered by generation order:
 
 ```
 8_publication/
-├── 1_word/                             10b Word docx 派生
-│   └── <project>.docx                  Pandoc 自动生成，给客户审阅或批注
+├── 1_word/                             10b Word docx derivation
+│   └── <project>.docx                  Pandoc auto-generated, for client review / annotation
 ├── 2_HTML/                             10c publication-style HTML + PDF
 │   ├── <project>-publication-style.html
 │   ├── <project>-publication-style.pdf
-│   └── author.jpg                      作者头像（skill 自带 placeholder，按 §7.5 替换）
-└── 3_wechat_pages/                     10d 公众号 JPG 切页（10c PDF 切逐页）
+│   └── author.jpg                      author headshot (skill-bundled placeholder, replace per §7.5)
+└── 3_wechat_pages/                     10d WeChat JPG slices (10c PDF per page)
     ├── page_01.jpg
     └── ...
 ```
 
-**主报告 PDF 不放在此目录**：qmd 渲染产出的 `draft.pdf` 留在 `7_draft/` 直接查看分发，避免双份维护。冻结版本号通过 git tag 或文件名后缀（`draft_v3.pdf`）管理。
+**The main-report PDF is not in this directory**: the qmd-rendered `draft.pdf` stays in `7_draft/` for direct view and distribution, avoiding dual maintenance. The frozen version is managed by git tag or filename suffix (`draft_v3.pdf`).
 
-**铁律**：不要在 `2_HTML/` 留下 builder 脚本。一次性生成后转为手工维护，重复运行 builder 会覆盖手工调整。
+**Iron rule**: do not leave a builder script in `2_HTML/`. After a one-time generation, switch to manual maintenance; re-running the builder overwrites manual adjustments.
 
-### 7.8 内容映射：qmd 主报告 → publication HTML
+### 7.8 Content mapping: qmd main report → publication HTML
 
-参考 `workflow.md §九`（派生产出转换表）。HTML 模板需要额外承担：
+See `workflow_heavy.md §9` (derivation conversion table). The HTML template additionally carries:
 
-| 元素 | HTML 模板里怎么写 |
+| Element | How to write in the HTML template |
 |---|---|
-| 章节扉页大字 | `.chapter-opener .banner .ch-label` |
-| 章节英文 small-caps | `.chapter-opener .banner .ch-label-en` |
+| chapter title-page large text | `.chapter-opener .banner .ch-label` |
+| chapter English small-caps | `.chapter-opener .banner .ch-label-en` |
 | Pull quote | `<div class="pull-quote">` |
-| Exhibit 编号 | `<div class="exhibit-label">Exhibit N</div>` |
-| 摘要页 | `.page.abstract` + eyebrow + accent-bar + h2 + body |
-| 目录页 | `.page.contents` + `.toc-list` |
-| 参考文献页 | `.page.references` + `.references-list` 用 hanging indent（`padding-left: 34mm; text-indent: -34mm`），ref-key 固定宽度 32mm 避免长 key 换行换错位 |
-| 作者页 | `.page.authors` + author-card flex 布局 + 本地头像 img |
-| 封面 / 封底 | `.page.cover` / `.page.back-cover`，全屏 padding: 0 |
+| Exhibit number | `<div class="exhibit-label">Exhibit N</div>` |
+| abstract page | `.page.abstract` + eyebrow + accent-bar + h2 + body |
+| TOC page | `.page.contents` + `.toc-list` |
+| references page | `.page.references` + `.references-list` with hanging indent (`padding-left: 34mm; text-indent: -34mm`), ref-key fixed width 32mm to avoid a long key wrapping wrong |
+| author page | `.page.authors` + author-card flex layout + local headshot img |
+| cover / back cover | `.page.cover` / `.page.back-cover`, full-screen padding: 0 |
 
-**章节扉页类（abstract / contents / references / authors）的 h2 文本规则**：用 **plain section name**（如「摘要」「本期内容」「参考文献」「关于作者」），不用提炼性 hook 句。
+**h2 text rule for chapter-title-page classes (abstract / contents / references / authors)**: use the **plain section name** ("Abstract", "Contents", "References", "About the Author"), not a distilled hook sentence.
 
-- 反例：`<h2>三层会计加工叠加，让账面成就在叙事层面被系统性放大</h2>`
-- 正例：`<h2>摘要</h2>`
-- 原因：提炼性 hook 与 eyebrow（`ABSTRACT · 摘要`）功能重叠且抢夺正文焦点；plain section name 保留 h2 的视觉锚点（首行 30+pt 大字）作为页面结构定位，hook 应留给正文首句或 pull-quote 承担
+- counter-example: `<h2>Three layers of accounting processing systematically amplify book achievements at the narrative level</h2>`
+- positive example: `<h2>Abstract</h2>`
+- reason: a distilled hook overlaps the eyebrow (`ABSTRACT · 摘要`) and steals body focus; the plain section name keeps h2's visual anchor (the first-line 30+pt large text) as page-structure positioning, the hook belongs to the body's first sentence or a pull-quote
 
-### 7.9 公众号 JPG 切页（可选派生）
+### 7.9 WeChat JPG slices (optional derivation)
 
-publication-style PDF 渲完后，公众号长稿渠道可把 PDF 切成逐页 JPG（公众号编辑器原生支持图序，不直接吃 PDF）。落 `8_publication/3_wechat_pages/`，命名 `page_NN.jpg`（zero-pad 两位数）。
+After the publication-style PDF renders, the WeChat long-form channel can slice the PDF into per-page JPGs (the WeChat editor supports image sequences natively, does not take PDF directly). Land in `8_publication/3_wechat_pages/`, named `page_NN.jpg` (zero-padded two digits).
 
-具体切页工具与 DPI 由用户按场景定（常用 200 DPI 即可，公众号正文图宽自适应，对长边像素不敏感）。常见命令行选项：`pdftoppm -jpeg -r 200 input.pdf page` 或 macOS Automator 的「Render PDF Pages as Images」动作。
+The specific slicing tool and DPI are set by the user per scenario (200 DPI is common; the WeChat body image width is responsive, insensitive to long-edge pixels). Common CLI options: `pdftoppm -jpeg -r 200 input.pdf page` or the macOS Automator "Render PDF Pages as Images" action.
 
-只在公众号长稿渠道需要时做，主报告 PDF 本身已分页，不需要这层派生。
+Do this only when the WeChat long-form channel is needed; the main-report PDF is already paginated and needs no such derivation.
 
 ---
 
-## 八、AI disclosure 尾段（每份 PDF 必加）
+## 8. AI disclosure footer (mandatory in each PDF)
 
-每份 PDF 末尾紧挨参考文献之前，加一段 AI 使用披露。专业性 + 透明度 + 可追溯，5 行文字搞定。
+At the end of each PDF, immediately before the references, add an AI-use disclosure. Professionalism + transparency + traceability, done in 5 lines.
 
-### 8.1 标准文案（双语 ready）
+### 8.1 Standard copy (bilingual ready)
 
-英文版（适用 EN PDF）：
-
-```markdown
-::: {.callout-note appearance="minimal" icon=false}
-**About this report.** This report was produced using the [analyst-research](https://github.com/reagan475614947/market-research-skills) workflow, an open-source Claude skill that codifies investment-research methodology (source provenance, three-state labelling, multi-source caliper analysis). Every numerical claim traces to a primary source listed in the bibliography; verifying records are preserved in the project's `_process/` folder. The analysis, judgement, and final sign-off are the author's; AI handled source aggregation, drafting, and citation formatting under explicit human checkpoints.
-:::
-```
-
-中文版（适用 zh PDF）：
+English version (for EN PDFs):
 
 ```markdown
 ::: {.callout-note appearance="minimal" icon=false}
-**关于本报告**：本报告使用 [analyst-research](https://github.com/reagan475614947/market-research-skills) 工作流生成。该工作流是一个开源 Claude skill，封装了投研方法论（来源可追溯、三态标注、多源口径辨析）。所有数字均可追溯至参考文献列出的一手来源，verifying 记录保存在项目 `_process/` 目录。分析判断与最终签字由作者负责；AI 在显式人工检查点下承担素材汇总、初稿撰写、引用格式化工作。
+**About this report.** This report was produced using the [analyst-research](https://github.com/genli-ai/market-research-skills) workflow, an open-source Claude skill that codifies investment-research methodology (source provenance, three-state labelling, multi-source caliper analysis). Every numerical claim traces to a primary source listed in the bibliography; verifying records are preserved in the project's `_process/` folder. The analysis, judgement, and final sign-off are the author's; AI handled source aggregation, drafting, and citation formatting under explicit human checkpoints.
 :::
 ```
 
-### 8.2 放置位置
+Chinese version (for zh PDFs):
 
-在 `draft.qmd` 末尾、`# 参考文献 / # References` 章节标题**之前**插入。Quarto 把它渲染为正文最后一段，无序号。
+```markdown
+::: {.callout-note appearance="minimal" icon=false}
+**关于本报告**：本报告使用 [analyst-research](https://github.com/genli-ai/market-research-skills) 工作流生成。该工作流是一个开源 Claude skill，封装了投研方法论（来源可追溯、三态标注、多源口径辨析）。所有数字均可追溯至参考文献列出的一手来源，verifying 记录保存在项目 `_process/` 目录。分析判断与最终签字由作者负责；AI 在显式人工检查点下承担素材汇总、初稿撰写、引用格式化工作。
+:::
+```
+
+### 8.2 Placement
+
+Insert at the end of `draft.qmd`, **before** the `# 参考文献 / # References` section title. Quarto renders it as the last body paragraph, unnumbered.
 
 ```qmd
-... 正文结尾段 ...
+... final body paragraph ...
 
 {{< pagebreak >}}
 
 ::: {.callout-note appearance="minimal" icon=false}
-**About this report**：...（上面的英 / 中模板任选）
+**About this report**: ... (pick the EN / zh template above)
 :::
 
 {{< pagebreak >}}
@@ -986,21 +991,21 @@ publication-style PDF 渲完后，公众号长稿渠道可把 PDF 切成逐页 J
 :::
 ```
 
-### 8.3 三档 mode 差异
+### 8.3 Three-mode differences
 
-| mode | 是否加 | 原因 |
+| mode | include? | reason |
 |---|---|---|
-| light | 可选 | 5 页 memo 篇幅紧张，作者可酌情；加的话放尾段 footer 即可，不用单独成块 |
-| medium | **必加** | 半天产出，专业感重要；按 8.1 模板加 |
-| heavy | **必加** | 旗舰报告对外发布场景多，透明度 + 合规价值高 |
+| light | optional | a 5-page memo is tight; the author may judge; if included, a footer line is enough, not a separate block |
+| medium | **mandatory** | a half-day product, professionalism matters; add per the 8.1 template |
+| heavy | **mandatory** | a flagship report often externally published, high transparency + compliance value |
 
-### 8.4 跨工具兼容
+### 8.4 Cross-tool compatibility
 
-`::: {.callout-note ...}` 是 Quarto 原生语法，渲 PDF 时变成淡灰底框 + 「Note」前缀（按 8.1 模板加 `appearance="minimal" icon=false` 后变成无装饰的纯文本块）。如果用户用 Word 派生，Pandoc 把 callout 转换为带左 border 的引用块；HTML 派生则保留 callout 样式。任一渠道都视觉一致。
+`::: {.callout-note ...}` is native Quarto syntax; rendering PDF it becomes a light-grey box + "Note" prefix (with `appearance="minimal" icon=false` per the 8.1 template it becomes an undecorated plain-text block). If the user derives Word, Pandoc converts the callout to a left-bordered blockquote; HTML derivation keeps the callout style. Visually consistent across channels.
 
-### 8.5 设计原则（为什么不写成更长的免责声明）
+### 8.5 Design principle (why not a longer disclaimer)
 
-- **5 行内** 控制：长 disclaimer（如学术 venue 的 AI policy 半页声明）对投研产品文档冗余。
-- **不喧宾夺主**：用 `appearance="minimal" icon=false` 让视觉低调，PDF 翻到末页才看到。
-- **不撇清责任**：明示「分析判断与最终签字由作者负责」，AI 角色限定在 "source aggregation, drafting, citation formatting under explicit human checkpoints"。把检查点责任坐实在作者身上，不让读者误以为这是「AI 自动生成、作者放手」的产物。
-- **可追溯**：明示 `_process/` 目录可查 verifying 记录，给真正想 audit 的读者一个落脚点。
+- **within 5 lines**: a long disclaimer (like an academic venue's half-page AI policy) is redundant for an investment-research product doc.
+- **not stealing focus**: `appearance="minimal" icon=false` keeps it visually low-key, seen only on the last page.
+- **not disclaiming responsibility**: state "the analysis, judgement, and final sign-off are the author's", with the AI role limited to "source aggregation, drafting, citation formatting under explicit human checkpoints". This pins the checkpoint responsibility on the author, not letting the reader think this is "AI auto-generated, author hands-off".
+- **traceable**: state that the `_process/` folder has the verifying records, giving a reader who really wants to audit a foothold.

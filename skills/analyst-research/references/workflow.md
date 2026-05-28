@@ -26,7 +26,7 @@ These rules apply to all three modes regardless of which workflow file you loade
 2. **Source provenance**: every number cited in the final deliverable must trace to a primary source. Cite-as-you-write, never cite-after-draft.
 3. **Three-state labeling**: facts (per source), estimates (per market consensus), inferences (your derivation) get distinct wording. Never collapse the three.
 4. **No fabricated numbers**: "not publicly available" or "to be verified" beats a plausible guess. Always.
-5. **Reply language matches question language**: Chinese question → Chinese answer; English question → English answer. Draft language follows hypothesis language, not user-facing reply language.
+5. **Reply language matches question language**; **report language defaults to English**. Chinese question → Chinese answer; English question → English answer. The deliverable draft defaults to English regardless of conversation language — at onboarding ask "report language: English (default) / Chinese / other?" and lock the answer in the project CLAUDE.md. This supersedes the older "draft follows hypothesis language" rule (see SKILL.md "Reply language").
 
 ## Upgrading a project mid-flight
 

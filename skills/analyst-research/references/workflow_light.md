@@ -1,35 +1,39 @@
-# analyst-research · light 模式工作流（v1.0）
+# analyst-research · light mode workflow
 
-适用对象：5 页内决策备忘 / executive brief / 内部 memo。预算 60-80 min，单 LLM，0 硬停，纯文字无图，仅 PDF + Word 产出。
+> English is the authoritative version; the Chinese mirror is `workflow_light.zh.md`.
 
-medium 与 heavy 是 analyst-research 同 skill 内的姐妹模式，分别覆盖 10-15 页主题分析与 1.5 万字+ 旗舰报告。三档共用 hypothesis-lock 起点，下游差异由本模式自治。
+Scope: decision memo / executive brief / internal memo within 4-5 pages. Budget 60-80 min, single LLM, 0 hard stops, plain text with no charts, PDF + Word output only.
+
+medium and heavy are sibling modes of the same analyst-research skill, covering 12-15 page topic analysis and 30-40 page / 15k-word+ flagship reports respectively. All three share the hypothesis-lock starting point; downstream differences are governed by each mode.
 
 ---
 
-## 一、新项目 onboarding 流程
+## 1. New-project onboarding
 
-### 第 0 步：宣告
+### Step 0: announce
 
-向用户简短确认：「我已读完 analyst-research light 模式工作流（`references/workflow_light.md`），准备启动 6 步流程。」
+Briefly confirm to the user: "I have read the analyst-research light mode workflow (`references/workflow_light.md`) and am ready to start the 6-step flow."
 
-确认后问 **1 个 onboarding 问题**（只 1 题，问完锁定不再追问）：
+Then ask **2 onboarding questions** (lock the answers, do not re-ask):
 
-**研究问题或 hypothesis（一句话）**：用户给出要研究的具体问题。如「美联储 9 月是否会降息 50bp」「公司 X 的 Q3 财报会不会 beat consensus」「中东主权基金对中国 AI 板块持仓最近变化」。
+**Q1 · Research question or hypothesis (one sentence)**: the user gives the specific question. E.g. "Will the Fed cut 50bp in September", "Will company X beat consensus on Q3 earnings", "Recent shifts in Middle East sovereign-fund holdings of Chinese AI names".
 
-不问的事项（default 锁定，不允许 AI 主动询问）：
+**Q2 · Report language**: English (default) / Chinese / other. If the user does not specify, write the draft in English (see SKILL.md "Language policy"). Lock it into the hypothesis.md key-constraints section. English drafts skip the Chinese colon redline and enforce the unescaped-`$` redline (write dollar amounts as `\$`).
 
-- 产出形态：PDF + Word docx，**不出 HTML、不出公众号 JPG、不出 slide**
-- 篇幅：5 页（4-6 页 OK，7-9 页强警告 + 建议精简，10+ 页要求用户重新评估是 light 还是 heavy，不强行硬截）
-- 图表：**0 张**，纯文字 + 内联 footnote 引用
-- 目标读者：**专家 / 决策者**（非双兼，不写科普）
-- LLM：单 LLM（Claude solo 全程）
-- 摘要形态：**BLUF**（bottom line up front 单段，80-150 字开场给结论 + 关键数字 + so-what）
-- 时间预期：60-80 min 单 session 跑完
-- 作者署名 / 邮箱：从全局 `~/.claude/CLAUDE.md`「作者署名」段读 default，无此段才显式问
+Items NOT asked (locked by default; the AI must not proactively ask):
 
-### 第 1 步：搭建脚手架
+- Output form: PDF + Word docx. **No HTML, no WeChat JPG, no slides.**
+- Length: 4-5 page target (**< 4 pages is too thin and must be backfilled with content or deeper sub-questions**; 6 pages OK; 7-9 pages strong warning + suggest trimming; 10+ pages ask the user to re-assess light vs heavy; never hard-truncate).
+- Charts: **0**, plain text + inline footnote citations.
+- Audience: **expert / decision-maker** (not dual-audience, no explainer background).
+- LLM: single LLM (Claude solo throughout).
+- Summary form: **BLUF** (bottom line up front, single paragraph, 80-150 words / characters giving conclusion + key numbers + so-what).
+- Time expectation: 60-80 min, single session.
+- Author byline / email: read the default from the global `~/.claude/CLAUDE.md` "author byline" section; ask explicitly only if absent.
 
-cwd 切到项目根后跑：
+### Step 1: scaffold
+
+With cwd at the project root, run:
 
 ```bash
 SKILL_ROOT="${SKILL_ROOT:-$(find ~/.claude/plugins -type d -path '*market-research-skills/skills/analyst-research' | head -1)}"
@@ -38,15 +42,15 @@ cp "$SKILL_ROOT/references/_quarto-light.yml" _quarto.yml && \
 touch hypothesis.md research.md outline.md draft.qmd
 ```
 
-If the plugin path lookup fails (e.g., installed via clone-and-symlink instead of plugin marketplace), fall back to:
+If the plugin-path lookup fails (e.g. installed via clone-and-symlink instead of the plugin marketplace), fall back to:
 
 ```bash
 cp ~/.claude/skills/analyst-research/references/_quarto-light.yml _quarto.yml
 ```
 
-不创建 `_state.md`、不创建项目级 `CLAUDE.md`、不创建 retrospective、不创建图表 / scripts 子目录。
+Do not create `_state.md`, a project-level `CLAUDE.md`, a retrospective, or chart / scripts subfolders.
 
-`.claude/settings.json` 项目级权限（与 heavy 相同，签入 git）：
+`.claude/settings.json` project-level permissions (same as heavy, checked into git):
 
 ```json
 {
@@ -59,376 +63,380 @@ cp ~/.claude/skills/analyst-research/references/_quarto-light.yml _quarto.yml
 }
 ```
 
-### 第 2 步：启动 step 1
+### Step 2: launch step 1
 
-把第 0 步收到的 hypothesis 写到 `hypothesis.md`：
+Write the hypothesis received in Step 0 into `hypothesis.md`:
 
 ```markdown
-# 研究问题
+# Research question
 
-<用户原话一句话>
+<user's one sentence, verbatim>
 
-# 关键约束
+# Key constraints
 
-- 时间锁：<YYYY-MM-DD 快照>
-- 受众：<决策者 / 同行 / 投委>
-- 输出形态：PDF + Word，5 页内
-- 必须覆盖的子问题（如有）：
+- Time-lock: <YYYY-MM-DD snapshot>
+- Audience: <decision-maker / peer / investment committee>
+- Output form: PDF + Word, within 5 pages
+- Report language: <English (default) / Chinese / other>
+- Sub-questions to cover (if any):
   - ...
 ```
 
-软停推进到 step 2，不等用户确认。
+Soft-stop into step 2 without waiting for user confirmation.
 
 ---
 
-## 二、6 步骨架
+## 2. The 6-step skeleton
 
-| 步骤 | 名称 | 主导 | 时间预算 |
+| Step | Name | Lead | Time budget |
 |---|---|---|---|
-| 1 | hypothesis | 用户 + AI 复述 | 5 min |
+| 1 | hypothesis | user + AI restatement | 5 min |
 | 2 | search | Claude solo | 25 min |
 | 3 | plan | Claude solo | 5 min |
 | 4 | draft | Claude solo | 20 min |
 | 5 | self-check | Claude solo | 10 min |
 | 6 | freeze | Claude | 5 min |
 
-**全部 0 硬停**——AI 各步落盘后简短告知用户阶段产出，立即推进下一步。用户随时可叫停、调整方向、要求回退。
+**All soft stops (0 hard stops)** — after each step lands, the AI briefly tells the user the stage output and immediately proceeds. The user can stop, redirect, or roll back at any time.
 
 ---
 
-## 三、各步骤细则
+## 3. Step details
 
-### 步骤 1：hypothesis（无停点）
+### Step 1: hypothesis (no stop)
 
-第 0 步问完用户的一句话研究问题后，AI 写 `hypothesis.md` 包含三段：研究问题原话 + 关键约束（时间锁 / 受众 / 输出形态 / 必须覆盖的子问题）+ AI 的复述确认。
+After asking the user's one-sentence research question in Step 0, the AI writes `hypothesis.md` with three parts: the research question verbatim + key constraints (time-lock / audience / output form / report language / sub-questions to cover) + the AI's restatement.
 
-不做发散性方向 brainstorm（用 heavy 才有 step 3 多方向劝退）。light 假设 hypothesis 在 onboarding 时已成形。
+No divergent direction brainstorm (that is heavy's step 3 multi-direction triage). light assumes the hypothesis is already formed at onboarding.
 
-**模糊 hypothesis 的 0 硬停 nudge**：若用户给的 hypothesis 范围模糊（如「看美股 AI 板块」未指定时间锁 / 子主题边界、「分析中东主权基金」未指定具体哪家），AI **自行给出 assumption 写入 hypothesis.md 关键约束段**，并在落盘告知用户时一句话明示「按以下假设推进：时间锁 X / 范围 Y / 排除 Z，您可叫停修正」。**不停下来等用户确认**——0 硬停设计下用 assumption 透明化代替硬停。用户随时可叫停回退。
+**0-hard-stop nudge for a vague hypothesis**: if the hypothesis is vague in scope (e.g. "look at US AI stocks" with no time-lock / sub-topic boundary, or "analyse Middle East sovereign funds" without naming which one), the AI **states its own assumptions in the hypothesis.md key-constraints section** and, on landing, tells the user in one line: "Proceeding on these assumptions: time-lock X / scope Y / excluding Z; stop me to correct." **Do not stop to wait for confirmation** — under the 0-hard-stop design, transparent assumptions replace hard stops. The user can stop and roll back at any time.
 
-落盘后立即进 step 2。
+Proceed to step 2 immediately after landing.
 
 ---
 
-### 步骤 2：search（无停点）
+### Step 2: search (no stop)
 
-**目标**：20-30 条资料覆盖 hypothesis 涉及的关键事实 + 5-8 份核心 PDF 全文下载。
+**Goal**: 20-30 sources covering the key facts in the hypothesis + 5-8 core PDFs downloaded in full.
 
-**6 类来源**（删 heavy 的「学术与智库」一类，其他 6 类全保留）：
+**6 source classes** (drops heavy's "academic & think tank" class; keeps the other 6):
 
-| 类别 | 代表 |
+| Class | Examples |
 |---|---|
-| A.1 国际机构 | IMF、World Bank、IEA、OECD、BIS、UN、地区开发银行 |
-| A.2 主权 / 政府 / 央行 | 央行、统计局、财政部、主权基金、行业监管 |
-| A.4 投行 + 咨询 | GS / JPM / MS / Citi 等 Country Outlook，麦肯锡 / BCG 等行业报告 |
-| A.5 主流财经媒体 | 中文：财新、华尔街见闻、FT 中文等；英文：Bloomberg、Reuters、FT、WSJ、Economist |
-| A.6 公众号 / 行业社群 | 财经 / 区域 / 垂直行业的中文公众号 |
-| A.7 数据库（程序化） | 项目可用的 MCP / API / skill：iFind、`financial-data-sources` skill 等。step 2 用于抓历史背景数字；time-lock 快照数字（最新行情 / 利率 / 估值倍数）在 step 4 引用前再次实拉，详见 §步骤 4 |
+| A.1 international organisations | IMF, World Bank, IEA, OECD, BIS, UN, regional development banks |
+| A.2 sovereign / government / central bank | central banks, statistics offices, finance ministries, sovereign funds, sector regulators |
+| A.4 investment banks + consulting | GS / JPM / MS / Citi Country Outlooks, McKinsey / BCG sector reports |
+| A.5 mainstream financial media | Chinese: Caixin, Wallstreetcn, FT Chinese; English: Bloomberg, Reuters, FT, WSJ, Economist |
+| A.6 WeChat / industry communities | finance / regional / vertical Chinese public accounts |
+| A.7 databases (programmatic) | available MCP / API / skill: iFind, `financial-data-sources` skill, etc. Used in step 2 for historical background numbers; time-lock snapshot numbers (latest prices / rates / valuation multiples) are re-pulled live before citation in step 4, see §step 4 |
 
-类别编号沿用 heavy 的 A.x 命名以便互查，跳号 A.3 是因为 light 不把学术作为 6 大类强制覆盖维度（个别学术论文需要引用时直接以单条 source 进 A.1 或 A.4，不另起一类）。
+The class numbering follows heavy's A.x naming for cross-reference; A.3 is skipped because light does not treat academia as a mandatory coverage dimension among the 6 classes (an individual academic paper that needs citing goes in as a single source under A.1 or A.4, not its own class).
 
-**纪律**：
+**Discipline**:
 
-1. **类别覆盖**：按 hypothesis 类型至少检索过 3 类，不能只挑 1-2 类熟悉的就交差。纯宏观议题通常 A.1+A.2+A.7；公司议题通常 A.2+A.4+A.5+A.7；政策议题通常 A.1+A.2+A.5
-2. **数量级**：20-30 条资料即可，不追求 heavy 的 100+ 条覆盖面。每条记录类型 / 机构 / 标题 / 年份 / URL / 关键数字 / 重要性
-3. **核心 PDF 全文下载**：承担**结构性论证作用**的文献（章节核心论点引用 / 提供关键数字 / 方法论被借鉴）必须下载全文 PDF 到 `pdfs/`，统一编号 `<编号> <机构> <标题>.pdf`，下载后用 pypdf 抽全文摘要再决定引用
-4. **time-lock 数字 step 4 实拉**：行情 / 估值 / 收益率 / 央行政策利率等 time-lock 快照数字，**不在 step 2 抓二手转述**——在 step 4 draft 引用前用 `financial-data-sources` skill 实拉
+1. **Class coverage**: search at least 3 classes by hypothesis type; do not settle for the 1-2 familiar classes. Pure macro topics usually A.1+A.2+A.7; company topics usually A.2+A.4+A.5+A.7; policy topics usually A.1+A.2+A.5.
+2. **Order of magnitude**: 20-30 sources is enough; do not pursue heavy's 100+ coverage. Record type / institution / title / year / URL / key number / importance per source.
+3. **Download core PDFs in full**: documents that play a **structural argumentative role** (a section's core argument cites it / it provides a key number / its methodology is borrowed) must be downloaded in full to `pdfs/`, numbered uniformly `<n> <institution> <title>.pdf`, then summarised with pypdf before deciding how to cite.
+4. **Pull time-lock numbers live in step 4**: time-lock snapshot numbers like prices / valuations / yields / central-bank policy rates are **not** taken from second-hand paraphrase in step 2 — pull them live with the `financial-data-sources` skill just before citing in the step 4 draft.
 
-**「打开网页下载，再判断」**：数据侦察时至少下载一个代表性时点的实际数据再判断可达性，不要只看 SERP 摘要就下结论「数据不全」。
+**"Open the page and download, then judge"**: when scouting data, download at least one representative point of actual data before concluding on availability; do not conclude "data incomplete" from a SERP snippet alone.
 
-**IMF / Cloudflare 类 PDF 受限处理**：`pdfs/` 放 `_NOTES_<机构>_<标题>.md` 占位，明示「直链被 Cloudflare 拦截、已尝试 curl 与 WebFetch」+ 记录 SERP 摘要与 press briefing 等替代 source。draft.qmd 引用时 footnote 内联标注 `^[<机构>, <标题>（press briefing）, YYYY-MM-DD. URL. 注：直链 PDF 被 Cloudflare 拦截，引用来自 press briefing 转述]`，引用降级为「press briefing」（不写「据 IMF WEO Apr 2026 figure X」，改「据 IMF WEO Apr 2026（press briefing）」）。
+**Handling IMF / Cloudflare-blocked PDFs**: put a `_NOTES_<institution>_<title>.md` placeholder in `pdfs/`, stating "direct link blocked by Cloudflare, tried curl and WebFetch" + recording the SERP summary and press-briefing substitutes. When citing in draft.qmd, annotate the footnote inline `^[<institution>, <title> (press briefing), YYYY-MM-DD. URL. Note: direct PDF blocked by Cloudflare, citation from press-briefing paraphrase]`, downgrading the citation to "press briefing" (write "per IMF WEO Apr 2026 (press briefing)" rather than "per IMF WEO Apr 2026 figure X").
 
-**交付物**：`research.md` 含 20-30 条资料台账（按 6 类组织）+ `pdfs/` 含 5-8 份核心 PDF 全文。
+**Deliverable**: `research.md` with a 20-30 source ledger (organised by the 6 classes) + `pdfs/` with 5-8 core full-text PDFs.
 
-落盘后立即进 step 3。
+Proceed to step 3 immediately after landing.
 
 ---
 
-### 步骤 3：plan（无停点）
+### Step 3: plan (no stop)
 
-**目标**：一段话 outline，纯文字，无图清单。
+**Goal**: a one-paragraph outline, plain text, no chart list.
 
-**结构**：
+**Structure**:
 
 ```markdown
 # Outline
 
-**Hypothesis**：<复述 step 1 问题>
+**Hypothesis**: <restate the step 1 question>
 
-**BLUF 摘要**（80-150 字）：<结论 + 关键数字 + so-what>
+**BLUF summary** (80-150 words): <conclusion + key numbers + so-what>
 
-**支撑论点**（3-5 个）：
-1. <论点 1>：<一句话 take-away + 关键数字 + 引用 source>
-2. <论点 2>：...
-3. <论点 3>：...
+**Supporting arguments** (3-5):
+1. <argument 1>: <one-line take-away + key number + cited source>
+2. <argument 2>: ...
+3. <argument 3>: ...
 
-**Caveat / Open questions**：
-- <未闭合的问题 1>
-- <未闭合的问题 2>
+**Caveats / Open questions**:
+- <unresolved question 1>
+- <unresolved question 2>
 ```
 
-不写「方法论」段。不写 TOC。不预留章节编号。
+No "methodology" section. No TOC. No reserved section numbers.
 
-**自检**：
+**Self-check**:
 
-- 每个支撑论点必须有至少 1 个 source 来自 step 2 的 `research.md` 或 `pdfs/`
-- 论点之间不重叠
-- Caveat 段必须存在（即使只 1 条），明示未闭合的不确定性
+- Each supporting argument must have at least 1 source from step 2's `research.md` or `pdfs/`.
+- Arguments must not overlap.
+- A Caveat section must exist (even one item), making unresolved uncertainty explicit.
 
-落盘后立即进 step 4。
+Proceed to step 4 immediately after landing.
 
 ---
 
-### 步骤 4：draft（无停点）
+### Step 4: draft (no stop)
 
-**目标**：5 页一气连写整稿。
+**Goal**: write the full 4-5 page draft in one pass.
 
-**结构**：
+**Structure**:
 
 ```markdown
 ---
-title: "<题目，从 hypothesis.md 派生>"
-author: "<onboarding 阶段从 ~/.claude/CLAUDE.md 读到的 author 字符串，如 'Ligen'>"
-date: today                # Quarto 内置 keyword，渲染时自动填当天日期
+title: "<title, derived from hypothesis.md>"
+author: "<author string read from ~/.claude/CLAUDE.md at onboarding, e.g. 'Ligen'>"
+date: today                # Quarto built-in keyword, auto-fills today's date on render
 ---
 
 # Executive Summary
 
-<BLUF 单段 80-150 字。给结论 + 关键数字 + so-what。不分要点>
+<BLUF single paragraph, 80-150 words. Conclusion + key numbers + so-what. No bullets.>
 
-# <第一节标题，直接写主旨，不写「背景」>
+# <First section title, state the point directly, do not write "Background">
 
-<正文>
+<body>
 
-# <第二节标题>
+# <Second section title>
 
-<正文>
+<body>
 
 ...
 
 # Bottom Line
 
-<再次拎结论 + 给决策者的下一步建议>
+<restate the conclusion + next-step recommendation for the decision-maker>
 ```
 
-**模板里不写 `format:` 段**——`_quarto.yml` 已完整定义了 pdf / docx 格式与 include-in-header，draft.qmd 重写 format 段虽然 Quarto deep-merge 多数 OK，但碰到嵌套字段边界时可能丢失 _quarto.yml 的 include-in-header 关键设置，让标题字号 / 段间距 / 中文字体全部回退到 Quarto default。
+**Do not write a `format:` block in the template** — `_quarto.yml` already fully defines the pdf / docx formats and include-in-header. A draft.qmd that rewrites the format block usually deep-merges OK in Quarto, but at nested-field boundaries it can drop the `_quarto.yml` include-in-header settings, reverting title size / paragraph spacing / CJK font to Quarto defaults.
 
-**`{.unnumbered}` 不需要**——_quarto.yml 已 `number-sections: false`，全文无编号，加 `{.unnumbered}` 是冗余且容易误传染。
+**`{.unnumbered}` is not needed** — `_quarto.yml` already has `number-sections: false`, so the whole document is unnumbered; adding `{.unnumbered}` is redundant and easily over-propagated.
 
-**写作纪律**（继承 heavy §7.1 全部，本节不重复——见本文件 §四「写作规范」）：
+**Writing discipline** (inherits all of heavy §7.1; not repeated here — see §4 "Writing standards"):
 
-- 文风：陈述性、紧凑、专家受众，**不写科普背景**
-- 标点：无破折号 `——`、少用中文冒号、统一「」中文引号、无 emoji
-- 引用：内联 footnote `^[机构名, 《标题》, YYYY-MM-DD. URL.]`，**不用 references.bib**
-- ppts 改「个百分点」
-- 不要技术符号代连词（`→ + / vs`）
-- 不要抒情铺垫（「实际上 / 事实上 / 值得指出的是 / 众所周知」）
-- 不要 meta-language（「本研究不」「本节将」「本研究为... 而设」）
+- Style: declarative, compact, expert audience, **no explainer background**.
+- Punctuation: no em-dash `——`, sparse Chinese colons, uniform Chinese corner quotes 「」, no emoji.
+- Citation: inline footnote `^[institution, title, YYYY-MM-DD. URL.]`, **no references.bib**.
+- Write "percentage points" instead of "ppts".
+- No technical symbols as conjunctions (`→ + / vs`).
+- No lyrical padding ("actually / in fact / it is worth noting / as is well known").
+- No meta-language ("this study does not", "this section will", "this study is designed for...").
 
-**time-lock 数字实拉纪律**：
+**Live-pull discipline for time-lock numbers**:
 
-正文引用任何 time-lock 快照数字（股价 / 股指 / 收益率 / 估值倍数 / 央行政策利率 / 公司季度数据未走 10-K 一手）前，必须先用 `financial-data-sources` skill（FRED / yfinance / SEC EDGAR / AKShare 等）或 iFinD MCP 实拉一次，以实拉数据为准。step 2 transmitted 数字仅作 sanity check 对照——差异 > 5% 必须查清原因后再决定取舍。
+Before citing any time-lock snapshot number in the body (stock price / index / yield / valuation multiple / central-bank policy rate / company quarterly data not taken from the 10-K), first pull it once via the `financial-data-sources` skill (FRED / yfinance / SEC EDGAR / AKShare) or the iFinD MCP, and treat the live data as authoritative. Step 2 transmitted numbers are only a sanity-check cross-reference — a difference > 5% must be investigated before deciding which to use.
 
-这条与 heavy §步骤 7 的「time-lock 数字 step 7 实拉」精神一致，只是 light 没有 step 7（无图），实拉时机移到 draft 引用前。
+This is the same spirit as heavy's "pull time-lock numbers live in step 7", except light has no step 7 (no charts), so the live-pull moment moves to just before citing in the draft.
 
-**Executive Summary 写法（BLUF style）**：
+**Executive Summary style (BLUF)**:
 
-- **B**ottom **L**ine **U**p **F**ront：第一句话就是结论
-- 单段，80-150 字，不分要点（不写 markdown bullet，但段内可有 2-3 个完整短句承担结论 / 数字 / so-what 三件事）
-- 含：结论 + 关键数字（1-2 个最 critical 的）+ so-what（决策含义）
-- 反面例：「本文研究了 X 的 Y 问题，发现…」（这是 academic 写法，不是 BLUF）
-- 正面例（~75 字）：「Fed 9 月降 50bp 概率 < 30%。当前 SOFR 3M 利率隐含 25bp 降幅，与 Powell Jackson Hole 措辞一致。利率衍生品多头建仓节奏可保守 2-3 周。」
+- **B**ottom **L**ine **U**p **F**ront: the first sentence is the conclusion.
+- Single paragraph, 80-150 words, no bullets (no markdown bullets, but 2-3 complete short sentences within the paragraph can carry the conclusion / numbers / so-what).
+- Contains: conclusion + key numbers (1-2 most critical) + so-what (decision implication).
+- Bad example: "This paper studies X's Y problem and finds..." (that is academic style, not BLUF).
+- Good example (~75 words): "Fed Sept 50bp cut probability < 30%. The current SOFR 3M rate implies a 25bp cut, consistent with Powell's Jackson Hole language. Rate-derivatives long positioning can be paced conservatively over 2-3 weeks."
 
-落盘后立即进 step 5。
-
----
-
-### 步骤 5：self-check（无停点）
-
-**目标**：3 类 critique + caveat 核 + §7.4 grep 文字红线，落定稿。
-
-**3 类 critique**（heavy 的 6 类压缩到 3 类——5 页内跨节一致 / 论证流 / 三方一致都不存在或好抓）：
-
-1. **事实与数据**：每个数字、年份、人名、机构名都能定位到原始来源（research.md 或 pdfs/ 或实拉数据）。time-lock 数字已实拉。
-2. **引用支撑**：每条 footnote `^[...]` 真支持文中陈述，不挂羊头卖狗肉。URL 可达，日期注明。
-3. **语言规范**：跑 §7.4 grep self-check 全量清单，粘实际输出数字到 commit message 或对话回复。
-
-**Caveat 核**：
-
-step 3 outline 列的「Caveat / Open questions」是否都在 draft 末尾或相关段落以明示态度处理。能闭合就闭合（再调 `verifying` skill 核一次），不能闭合就保留 caveat 进 draft 终稿。
-
-**绝对不允许**：以「light 是短稿、self-check 走过场」为由跳过 §7.4 grep。短稿照样要 grep，且声明必须粘数字（详见 §6 grep self-check）。
-
-**self-check 失败的回退路径**：
-
-§6 grep 任一红线超标（如破折号 ≥ 1、冒号 / 句号比例 > 15%、正文加粗 > 2、emoji ≥ 1、抒情铺垫词命中等）：
-
-1. **回 step 4** 改写 draft.qmd 触发的具体段落
-2. 重渲 `quarto render draft.qmd`
-3. **回 step 5** 重跑 §6 grep 全量清单
-4. **直到全过才进 step 6**——0 硬停 ≠ 0 自检门。light 没有用户审 PDF 的硬停 gate，self-check 失败就裸进 step 6 等于把红线甩给用户
-
-无限循环兜底：同一条红线连续 3 轮回退都改不掉，向用户报「self-check 第 X 条反复失败，建议人工介入」，停下等用户裁定。
-
-落盘后立即进 step 6。
+Proceed to step 5 immediately after landing.
 
 ---
 
-### 步骤 6：freeze（无停点）
+### Step 5: self-check (no stop)
 
-**目标**：PDF 冻结 + docx 派生。
+**Goal**: 3 critique passes + caveat reconciliation + §6 grep text redlines, finalise.
+
+**3 critique passes** (heavy's 6 compressed to 3 — within 5 pages, cross-section consistency / argument flow / three-way consistency are absent or easy to catch):
+
+1. **Facts and data**: every number, year, person, institution traces to an original source (research.md or pdfs/ or live-pulled data). Time-lock numbers have been live-pulled.
+2. **Citation support**: each footnote `^[...]` genuinely supports the statement, no bait-and-switch. URLs reachable, dates noted.
+3. **Language standards**: run the full §6 grep self-check list and paste the actual output numbers into the commit message or chat reply.
+
+**Caveat reconciliation**:
+
+Check whether the "Caveats / Open questions" listed in the step 3 outline are all handled explicitly at the end of the draft or in the relevant paragraphs. Close what can be closed (re-run the `verifying` skill once); keep what cannot as a caveat in the final draft.
+
+**Absolutely not allowed**: skipping the §6 grep on the grounds that "light is short, self-check is a formality". Short drafts still get grepped, and the all-clear claim must paste numbers (see §6 grep self-check).
+
+**Fallback path when self-check fails**:
+
+If any §6 grep redline is over threshold (e.g. em-dash ≥ 1, colon/period ratio > 15%, body bold > 2, emoji ≥ 1, lyrical-padding hits):
+
+1. **Back to step 4** to rewrite the specific paragraph that triggered it.
+2. Re-render `quarto render draft.qmd`.
+3. **Back to step 5** to re-run the full §6 grep list.
+4. **Only proceed to step 6 when all pass** — 0 hard stops ≠ 0 self-check gates. light has no user-PDF-review hard-stop gate, so going to step 6 with a failed self-check just dumps the redlines on the user.
+
+Infinite-loop safety net: if the same redline cannot be fixed after 3 consecutive rollbacks, report to the user "self-check item X repeatedly failing, recommend manual intervention" and stop for the user's call.
+
+Proceed to step 6 immediately after landing.
+
+---
+
+### Step 6: freeze (no stop)
+
+**Goal**: PDF freeze + docx derivation.
 
 ```bash
 quarto render draft.qmd                  # → draft.pdf
 quarto render draft.qmd --to docx        # → draft.docx
 ```
 
-无 git tag 要求（light 项目不强制版本号管理；用户想 tag 就 tag）。无 publication-style HTML，无公众号 JPG 切页。
+No git-tag requirement (light projects do not enforce version management; tag if you want). No publication-style HTML, no WeChat JPG slicing.
 
-**完成判据**：
+**Completion criteria**:
 
-- `draft.pdf` 与 `draft.docx` 都生成
-- PDF 翻一下肉眼看：无 ctex / xelatex 错、无 figure caption 残留（light 没图，若有 figure 引用残留是 bug）、页数在 4-6 范围内（超 7 强警告，详见下方）
+- Both `draft.pdf` and `draft.docx` are generated.
+- Eyeball the PDF: no ctex / xelatex errors, no leftover figure captions (light has no charts; a leftover figure reference is a bug), page count in the 4-6 range (over 7 strong warning, see below).
 
-**超页处置**：
+**Over/under-length handling**:
 
-- 4-6 页：OK，正常结案
-- 7-9 页：强警告「内容超 light 边界」，建议精简 1-2 个最弱论点；用户认可超页时可正常交付
-- 10+ 页：告诉用户「内容量级已接近 mini-report，请重新评估是继续 light 路径精简到 6 页内，还是转 heavy-research 重新规划」，由用户裁定，AI 不强行硬截
+- **< 4 pages: too thin, backfill content or deepen sub-questions and re-render, do not ship.**
+- 4-5 pages: target range, close normally.
+- 6 pages: OK.
+- 7-9 pages: strong warning "content over light's boundary", suggest trimming the 1-2 weakest arguments; ship if the user accepts the overage.
+- 10+ pages: tell the user "the content has reached mini-report scale; re-assess whether to keep trimming on the light path to within 6 pages, or re-trigger in heavy mode for a fresh plan", user decides, AI does not hard-truncate.
 
 ---
 
-## 四、写作规范
+## 4. Writing standards
 
-### 4.1 文风
+### 4.1 Style
 
-- 陈述性优先，**不写科普背景**（专家受众假设）
-- 句子短促，单句信息密度高
-- 主谓宾结构，少嵌套从句
-- 数字精确（具体数字 + 单位 + 时点）
+- Declarative first, **no explainer background** (expert-audience assumption).
+- Short, dense sentences.
+- Subject-verb-object structure, few nested clauses.
+- Precise numbers (specific number + unit + time point).
 
-### 4.2 标点与字符（与 heavy §7.2 等价，本段重申红线）
+### 4.2 Punctuation and characters (equivalent to heavy §7.2; restated here)
 
-- **绝对不用破折号 `——`**
-- **半角连字符 `-` 仅限范围号与复合词使用**（`30-90%` / `2026-2030` / `single-bar`）。禁止 `-` 替代破折号
-- **少用中文冒号 `：`**。能用句号断句就用句号
-- 中文引号统一用「」角引号
-- **不用 emoji 与特殊符号**
+- **Never use the em-dash `——`**.
+- **The half-width hyphen `-` is only for ranges and compound words** (`30-90%` / `2026-2030` / `single-bar`). Never use `-` as an em-dash substitute.
+- **Use Chinese colons `：` sparingly**. Break with a period when you can.
+- Use Chinese corner quotes 「」 uniformly.
+- **No emoji or special symbols.**
 
-### 4.3 引用
+### 4.3 Citation
 
-light 不用 references.bib，统一用 Pandoc footnote 内联：
+light does not use references.bib; use inline Pandoc footnotes uniformly:
 
 ```markdown
-SOFR 3M 利率最新 4.51%^[FRED, SOFR 3-Month Term Rate, 2026-05-15. https://fred.stlouisfed.org/series/SOFR3M.]，与 Powell 措辞一致。
+SOFR 3M rate latest 4.51%^[FRED, SOFR 3-Month Term Rate, 2026-05-15. https://fred.stlouisfed.org/series/SOFR3M.], consistent with Powell's language.
 ```
 
-- footnote 内容：`机构名, 标题或字段名, YYYY-MM-DD. URL.`（英文字段名 / 数据库 series 名直接写，不套《》；中文书 / 报告标题加《》）
-- URL 必须可达（self-check step 5 时抽检 3-5 条）
-- 同一来源在文中多次引用就重复写，**不引入 bib 共享 key**
+- Footnote content: `institution, title or field name, YYYY-MM-DD. URL.` (English field names / database series names written plainly, no 《》; Chinese book / report titles get 《》).
+- URLs must be reachable (spot-check 3-5 during step 5 self-check).
+- Repeat the source if it is cited multiple times; **do not introduce a shared bib key**.
 
 ### 4.4 BLUF Executive Summary
 
-详见 §步骤 4 的 BLUF 写法段。要点：
+See the BLUF style section under §step 4. Key points:
 
-- 单段 80-150 字
-- 结论 + 关键数字 + so-what
-- 第一句话就给结论
+- Single paragraph, 80-150 words.
+- Conclusion + key numbers + so-what.
+- The first sentence gives the conclusion.
 
-### 4.5 不写的内容（light 红线）
+### 4.5 What not to write (light redlines)
 
-- **不写方法论段**（不解释「本研究采用什么方法」）
-- **不写 TOC**（_quarto-light.yml 默认 `toc: false`）
-- **不写章节编号**（`number-sections: false`）
-- **不写「背景」「研究意义」**类 academic 框口段
-- **不写 meta-language**（「本研究将」「本节将探讨」「本研究不」）
-- **不写图表**（light 设计上就是纯文字）
-
----
-
-## 五、贯穿性纪律
-
-### 5.1 来源可追溯（不可砍）
-
-任何数字都必须能定位到原始来源（research.md 条目 / pdfs/ PDF 名 / 实拉数据系列）。不能定位的标 ⚠️ 或剔除，**不要写进结论**。
-
-### 5.2 不造数（不可砍）
-
-宁可写「未公开」「待核实」，也不要给一个看似合理的猜测。
-
-### 5.3 区分三态（不可砍）
-
-事实（「据 IMF」）/ 估算（「据市场估算 ~X」）/ 推断（「推测可能…」）—— 三者用不同措辞标注。
-
-### 5.4 AI 输出 ≠ 结论（不可砍）
-
-AI 提供素材和初稿，最终结论由人决定。light 0 硬停意味用户「随时可叫停」，不意味 AI 写完用户就盲签。
-
-### 5.5 verifying skill 调用（不可砍）
-
-step 5 self-check 时对未闭合 caveat 必须调 `market-research-skills:verifying` skill 严格核一次。light 没有 heavy 的独立 9c verifying 子步，但 verifying 调用本身不允许跳过。
+- **No methodology section** (no explaining "what method this study uses").
+- **No TOC** (_quarto-light.yml defaults to `toc: false`).
+- **No section numbering** (`number-sections: false`).
+- **No "Background" / "Significance"** academic framing sections.
+- **No meta-language** ("this study will", "this section will explore", "this study does not").
+- **No charts** (light is plain text by design).
 
 ---
 
-## 六、§7.4 grep self-check 文字红线
+## 5. Cross-cutting discipline
 
-draft v1 完成、修订版交付前**必须** grep 核对。命令以 `draft.qmd` 为例。
+### 5.1 Source traceability (non-negotiable)
 
-**证据要求（反「自检走过场」纪律）**：声明 self-check 全过时**必须粘最后一次实际 grep 输出的数字**，不允许只口头声明「全过」。详见 heavy workflow §7.4 同名段——light 同样适用。
+Every number must trace to an original source (research.md entry / pdfs/ PDF name / live-pulled data series). Mark what cannot be located with ⚠️ or drop it; **do not write it into the conclusion**.
 
-| 红线 | 检查命令 | 应为 |
+### 5.2 No fabricated numbers (non-negotiable)
+
+"Not publicly available" / "to be verified" beats a plausible guess.
+
+### 5.3 Three-state labelling (non-negotiable)
+
+Fact ("per IMF") / estimate ("per market estimate ~X") / inference ("possibly X") — label the three with distinct wording.
+
+### 5.4 AI output ≠ conclusion (non-negotiable)
+
+The AI provides material and a first draft; the human decides the final conclusion. light's 0 hard stops mean the user "can stop at any time", not that the user blind-signs whatever the AI writes.
+
+### 5.5 verifying-skill call (non-negotiable)
+
+During the step 5 self-check, unresolved caveats must be checked once with the `market-research-skills:verifying` skill. light has no separate 9c verifying sub-step like heavy, but the verifying call itself may not be skipped.
+
+---
+
+## 6. §6 grep self-check text redlines
+
+Before draft v1 is done and before any revision is delivered, grep verification is **mandatory**. Commands use `draft.qmd` as the example.
+
+**Evidence requirement (anti "formality self-check" discipline)**: when claiming the self-check passed, you **must paste the numbers from the last actual grep output**; a verbal "all clear" is not allowed. See the same-named section in heavy workflow §7.4 — light applies the same.
+
+| Redline | Check command | Expected |
 |---|---|---|
-| 破折号 `——` | `grep -c "——" draft.qmd` | 0 |
-| 标题手写编号前缀 | `grep -nE "^#{1,3} (§\|A\.\|[0-9]\|[一二三四五六七八九十]、)" draft.qmd` | 0 行 |
+| Em-dash `——` | `grep -c "——" draft.qmd` | 0 |
+| Hand-written section-number prefix in titles | `grep -nE "^#{1,3} (§\|A\.\|[0-9]\|[一二三四五六七八九十]、)" draft.qmd` | 0 lines |
 | Emoji | `grep -cP "[\x{1F300}-\x{1F9FF}\x{2600}-\x{27BF}]" draft.qmd` | 0 |
-| h3 及更深标题（light 仅 h1 + h2） | `grep -nE "^#{3,}" draft.qmd` | 0 行 |
-| 正文粗体 | `grep -c "\*\*" draft.qmd` | ≤ 2（仅引领词例外）|
-| 中文冒号「：」对句号比例 | 总冒号 `grep -c "：" draft.qmd` 除以句号数 `grep -c "。" draft.qmd` | 5-15%（light 短稿无 figsource/tblsource 占用，可直接算比例不扣除） |
-| 抒情铺垫高频词 | `grep -nE "实际上\|事实上\|值得指出\|值得注意\|众所周知\|不可否认\|毫无疑问\|需要指出\|客观地讲\|不难看出\|在此背景下\|在这一过程中" draft.qmd` | 命中即抽检删 |
-| h2 空标题反模式（学术造作） | `grep -nE "^## .*(关于\|讨论\|探究\|浅析\|思考\|现状与挑战\|视角$)" draft.qmd` | 0 行 |
-| 半角 `-` 当破折号 | `grep -nE " - " draft.qmd` | 抽检，合法只剩范围号与英文复合词 |
-| 技术符号代连词 | `grep -nE "→\|∴" draft.qmd` + 抽检 `+` `/` `vs` | 替换为完整书面表达 |
-| 学术腔与口语腔 | `grep -nE "使得\|进行了\|做出了\|具有重要意义\|一定程度上\|综上所述\|总而言之" draft.qmd` | 命中即按对照表替换 |
-| 模糊量化词（无数字支撑） | `grep -nE "很大程度上\|相对较高\|相对较低\|大致\|大约\|一些\|部分" draft.qmd` | 抽检，无数字支撑全删或替换为具体数字 |
-| meta-language / 元命令 | `grep -nE "本研究不\|本章不\|本研究将\|本研究为.*而设\|本章构造\|研究边界明确\|需要明示\|本节将\|本章将\|本节强调\|本章强调" draft.qmd` | 0 行（light 没有「本章」「本节」概念，命中即改写） |
-| 页数 | 渲染 PDF 后翻一下 | 4-6 OK，7-9 强警告 + 建议精简，10+ 请用户裁定继续精简还是转 heavy |
-| Quarto 渲染 | `quarto render draft.qmd` | 成功，无 mathtext / dimension 错误 |
+| Unescaped dollar sign `$` (**mandatory for English drafts**; LaTeX treats `$` as a math delimiter, unescaped = render failure) | `grep -nP "(?<!\\\\)\\$" draft.qmd` | 0 (write body dollar amounts as `\$`, e.g. `\$1.5 billion`) |
+| h3 and deeper titles (light is h1 + h2 only) | `grep -nE "^#{3,}" draft.qmd` | 0 lines |
+| Body bold | `grep -c "\*\*" draft.qmd` | ≤ 2 (lead-in words excepted) |
+| Chinese colon `：` to period ratio | total colons `grep -c "：" draft.qmd` over period count `grep -c "。" draft.qmd` | 5-15% (light short drafts have no figsource/tblsource colons, so compute the ratio directly without deducting). English drafts skip this item |
+| Lyrical-padding high-frequency words | `grep -nE "实际上\|事实上\|值得指出\|值得注意\|众所周知\|不可否认\|毫无疑问\|需要指出\|客观地讲\|不难看出\|在此背景下\|在这一过程中" draft.qmd` | spot-check and delete on hit |
+| h2 empty-title anti-pattern (academic affectation) | `grep -nE "^## .*(关于\|讨论\|探究\|浅析\|思考\|现状与挑战\|视角$)" draft.qmd` | 0 lines |
+| Half-width `-` as em-dash | `grep -nE " - " draft.qmd` | spot-check; legal use is only ranges and English compounds |
+| Technical symbols as conjunctions | `grep -nE "→\|∴" draft.qmd` + spot-check `+` `/` `vs` | replace with full written expressions |
+| Academic / colloquial tone | `grep -nE "使得\|进行了\|做出了\|具有重要意义\|一定程度上\|综上所述\|总而言之" draft.qmd` | replace per the lookup table on hit |
+| Vague quantifiers (no number support) | `grep -nE "很大程度上\|相对较高\|相对较低\|大致\|大约\|一些\|部分" draft.qmd` | spot-check; delete or replace with concrete numbers if unsupported |
+| meta-language / meta-commands | `grep -nE "本研究不\|本章不\|本研究将\|本研究为.*而设\|本章构造\|研究边界明确\|需要明示\|本节将\|本章将\|本节强调\|本章强调" draft.qmd` | 0 lines (light has no "chapter"/"section" concept; rewrite on hit) |
+| Page count | eyeball after rendering PDF | 4-5 target, < 4 too thin needs backfill, 6 OK, 7-9 strong warning + suggest trimming, 10+ user decides whether to keep trimming or move to heavy |
+| Quarto render | `quarto render draft.qmd` | success, no mathtext / dimension errors |
 
-**对比 heavy §7.4**：light 砍掉了 5 项与图 / publication / bib 相关的红线（`_quarto.yml` lof / lot 对齐、未引用 fig/tbl label、框口段二轮重写、bib 字段、figsource/tblsource 占用）。其余 12 项保留。
+**Versus heavy §7.4**: light drops 5 chart / publication / bib-related redlines (`_quarto.yml` lof / lot alignment, unreferenced fig/tbl labels, framing-section second rewrite, bib fields, figsource/tblsource colon deduction). The other 12 are kept.
 
 ---
 
-## 七、与 heavy-research 的边界
+## 7. Boundary with heavy mode
 
-不要混用。下表给清晰区分：
+Do not mix them up. The table draws the clean line:
 
-| 维度 | light | heavy |
+| Dimension | light | heavy |
 |---|---|---|
-| 步骤数 | 6 | 11 |
-| 时间预算 | 60-80 min | 2+ 小时 |
-| 篇幅 | 5 页 / 2500-3000 字 | 1.5 万字+ |
-| 图表 | 0 | 通常 15+ 张，一图一脚本 |
-| 引用机制 | footnote 内联 | references.bib |
-| LLM | 单 LLM only | 单 / 多 LLM 可选 |
-| 硬停 | 0 | 2（step 4 / 9d）|
-| 派生形态 | PDF + Word | PDF + Word + HTML + 公众号 |
-| 复盘 | 无 | 必做（§11.2 audit）|
-| _state.md | 无 | 必有 |
-| 目录结构 | 平铺 + pdfs/ 一个子目录 | 11 步骨架 9 个子目录 |
-| 摘要形态 | BLUF 单段 | 三段式（含关键词行）|
-| 受众 | 专家 / 决策者 | 双兼（专家 + 非专业）|
-| TOC / 章节编号 | 无 | 有 |
-| 升级路径 | 无（重跑 heavy）| n/a |
+| Steps | 6 | 11 |
+| Time budget | 60-80 min | 2+ hours |
+| Length | 4-5 pages / 2500-3000 chars | 30-40 pages / 15k+ words |
+| Charts | 0 | usually 25+, one script per chart |
+| Citation | inline footnote | references.bib |
+| LLM | single LLM only | single / multi-LLM optional |
+| Hard stops | 0 | 3 (outline / draft / final) |
+| Derivations | PDF + Word | PDF + Word + HTML + WeChat |
+| Retrospective | none | mandatory (§11.2 audit) |
+| _state.md | none | mandatory |
+| Directory structure | flat + pdfs/ single subfolder | 10 numbered subdirs |
+| Summary form | BLUF single paragraph | three-part (with keyword line) |
+| Audience | expert / decision-maker | dual (expert + non-specialist) |
+| TOC / numbering | none | yes |
+| Upgrade path | none (re-run heavy) | n/a |
 
-**触发判定示例**：
+**Trigger examples**:
 
-| 用户原话 | skill |
+| User phrasing | skill |
 |---|---|
-| 「给我写个 5 页 memo 看 Fed 9 月会不会降息」 | light |
-| 「做个深度研究看美股 AI 泡沫风险」 | heavy |
-| 「1 小时内出一份 brief 给老板看」 | light |
-| 「写一份公众号长稿讲沙特 Vision 2030」 | heavy |
-| 「快速分析下中东主权基金最近持仓」 | light |
-| 「行业研报：中国电池产业链全景」 | heavy |
+| "Write me a 5-page memo on whether the Fed cuts in September" | light |
+| "Do a deep study of US AI-bubble risk" | heavy |
+| "Get me a brief for the boss within the hour" | light |
+| "Write a long WeChat piece on Saudi Vision 2030" | heavy |
+| "Quick analysis of recent Middle East sovereign-fund holdings" | light |
+| "Industry report: the full China battery supply chain" | heavy |
 
-判定不清楚时**首选 light**——short 是短稿的最大优势，写完不够再升级（重跑 heavy）成本可控；反过来 heavy 跑到一半发现题目其实只够 5 页就尴尬。
+When unsure, **default to light** — being short is the short draft's biggest advantage; if it turns out too thin, upgrading (re-running heavy) is cheap, whereas running heavy and finding the topic only supports 5 pages is awkward.

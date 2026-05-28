@@ -5,6 +5,8 @@ description: Use when verifying information (fact, number, quote, event, stateme
 
 # Information Verification Skill
 
+> Bilingual skill. Chinese version: `SKILL.zh.md`. English is the single source of truth; the `.zh.md` is a synchronized translation — always edit the English first, then mirror the change into `.zh.md` in the same change-set, never edit only the Chinese.
+
 ## Purpose
 
 The user provides a sentence or paragraph that needs verification. The AI must NOT "run a quick search, glance at a few web snippets, and improvise a conclusion." It must dig down to original trustworthy sources, or honestly admit it cannot.

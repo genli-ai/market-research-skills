@@ -49,7 +49,7 @@ asks one-line confirmation.
 
 Battle-tested on the Saudi Vision 2030 economic diversification deep-dive
 (heavy mode, 41 figures, 15k+ words). Source + CHANGELOG:
-https://github.com/reagan475614947/market-research-skills"
+https://github.com/genli-ai/market-research-skills"
     ;;
 esac
 

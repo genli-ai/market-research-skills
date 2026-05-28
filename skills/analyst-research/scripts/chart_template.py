@@ -7,7 +7,7 @@ chart_template.py · v8 共用绘图样式
 report_style_spec.md 的 §5 速查表是人工镜像，漂移时以本文件为准。
 
 调用模板（5_scripts/make_fig_*.py 顶部）：
-    import _path  # noqa: F401  -- 把 heavy-research/scripts/ 加进 sys.path
+    import _path  # noqa: F401  -- 把 analyst-research/scripts/ 加进 sys.path
     from chart_template import setup_style, save_fig, PALETTE, FIG_W
 
 完整接口契约见 report_style_spec.md §六。
@@ -64,7 +64,7 @@ from matplotlib import font_manager
 import pandas as pd
 from pathlib import Path
 
-# chart_template.py 路径: <项目根>/heavy-research/scripts/chart_template.py
+# chart_template.py 路径: <项目根>/analyst-research/scripts/chart_template.py
 # 三次 parent 跳到项目根目录, 让 DATA_RAW / DATA_PROC / FIGURES 解析到 <项目根>/{4_data,6_figures}/
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_RAW = PROJECT_ROOT / "4_data" / "1_raw"
@@ -250,7 +250,9 @@ def _wrap_text_precise(fig, text: str, max_width_in: float,
 
     text_kwargs 传给 fig.text（影响渲染宽度）：fontweight / style / linespacing 等。
     """
-    safe = text.replace("$", r"\$")
+    # 仅在 mathtext 解析开启时才转义 $；setup_style() 设 text.parse_math=False，
+    # 此时 $ 是普通字面字符，转义会让图上多出一个反斜杠（pre-flight self-test 命中）。
+    safe = text.replace("$", r"\$") if mpl.rcParams.get("text.parse_math", False) else text
     renderer = _get_renderer(fig)
 
     def width_in(s: str) -> float:
@@ -307,7 +309,7 @@ def _wrap_text_precise(fig, text: str, max_width_in: float,
 
 def save_fig(fig, fig_id: str,
              title: str = None, source: str = None, note: str = None,
-             subdir: str = "", lang: str = "zh"):
+             subdir: str = "", lang: str = "zh", clean: bool = True):
     """PDF（裸图）+ JPG（含 title/source/note）+ _clean.jpg（与 PDF 同步的栅格版）三输出。
 
     设计（v9）：在 v8 的 PDF + JPG 基础上加了 `_clean.jpg`，专供 publication-style
@@ -372,9 +374,12 @@ def save_fig(fig, fig_id: str,
     # === 1.5) CLEAN JPG：与 PDF 同步的栅格版（无 title/source/note），供 publication-style
     # HTML / 公众号 等需要纯图嵌入的场景。HTML 已经用模板提供 title 与 source，再嵌带 title 的
     # JPG 会重复。dpi=200 在 FIG_W=6.69 下给约 1338px 宽，远低于 2000px 上限
-    jpg_clean = out_dir / f"{fig_id}_clean.jpg"
-    fig.savefig(jpg_clean, bbox_inches='tight', pad_inches=0.05, dpi=200,
-                facecolor=PALETTE["bg"])
+    # _clean.jpg 仅在 clean=True 时生成（heavy 的 publication HTML 需要；
+    # medium / light 不出 publication，可传 clean=False 跳过，见 workflow_medium §四）
+    if clean:
+        jpg_clean = out_dir / f"{fig_id}_clean.jpg"
+        fig.savefig(jpg_clean, bbox_inches='tight', pad_inches=0.05, dpi=200,
+                    facecolor=PALETTE["bg"])
 
     # 记录 PDF 阶段的 plot 左/右 fig-fraction（用于后续把 plot 平移到 JPG 中）
     L_old = fig.subplotpars.left

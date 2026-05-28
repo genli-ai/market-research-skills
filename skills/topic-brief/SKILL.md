@@ -7,6 +7,8 @@ description: Generate a topic-focused briefing in HTML from public news sources.
 
 Generate a public-news-based information briefing for any subject (region / industry / policy issue / institution) and produce a single self-contained HTML file ready to paste into the 微信公众号 / WeChat Official Account editor.
 
+> Bilingual skill. Chinese version: `SKILL.zh.md`. English is the single source of truth; the `.zh.md` is a synchronized translation — always edit the English first, then mirror the change into `.zh.md` in the same change-set, never edit only the Chinese.
+
 ## Trigger phrases
 
 User says something like:
