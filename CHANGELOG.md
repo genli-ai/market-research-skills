@@ -6,27 +6,43 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
-## [0.6.0] - 2026-05-26
+## [1.0.0] - 2026-05-28
+
+First stable release. Consolidates the `analyst-research` work (the internal 0.6.x development series, never published) into one milestone: a mature three-mode research skill replacing the old `light-research`, with full bilingual source files across all three skills.
 
 ### Added
 
 - New skill: `analyst-research` — three-mode end-to-end research workflow for investment analysts and policy researchers. Battle-tested on the Saudi Vision 2030 economic diversification deep-dive (heavy mode, 35 figures, 15k+ words). User picks mode at trigger time:
-  - **light mode** — 5-page decision memo, 0 charts, 60-80 min budget. Successor to the standalone `light-research` skill; all 6 workflow steps and the 12-item grep self-check carried over verbatim (see `references/workflow_light.md`).
-  - **medium mode** — 10-15 page topic analysis, 3-8 charts, half-day budget (3-5 h). 8-step skeleton with one hard stop (sign-off after draft). PDF + Word derivations. Footnote citations (`references/workflow_medium.md`, `_quarto-medium.yml`).
-  - **heavy mode** — Flagship report 15k+ words, 20-35+ charts, days-to-weeks budget. 11-step skeleton, optional multi-LLM (Claude + GPT + DS), three hard stops (outline / draft / final), PDF + Word + WeChat md + HTML publication derivations. BibTeX + APA citations (`references/workflow_heavy.md`, `report_style_spec.md`).
-- Mode-picker UX: when `analyst-research` is triggered, the AI first presents the three modes with runtime budgets and chart counts, then loads only the workflow + Quarto template + spec relevant to the chosen mode. If the user's trigger message already contains explicit scope hints (page count, time budget), the AI infers the mode and asks one-line confirmation.
+  - **light mode** — 4-5 page decision memo, 0 charts, 60-80 min budget. Successor to the standalone `light-research` skill; all 6 workflow steps and the grep self-check carried over verbatim (see `references/workflow_light.md`).
+  - **medium mode** — 12-15 page topic analysis, 6-10 charts, half-day budget (3-5 h). 8-step skeleton with one hard stop (sign-off after draft). PDF + Word derivations. Footnote citations (`references/workflow_medium.md`, `_quarto-medium.yml`).
+  - **heavy mode** — Flagship report 30-40 pages / 15k+ words, 25-35+ charts, days-to-weeks budget. 11-step skeleton, optional multi-LLM (Claude + GPT + DS), three hard stops (outline / draft / final), PDF + Word + WeChat md + HTML publication derivations. BibTeX + APA citations (`references/workflow_heavy.md`, `report_style_spec.md`).
+- Mode-picker UX: when `analyst-research` is triggered, the AI first presents the three modes with runtime budgets and chart counts, then loads only the workflow + Quarto template + spec relevant to the chosen mode. If the user's trigger message already contains explicit scope hints (page count, time budget), the AI infers the mode and asks one-line confirmation. After mode confirmation it asks one short report-language question.
+- `MODE_REGISTRY.md` — single source of truth for the three modes' parameters (comparison table, per-mode file dependencies, use-case fit / anti-fit, mode-upgrade trajectory, propagation order for future edits). Consolidates per-mode parameters that were previously scattered across `SKILL.md`, `workflow.md` and the workflow headers.
+- SessionStart announce hook (`hooks/hooks.json` + `scripts/announce-loaded.sh`) — fires when the plugin loads in Claude Code and emits a short description of the three skills and the mode-picker UX. Bash 3.2 compatible (macOS stock shell).
+- AI-usage disclosure footer convention (`report_style_spec.md` §八) — a standard 5-line disclosure paragraph (EN + zh templates) placed before the references chapter; mandatory for medium / heavy modes, optional for light.
+- Full Chinese mirrors for `analyst-research`: `SKILL.zh.md`, `MODE_REGISTRY.zh.md`, and `.zh.md` versions of every reference file (`workflow`, `workflow_light/medium/heavy`, `report_style_spec`). English `.md` stays authoritative for the agent; `.zh.md` is for human readers and excluded from packaged zips.
 - Cross-mode invariants documented in `references/workflow.md` (router file): hypothesis-first start, source provenance, three-state labeling (fact / estimate / inference), no fabricated numbers, reply language matches question language.
 - Mode-upgrade path: a project started in `light` mode can be re-triggered in `medium` or `heavy` since all three share the hypothesis-lock first step. Downgrade is generally not worth it (cut deliverables instead).
-- Visual production stack carried over from heavy mode: shared `chart_template.py` (matplotlib styling — McKinsey blue-grey palette, Songti SC CJK, fig number alignment, accent color separation), `publication-style-template.html` (HTML publication template for heavy mode), `author.jpg` (author photo placeholder).
-- `report_style_spec.md` (~58k chars) covering: document layout, chart design principles, chart production rules, HTML derivation, `chart_template` interface contract, Quarto config defaults. Loaded by medium + heavy modes; skipped by light mode (no charts).
+- Visual production stack carried over from heavy mode: shared `chart_template.py` (matplotlib styling — McKinsey blue-grey palette, Songti SC CJK, fig number alignment, accent color separation, `lang='en'` switch for English source/note prefixes), `publication-style-template.html`, `author.jpg`.
+- `report_style_spec.md` covering: document layout, chart design principles, chart production rules, HTML derivation, `chart_template` interface contract, Quarto config defaults. Loaded by medium + heavy modes; skipped by light mode (no charts).
+
+### Changed
+
+- Report-language policy: reports default to English; the AI replies in the user's chat language. The mode-picker now asks a one-line report-language question after mode confirmation.
+- Bilingual-sync notes added to `topic-brief` and `verifying` `SKILL.md` + `SKILL.zh.md` (English is the single source of truth; edit English first, mirror into `.zh.md` in the same change-set).
+- README + plugin manifests (`plugin.json` / `marketplace.json`): `analyst-research` row / description refreshed with the updated mode parameters and report-language policy.
+
+### Fixed
+
+- Repo URL corrected from `reagan475614947/market-research-skills` to `genli-ai/market-research-skills` across README install instructions and the announce hook.
 
 ### Removed
 
-- **BREAKING**: `light-research` skill removed as a standalone skill. Its functionality is preserved verbatim as `analyst-research --light` mode. Users who previously invoked `/light-research` should now invoke `analyst-research` and pick `light` when prompted. The `workflow_light.md` and `_quarto-light.yml` files inside `analyst-research/references/` are byte-for-byte copies of the original `light-research` skill files.
+- **BREAKING**: `light-research` skill removed as a standalone skill. Its functionality is preserved verbatim as `analyst-research` light mode. Users who previously invoked `/light-research` should now invoke `analyst-research` and pick `light` when prompted. The `workflow_light.md` and `_quarto-light.yml` files inside `analyst-research/references/` are byte-for-byte copies of the original `light-research` skill files.
 
 ### Migration
 
-If you had `light-research` installed via this plugin marketplace at v0.5.0, upgrading to v0.6.0 will replace it with `analyst-research`. Trigger keywords that used to fire `light-research` (e.g., "5-page memo", "quick analysis", "决策摘要") now fire `analyst-research`, which will ask you to pick a mode — pick `light` for byte-identical behavior to v0.5.0.
+If you had `light-research` installed via this plugin marketplace at v0.5.0, upgrading to v1.0.0 will replace it with `analyst-research`. Trigger keywords that used to fire `light-research` (e.g., "5-page memo", "quick analysis", "决策摘要") now fire `analyst-research`, which will ask you to pick a mode — pick `light` for byte-identical behavior to v0.5.0.
 
 ## [0.5.0] - 2026-05-17
 
@@ -147,6 +163,44 @@ If you had `light-research` installed via this plugin marketplace at v0.5.0, upg
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
 ## [未发布]
+
+## [1.0.0] - 2026-05-28
+
+首个稳定版。把 `analyst-research` 的开发成果（内部 0.6.x 系列，从未公开发布）收敛为一个里程碑：一个成熟的三档研究 skill 取代旧的 `light-research`，并为三个 skill 补齐完整的中英双语源文件。
+
+### 新增
+
+- 新 skill：`analyst-research` —— 面向投研分析师与政策研究者的三档端到端研究工作流。已在沙特 Vision 2030 经济多元化深度报告跑通（heavy 档，35 张图、1.5 万字+）。用户在触发时选档：
+  - **light 档** —— 4-5 页决策备忘，0 图，60-80 分钟预算。继承独立的 `light-research` skill；6 步工作流与 grep 自检逐字搬运（见 `references/workflow_light.md`）。
+  - **medium 档** —— 12-15 页主题分析，6-10 图，半天预算（3-5 h）。8 步骨架，1 个硬停（draft 后 sign-off）。PDF + Word 派生。Footnote 引用（`references/workflow_medium.md`、`_quarto-medium.yml`）。
+  - **heavy 档** —— 旗舰报告 30-40 页 / 1.5 万字+，25-35+ 图，数天到数周预算。11 步骨架，可选多 LLM（Claude + GPT + DS），3 个硬停（outline / draft / final），PDF + Word + 公众号 md + HTML publication 派生。BibTeX + APA 引用（`references/workflow_heavy.md`、`report_style_spec.md`）。
+- 选档 UX：触发 `analyst-research` 时，AI 先列出三档及各自的时间预算与图表数，再只加载所选档对应的 workflow + Quarto 模板 + spec。若触发语已含明确范围线索（页数、时间预算），AI 推断档位并一句话确认。确认档位后再问一句报告语言。
+- `MODE_REGISTRY.md` —— 三档参数的单一事实源（对比表、各档文件依赖、适用 / 不适用场景、升档路径、未来改参数时的传播顺序）。把原先散落在 `SKILL.md`、`workflow.md` 和各 workflow 头部的参数收口。
+- SessionStart announce hook（`hooks/hooks.json` + `scripts/announce-loaded.sh`）—— 插件在 Claude Code 加载时触发，输出三个 skill 与选档 UX 的简短说明。兼容 Bash 3.2（macOS 自带 shell）。
+- AI 使用披露 footer 约定（`report_style_spec.md` §八）—— 标准 5 行披露段（中英模板），置于 references 章节之前；medium / heavy 档必填，light 档可选。
+- `analyst-research` 全套中文版：`SKILL.zh.md`、`MODE_REGISTRY.zh.md`，以及每个 reference 文件的 `.zh.md` 版（`workflow`、`workflow_light/medium/heavy`、`report_style_spec`）。英文 `.md` 对 agent 为权威版；`.zh.md` 供人阅读，打包 zip 时排除。
+- 跨档不变量写入 `references/workflow.md`（router 文件）：hypothesis 先行、来源可追溯、三态标注（事实 / 估算 / 推断）、不造数、回复语言与提问语言一致。
+- 升档路径：从 `light` 档起步的项目可重新以 `medium` / `heavy` 触发，三档共享 hypothesis-lock 第一步。降档一般不值得（直接砍交付物即可）。
+- 视觉生产栈从 heavy 档沿用：共享 `chart_template.py`（matplotlib 样式 —— McKinsey 蓝灰配色、Songti SC CJK、图号对齐、强调色分离、`lang='en'` 切换英文 source/note 前缀）、`publication-style-template.html`、`author.jpg`。
+- `report_style_spec.md`：文档版式、图表设计原则、图表生产规则、HTML 派生、`chart_template` 接口契约、Quarto 配置默认值。medium + heavy 档加载；light 档跳过（无图）。
+
+### 变更
+
+- 报告语言政策：报告默认英文；AI 按用户聊天语言回复。选档后新增一句报告语言确认。
+- 为 `topic-brief` 与 `verifying` 的 `SKILL.md` + `SKILL.zh.md` 补双语同步说明（英文为单一事实源；先改英文，同一改动集里同步进 `.zh.md`）。
+- README + 插件清单（`plugin.json` / `marketplace.json`）：`analyst-research` 行 / description 按更新后的档位参数与报告语言政策刷新。
+
+### 修复
+
+- 仓库 URL 从 `reagan475614947/market-research-skills` 修正为 `genli-ai/market-research-skills`，覆盖 README 安装说明与 announce hook。
+
+### 移除
+
+- **BREAKING**：`light-research` 不再作为独立 skill。其功能逐字保留为 `analyst-research` 的 light 档。原先用 `/light-research` 的用户现在改触发 `analyst-research`，在提示时选 `light`。`analyst-research/references/` 内的 `workflow_light.md` 与 `_quarto-light.yml` 是原 `light-research` 文件的逐字节副本。
+
+### 迁移
+
+如果你在 v0.5.0 通过本插件 marketplace 装过 `light-research`，升级到 v1.0.0 会用 `analyst-research` 取代它。原先触发 `light-research` 的关键词（如「5 页 memo」「快速分析」「决策摘要」）现在触发 `analyst-research`，它会让你选档 —— 选 `light` 即与 v0.5.0 行为逐字节一致。
 
 ## [0.5.0] - 2026-05-17
 
