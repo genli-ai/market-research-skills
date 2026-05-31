@@ -12,7 +12,7 @@ A collection of Claude Skills covering the full **market / equity / industry res
 |---|---|---|
 | [verifying](skills/verifying/) | Trace a statement back to whitelisted primary sources | "verify X" / "is this true" / "find the original source" |
 | [topic-brief](skills/topic-brief/) | Generate a thematic observation briefing (HTML, paste-into-WeChat-ready) for any subject (region / industry / issue / institution) | "做一份 XX 观察" / "generate a briefing on Y" / "/topic-brief" |
-| [analyst-research](skills/analyst-research/) | Three-mode end-to-end research workflow. User picks scope at trigger: **light** (4-5 page memo, 0 charts, 60-80 min), **medium** (12-15p topic analysis, 6-10 charts, half-day), or **heavy** (flagship 30-40p / 15k+ word report, 25-35+ charts, days-weeks, multi-LLM optional). Reports default to English; the AI replies in the user's chat language. Battle-tested on the Saudi Vision 2030 deep-dive. | "research report" / "投研报告" / "深度分析" / "做研报" / "5-page memo" / "/analyst-research" |
+| [analyst-research](skills/analyst-research/) | Three-mode end-to-end research workflow. User picks scope at trigger: **light** (4-5 page memo, 0 charts, ~15 min), **medium** (12-15p topic analysis, 6-10 charts, ~1 h), or **heavy** (flagship 30-40p / 15k+ word report, 25-35+ charts, ~2-3 h, full multi-stage workflow: framing → sourcing → analysis → drafting → review, multi-LLM optional). Reports default to English; the AI replies in the user's chat language. Battle-tested on the Saudi Vision 2030 deep-dive. | "research report" / "投研报告" / "深度分析" / "做研报" / "5-page memo" / "/analyst-research" |
 
 > The list grows with each release. Full change history in [CHANGELOG.md](CHANGELOG.md).
 
@@ -162,7 +162,7 @@ The `releases/` folder is `.gitignored` — the repo does not store binary artif
 |---|---|---|
 | [verifying](skills/verifying/) | 信息核实：把陈述追溯到白名单内的一手来源 | 「帮我核实 X」「这条信息是真的吗」「找一下原始出处」 |
 | [topic-brief](skills/topic-brief/) | 主题观察简报生成器：为任意主题（区域 / 行业 / 议题 / 机构）产出可粘贴公众号的 HTML 简报 | 「做一份 XX 观察 / 简报」「`/topic-brief`」 |
-| [analyst-research](skills/analyst-research/) | 三档端到端研究工作流。用户触发时选档：**light**（4-5 页备忘、0 图、60-80 分钟）/ **medium**（12-15 页主题分析、6-10 图、半天）/ **heavy**（30-40 页 / 1.5 万字+ 旗舰报告、25-35+ 图、数天到数周、可选多 LLM 协作）。报告默认英文，AI 按用户聊天语言回复。已在沙特 Vision 2030 深度报告项目跑通。 | 「写研报」「投研报告」「深度分析」「主题分析」「5 页 memo」「`/analyst-research`」 |
+| [analyst-research](skills/analyst-research/) | 三档端到端研究工作流。用户触发时选档：**light**（4-5 页备忘、0 图、约 15 分钟）/ **medium**（12-15 页主题分析、6-10 图、约 1 小时）/ **heavy**（30-40 页 / 1.5 万字+ 旗舰报告、25-35+ 图、约 2-3 小时、完整多阶段工作流：框定 → 取数 → 分析 → 起草 → 复盘、可选多 LLM 协作）。报告默认英文，AI 按用户聊天语言回复。已在沙特 Vision 2030 深度报告项目跑通。 | 「写研报」「投研报告」「深度分析」「主题分析」「5 页 memo」「`/analyst-research`」 |
 
 > 列表会随版本更新。完整变更见 [CHANGELOG.md](CHANGELOG.md)。
 
