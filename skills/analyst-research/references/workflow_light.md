@@ -2,7 +2,7 @@
 
 > English is the authoritative version; the Chinese mirror is `workflow_light.zh.md`.
 
-Scope: decision memo / executive brief / internal memo within 4-5 pages. Budget 60-80 min, single LLM, 0 hard stops, plain text with no charts, PDF + Word output only.
+Scope: decision memo / executive brief / internal memo within 4-5 pages. Budget ~15 min, single LLM, 0 hard stops, plain text with no charts, PDF + Word output only.
 
 medium and heavy are sibling modes of the same analyst-research skill, covering 12-15 page topic analysis and 30-40 page / 15k-word+ flagship reports respectively. All three share the hypothesis-lock starting point; downstream differences are governed by each mode.
 
@@ -28,7 +28,7 @@ Items NOT asked (locked by default; the AI must not proactively ask):
 - Audience: **expert / decision-maker** (not dual-audience, no explainer background).
 - LLM: single LLM (Claude solo throughout).
 - Summary form: **BLUF** (bottom line up front, single paragraph, 80-150 words / characters giving conclusion + key numbers + so-what).
-- Time expectation: 60-80 min, single session.
+- Time expectation: ~15 min, single session.
 - Author byline / email: read the default from the global `~/.claude/CLAUDE.md` "author byline" section; ask explicitly only if absent.
 
 ### Step 1: scaffold
@@ -413,7 +413,7 @@ Do not mix them up. The table draws the clean line:
 | Dimension | light | heavy |
 |---|---|---|
 | Steps | 6 | 11 |
-| Time budget | 60-80 min | 2+ hours |
+| Time budget | ~15 min | >1 h |
 | Length | 4-5 pages / 2500-3000 chars | 30-40 pages / 15k+ words |
 | Charts | 0 | usually 25+, one script per chart |
 | Citation | inline footnote | references.bib |
