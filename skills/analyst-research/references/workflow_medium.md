@@ -3,7 +3,7 @@
 > English is the authoritative version; the Chinese mirror is `workflow_medium.zh.md`.
 > Writing-standard examples that illustrate Chinese-prose redlines are kept in Chinese (they apply when the report language is Chinese); the surrounding rules are in English and apply to both languages unless noted.
 
-Scope: 12-15 page topic analysis, 6-10 charts, half-day budget (3-5 h), single LLM, 1 hard stop (step 7 user sign-off, mandatory), optional second hard stop (after the step 2 broad search, decided by the user at onboarding).
+Scope: 12-15 page topic analysis, 6-10 charts, ~1 h budget, single LLM, 1 hard stop (step 7 user sign-off, mandatory), optional second hard stop (after the step 2 broad search, decided by the user at onboarding).
 
 light and heavy are sibling modes of the same skill, handling decision memos within 5 pages and 15k-word+ long-form reports respectively. All three share the hypothesis-lock starting point; downstream each mode is self-governing.
 
@@ -41,7 +41,7 @@ Briefly confirm: "I have read the medium mode `references/workflow_medium.md` an
 - Charts: 6-10, **charts first** (build charts before writing the body, per heavy step 7 discipline).
 - LLM: single LLM only (Claude solo throughout), no multi-LLM critique.
 - Summary form: default "three-part summary" (conclusion + key numbers + so-what). The user can ask for a single BLUF paragraph.
-- Time expectation: 3-5 hours, single / dual session.
+- Time expectation: ~1 h, single session.
 - Author byline / email: read the default from the global `~/.claude/CLAUDE.md` "author byline" section; ask explicitly only if absent.
 
 ### Step 2: scaffold
@@ -735,7 +735,7 @@ Do not mix them up. The table draws the clean line:
 | Dimension | light | **medium** | heavy |
 |---|---|---|---|
 | Steps | 6 | **8** | 11 |
-| Time budget | 60-80 min | **3-5 h** | multi-day |
+| Time budget | ~15 min | **~1 h** | ~2-3 h |
 | Length | 5 pages / 2500-3000 chars | **12-15 pages** | 15k+ words / 35+ pages |
 | Charts | 0 | **6-10** | usually 15+, often 30+ |
 | Citation | inline footnote | **inline footnote** | references.bib |

@@ -2,7 +2,7 @@
 
 > 英文主文件为 `workflow_light.md`（中文镜像）。
 
-适用对象：5 页内决策备忘 / executive brief / 内部 memo。预算 60-80 min，单 LLM，0 硬停，纯文字无图，仅 PDF + Word 产出。
+适用对象：5 页内决策备忘 / executive brief / 内部 memo。预算约 15 分钟，单 LLM，0 硬停，纯文字无图，仅 PDF + Word 产出。
 
 medium 与 heavy 是 analyst-research 同 skill 内的姐妹模式，分别覆盖 10-15 页主题分析与 1.5 万字+ 旗舰报告。三档共用 hypothesis-lock 起点，下游差异由本模式自治。
 
@@ -28,7 +28,7 @@ medium 与 heavy 是 analyst-research 同 skill 内的姐妹模式，分别覆�
 - 目标读者：**专家 / 决策者**（非双兼，不写科普）
 - LLM：单 LLM（Claude solo 全程）
 - 摘要形态：**BLUF**（bottom line up front 单段，80-150 字开场给结论 + 关键数字 + so-what）
-- 时间预期：60-80 min 单 session 跑完
+- 时间预期：约 15 分钟单 session 跑完
 - 作者署名 / 邮箱：从全局 `~/.claude/CLAUDE.md`「作者署名」段读 default，无此段才显式问
 
 ### 第 1 步：搭建脚手架
@@ -412,7 +412,7 @@ draft v1 完成、修订版交付前**必须** grep 核对。命令以 `draft.qm
 | 维度 | light | heavy |
 |---|---|---|
 | 步骤数 | 6 | 11 |
-| 时间预算 | 60-80 min | 2+ 小时 |
+| 时间预算 | 约 15 分钟 | >1 小时 |
 | 篇幅 | 5 页 / 2500-3000 字 | 1.5 万字+ |
 | 图表 | 0 | 通常 15+ 张，一图一脚本 |
 | 引用机制 | footnote 内联 | references.bib |

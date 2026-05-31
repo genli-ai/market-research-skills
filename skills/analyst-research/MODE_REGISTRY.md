@@ -11,7 +11,7 @@ Single source of truth for the three modes. SKILL.md, workflow.md, CHANGELOG, an
 | **Tagline** | 5-page decision memo | 10-15 page topic analysis | Flagship report 15k+ words |
 | **Output length** | 4-5 pages (< 4 视为过薄,需补充) | 12-15 pages (< 12 偏薄) | 30-40 pages / 15k+ words |
 | **Chart count** | 0 | 6-10 | 25-35+ |
-| **Runtime budget** | 60-80 min | 3-5 hours | days-to-weeks |
+| **Runtime budget** | ~15 min | ~1 h | ~2-3 h |
 | **LLM model** | single (Claude solo) | single (Claude solo) | single or multi-LLM (Claude + GPT critique optional) |
 | **Workflow steps** | 6 | 8 | 11 |
 | **Hard stops** | 0 (soft only) | 1 (sign-off after draft) | 3 (outline / draft / final) |
