@@ -2,7 +2,9 @@
 
 > 中文版本见本文件下半部分 / Chinese version below
 
-A collection of Claude Skills for **market research / equity research / industry analysis**. Each skill tackles a specific link in the research workflow (information verification, data sourcing, industry mapping, report drafting, …). Use any skill standalone, or chain them into a complete workflow.
+**Turn Claude — or any LLM terminal — into a disciplined research analyst.**
+
+A collection of Claude Skills covering the full **market / equity / industry research** workflow: verify a fact against primary sources, spin up a topic briefing, or draft a flagship report — each step is its own skill. Every skill enforces the discipline real analysts live by: cite the original source, flag what can't be verified, never fabricate a number. Use any skill standalone, or chain them into an end-to-end pipeline. Runs in Claude Code / Desktop and ports to other LLM terminals (Codex / Gemini / Copilot).
 
 ## Skills currently included
 
@@ -150,7 +152,9 @@ The `releases/` folder is `.gitignored` — the repo does not store binary artif
 
 # 市场研究 Skills（中文版）
 
-一组面向**市场研究 / 投研 / 行业分析**场景的 Claude Skills 合集。每个 skill 解决一个具体的研究环节（信息核实、数据查找、行业地图、报告撰写……），可单独使用，也可组合成完整工作流。
+**把 Claude（或任意 LLM 终端）变成一个讲纪律的研究分析师。**
+
+一组覆盖**市场研究 / 投研 / 行业分析**完整工作流的 Claude Skills：核实一个事实、产出一份主题简报、撰写一篇旗舰研报——每个环节都是一个独立 skill。每个 skill 都贯彻真实分析师的纪律：引用一手来源、标注无法核实的内容、绝不编造数字。可单独用任一 skill，也可串成端到端流水线。支持 Claude Code / Desktop，并可移植到其他 LLM 终端（Codex / Gemini / Copilot）。
 
 ## 当前包含的 Skills
 
