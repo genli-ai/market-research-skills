@@ -1,6 +1,6 @@
 ---
 name: analyst-research
-description: 为投资分析师与政策研究者设计的端到端研究工作流 skill。三档 mode 由用户在触发时选择 —— light（4-5 页决策备忘，60-80 分钟，0 图）、medium（12-15 页主题分析，半天，6-10 图）、heavy（30-40 页 / 1.5 万字+ 旗舰报告，数天到数周，25-35+ 图，可多 LLM，PDF + Word + 公众号 + HTML 派生）。报告默认英文；AI 按用户聊天语言回复。已在真实宏观 / 政策 / 股票研报（如沙特 Vision 2030 深度报告）实战验证。触发：用户输入 /analyst-research、/flagship-research，或描述「做研报、投研报告、主题分析、深度分析、research report、topic analysis、investment research、policy assessment、industry deep-dive」类需求。不适用：单条新闻评论（用 topic-brief）、slide deck（用 deckster-slide-generator）、一次性快问快答。
+description: 为投资分析师与政策研究者设计的端到端研究工作流 skill。三档 mode 由用户在触发时选择 —— light（4-5 页决策备忘，约 15 分钟，0 图）、medium（12-15 页主题分析，约 1 小时，6-10 图）、heavy（30-40 页 / 1.5 万字+ 旗舰报告，约 2-3 小时，25-35+ 图，多阶段工作流，可多 LLM，PDF + Word + 公众号 + HTML 派生）。报告默认英文；AI 按用户聊天语言回复。已在真实宏观 / 政策 / 股票研报（如沙特 Vision 2030 深度报告）实战验证。触发：用户输入 /analyst-research、/flagship-research，或描述「做研报、投研报告、主题分析、深度分析、research report、topic analysis、investment research、policy assessment、industry deep-dive」类需求。不适用：单条新闻评论（用 topic-brief）、slide deck（用 deckster-slide-generator）、一次性快问快答。
 ---
 
 <!-- 双语 skill：本 SKILL.zh.md 是中文镜像，英文主文件为 SKILL.md。
@@ -19,16 +19,18 @@ description: 为投资分析师与政策研究者设计的端到端研究工作�
 ```
 本 skill 有三档 scope mode，按项目规模选一档：
 
-  light    4-5 页决策备忘，0 图，60-80 分钟预算
+  light    4-5 页决策备忘，0 图，约 15 分钟预算
            单 LLM session。纯 markdown 脚注引用。
-           适用：exec brief、内部 memo、1 小时决策支持。
+           适用：exec brief、内部 memo、快速决策支持。
 
-  medium   12-15 页主题分析，6-10 图，半天预算（3-5 h）
+  medium   12-15 页主题分析，6-10 图，约 1 小时预算
            单 LLM。PDF + Word 派生。draft 后一个 sign-off 检查点。
-           适用：主题深挖、带数据的 board memo、半天分析。
+           适用：主题深挖、带数据的 board memo、当天分析。
 
-  heavy    30-40 页 / 1.5 万字+ 旗舰报告，25-35+ 图，数天到数周预算
+  heavy    30-40 页 / 1.5 万字+ 旗舰报告，25-35+ 图，约 2-3 小时预算
            单或多 LLM。PDF + Word + 公众号 md + HTML publication。
+           跑完完整 11 步分阶段工作流（框定 → 取数 → 分析 → 起草 →
+           复盘），含 3 个 sign-off 检查点。
            适用：行业深度、宏观主题、政策评估、旗舰投资者刊物。
 
 哪一档适合你的项目？（回 light、medium 或 heavy）
@@ -84,7 +86,7 @@ heavy 模式的 Quarto 模板来自 `report_style_spec.md §5.1`（无独立 `_q
 |---|---|---|---|
 | 篇幅 | 4-5 页 | 12-15 页 | 30-40 页 / 1.5 万字+ |
 | 图表 | 0 | 6-10 | 25-35+ |
-| 时间预算 | 60-80 分钟 | 3-5 小时 | 数天到数周 |
+| 时间预算 | 约 15 分钟 | 约 1 小时 | 约 2-3 小时 |
 | LLM | 单 | 单 | 单或多 LLM |
 | 工作流步数 | 6 | 8 | 11 |
 | 硬停 | 0 | 1（draft 后 sign-off） | 3（outline / draft / final） |

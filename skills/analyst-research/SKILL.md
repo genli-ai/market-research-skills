@@ -20,16 +20,18 @@ When this skill is triggered, **before** loading any reference file, ask the use
 ```
 This skill has three scope modes. Pick one based on your project size:
 
-  light    4-5 page decision memo, 0 charts, 60-80 min budget
+  light    4-5 page decision memo, 0 charts, ~15 min budget
            Single LLM session. Pure markdown footnote citations.
-           Use for: exec brief, internal memo, 1-hour decision support.
+           Use for: exec brief, internal memo, quick decision support.
 
-  medium   12-15 page topic analysis, 6-10 charts, half-day budget (3-5 h)
+  medium   12-15 page topic analysis, 6-10 charts, ~1 h budget
            Single LLM. PDF + Word derivations. Sign-off checkpoint after draft.
-           Use for: topic deep-dive, board memo with data, half-day analysis.
+           Use for: topic deep-dive, board memo with data, same-day analysis.
 
-  heavy    Flagship report 30-40 pages / 15k+ words, 25-35+ charts, days-to-weeks budget
+  heavy    Flagship report 30-40 pages / 15k+ words, 25-35+ charts, ~2-3 h budget
            Single or multi-LLM. PDF + Word + WeChat md + HTML publication.
+           Runs the full 11-step staged workflow (framing → sourcing →
+           analysis → drafting → review), with 3 sign-off checkpoints.
            Use for: industry deep-dive, macro thesis, policy assessment,
                     flagship investor publication.
 
@@ -86,7 +88,7 @@ Quick summary below; **authoritative source of truth is `MODE_REGISTRY.md`**. Ed
 |---|---|---|---|
 | Output length | 4-5 pages | 12-15 pages | 30-40 pages / 15k+ words |
 | Charts | 0 | 6-10 | 25-35+ |
-| Runtime budget | 60-80 min | 3-5 hours | days-weeks |
+| Runtime budget | ~15 min | ~1 h | ~2-3 h |
 | LLM model | single | single | single or multi-LLM |
 | Workflow steps | 6 | 8 | 11 |
 | Hard stops | 0 | 1 (sign-off after draft) | 3 (outline / draft / final) |
