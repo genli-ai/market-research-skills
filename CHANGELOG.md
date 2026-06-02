@@ -6,6 +6,22 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-06-02
+
+### Added
+
+- New skill: `local-vault` — build and query a local Markdown knowledge base ("vault"). Two distinct jobs:
+  - **Convert / sync** raw files (PDF, Word/docx, PowerPoint/pptx, Excel/xlsx, csv/tsv, images, html, md/txt, code) into clean Markdown with retrieval-friendly frontmatter (`abstract` / `auto_tags` / `synonyms` / `key_data` + a `source` backlink to the raw file). Local-first (pandoc / pymupdf4llm / openpyxl / python-pptx); cloud OCR (MinerU) only as a fallback for scanned PDFs, legacy `.doc`/`.ppt`, `.html`, and images.
+  - **Retrieve / answer** questions over the resulting vault with retrieval discipline — startup vault health check, coverage self-monitoring, lossy-content flagging, and Maps-of-Content (MOC) proposals that grow from real usage.
+- Incremental sync (only source files without a matching `.md` are processed), orphan staging (deleted sources → `orphaned/<date>/`, never hard-deleted), and frontmatter-only enrichment (document **bodies** are never rewritten → zero content-loss risk from the tool).
+- Per-type routing: xlsx dual value+formula read, digital PDF via pymupdf4llm, pptx charts + notes + de-duplicated concurrent image OCR (`claude -p`), code/markdown passthrough; unsupported types are reported at the end, never silently dropped.
+- Ships `scripts/sync.py` (pipeline + interactive setup wizard), `scripts/config.py` (tuning knobs), `scripts/mineru_client.py` (cloud OCR fallback), and `sync.command` (double-click entry).
+- `SKILL.zh.md` Chinese reference (kept in sync with the English `SKILL.md`; excluded from `.zip` packaging).
+
+### Changed
+
+- README, `plugin.json`, and `marketplace.json` updated to list `local-vault` — the collection is now **four skills** (verifying / topic-brief / analyst-research / local-vault).
+
 ## [1.0.0] - 2026-05-28
 
 First stable release. Consolidates the `analyst-research` work (the internal 0.6.x development series, never published) into one milestone: a mature three-mode research skill replacing the old `light-research`, with full bilingual source files across all three skills.
@@ -163,6 +179,22 @@ If you had `light-research` installed via this plugin marketplace at v0.5.0, upg
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
 ## [未发布]
+
+## [1.1.0] - 2026-06-02
+
+### 新增
+
+- 新 skill：`local-vault` —— 构建并查询一个本地 Markdown 知识库（"vault"）。两件不同的事：
+  - **转换 / 同步**：把原始文件（PDF、Word/docx、PowerPoint/pptx、Excel/xlsx、csv/tsv、图片、html、md/txt、代码）转成干净的 Markdown，带检索友好的 frontmatter（`abstract` / `auto_tags` / `synonyms` / `key_data` + 双链回原文的 `source`）。本地优先（pandoc / pymupdf4llm / openpyxl / python-pptx）；云端 OCR（MinerU）仅作兜底，用于扫描版 PDF、老式 `.doc`/`.ppt`、`.html` 和图片。
+  - **检索 / 回答**：基于生成的 vault 负责任地回答问题 —— 会话首问做 vault 健康检查、自我监控覆盖度、标注有损内容、按真实使用沉淀 Maps-of-Content（MOC）。
+- 增量同步（只处理 SOURCE 中没有对应 `.md` 的文件）、孤儿暂存（源文件被删 → 工具生成的 `.md` 移到 `orphaned/<日期>/`，绝不硬删）、仅改 frontmatter 的增强（文档**正文**永不被改写 → 工具本身零内容丢失风险）。
+- 按类型路由：xlsx 值+公式双读、数字版 PDF 走 pymupdf4llm、pptx 图表 + 备注 + 去重并发图片 OCR（`claude -p`）、代码/markdown 原样透传；不支持的类型在结尾统一报告，绝不静默丢弃。
+- 自带 `scripts/sync.py`（管线 + 交互式配置向导）、`scripts/config.py`（调参）、`scripts/mineru_client.py`（云端 OCR 兜底）、`sync.command`（双击入口）。
+- `SKILL.zh.md` 中文参考版（与英文 `SKILL.md` 同步；打包 zip 时排除）。
+
+### 变更
+
+- README、`plugin.json`、`marketplace.json` 更新，列入 `local-vault` —— 合集现为**四个 skill**（verifying / topic-brief / analyst-research / local-vault）。
 
 ## [1.0.0] - 2026-05-28
 
