@@ -1,6 +1,11 @@
 # macOS
 .DS_Store
 
+# Secrets / local config — never commit real .env (only .env.example is shipped)
+# 密钥 / 本地配置 —— 真实 .env 绝不入库（只发 .env.example）
+.env
+**/.env
+
 # Packaged artifacts (regeneratable via scripts/pack.sh; ship via GitHub Release)
 # 打包产物（可由 scripts/pack.sh 重新生成，发 Release 时再附）
 releases/
