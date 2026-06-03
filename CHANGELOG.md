@@ -6,6 +6,13 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-06-03
+
+### Added
+
+- `local-vault`: the sync pipeline now drops a clickable `sync.command` **into the user's SOURCE folder** (macOS), with the absolute path to `sync.py` baked in. Tool and data live apart — under `/plugin install` the script sits deep in `~/.claude/plugins/cache/…`, so the old relative-path launcher was effectively unreachable for plugin users. The new launcher makes the daily loop "drop files → double-click → read the `.md`" work regardless of install path. It is created both by the setup wizard and idempotently on every run (covering the Claude-writes-`.env` setup path that never hits the wizard), and self-heals — re-pointing itself when a plugin upgrade moves `sync.py`.
+- `local-vault`: new `KB_NO_LAUNCHER=1` `.env` flag (`config.INSTALL_CLICKABLE_LAUNCHER`) to opt out of writing the launcher into the source folder.
+
 ## [1.1.0] - 2026-06-02
 
 ### Added
@@ -179,6 +186,13 @@ If you had `light-research` installed via this plugin marketplace at v0.5.0, upg
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
 ## [未发布]
+
+## [1.2.0] - 2026-06-03
+
+### 新增
+
+- `local-vault`：同步管线现在会往**用户的原始文件目录**（macOS）放一个可双击的 `sync.command`，里面硬编码 `sync.py` 的绝对路径。工具与数据是分离的——`/plugin install` 时脚本埋在 `~/.claude/plugins/cache/…` 深处，旧的相对路径 launcher 对插件用户基本不可达。新 launcher 让「拖文件 → 双击 → 读 `.md`」的日常闭环在任何安装方式下都成立。它由配置向导创建，也在每次运行时幂等补放（覆盖「Claude 帮写 `.env`」这条不走向导的首配路径），并能自愈——插件升级使 `sync.py` 路径变化时自动重新指向。
+- `local-vault`：新增 `KB_NO_LAUNCHER=1` 的 `.env` 开关（`config.INSTALL_CLICKABLE_LAUNCHER`），可关掉往原始文件目录写 launcher 的行为。
 
 ## [1.1.0] - 2026-06-02
 

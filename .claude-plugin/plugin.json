@@ -1,6 +1,6 @@
 {
   "name": "market-research-skills",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Claude Skills collection for market research, equity research, and investment analysis. Includes: verifying, topic-brief, analyst-research (3 modes: light/medium/heavy), local-vault (local Markdown knowledge base — file conversion + disciplined retrieval). | 市场研究 / 投研 / 行业分析 Claude Skills 合集。当前包含：verifying（信息核实）、topic-brief（主题观察简报生成器）、analyst-research（三档研究工作流：light/medium/heavy）、local-vault（本地 Markdown 知识库：文件转换 + 检索）",
   "author": {
     "name": "ligen",

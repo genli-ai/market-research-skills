@@ -61,8 +61,16 @@ There are **two distinct jobs** — figure out which the user wants:
 ### Run it
 
 ```
-python3 scripts/sync.py          # or double-click sync.command
+python3 scripts/sync.py
 ```
+
+On macOS, the first run (wizard or any normal run) also drops a clickable
+`sync.command` **into the user's SOURCE folder**, with the absolute path to
+`sync.py` baked in (tool and data live apart — under `/plugin install` the script
+sits in `~/.claude/plugins/cache/…`, far from the data folders, so a relative
+launcher can't work). After that the daily loop is: drop files into SOURCE →
+double-click `sync.command` → read the `.md` in VAULT. The launcher is
+idempotent and self-heals (re-points itself if a plugin upgrade moves `sync.py`).
 
 First terminal run with no config → the setup wizard (above). Once `.env` exists:
 

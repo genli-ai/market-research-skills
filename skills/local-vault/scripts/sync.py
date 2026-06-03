@@ -1161,6 +1161,55 @@ def report_skipped(
     logger.info("")
 
 
+def _launcher_body(sync_py: Path) -> str:
+    """生成放进用户文件夹的双击 launcher 内容。
+
+    工具本体（sync.py）和用户数据是分离的——插件安装时 sync.py 埋在
+    ~/.claude/plugins/cache/.../scripts/ 下，跟原始文件目录完全两处。所以这里
+    把 sync.py 的【绝对路径】硬编码进 launcher，不能用相对路径的 cd "$DIR"。
+    """
+    return (
+        "#!/bin/bash\n"
+        "# 本地知识库 · 双击同步入口（local-vault 自动生成，勿手改——升级会被覆盖刷新）\n"
+        "# 用法：把要转换的文件拖进本文件夹，然后双击我 → 自动转成 Markdown 进 vault。\n"
+        f'python3 "{sync_py}"\n'
+        "EXIT_CODE=$?\n"
+        "echo \"\"\n"
+        "echo \"─────── 同步结束（退出码 $EXIT_CODE），按回车关闭窗口 ───────\"\n"
+        "read -r\n"
+        "exit $EXIT_CODE\n"
+    )
+
+
+def ensure_clickable_launcher(source_dir: Path, logger: Optional[logging.Logger] = None) -> Optional[Path]:
+    """在用户的原始文件目录里放/刷新一个可双击的 sync.command。
+
+    幂等：内容与当前 sync.py 绝对路径一致就不动；缺失或路径过期（插件版本 bump
+    导致 cache 目录变化）则（重新）写入。仅 macOS——.command 是 Finder 双击格式；
+    其它平台静默跳过（用户照常用 python3 sync.py）。返回写入的路径，未写则 None。
+    .env 里 KB_NO_LAUNCHER=1 可整体关掉（见 config.INSTALL_CLICKABLE_LAUNCHER）。
+    """
+    if not config.INSTALL_CLICKABLE_LAUNCHER:
+        return None
+    if sys.platform != "darwin":
+        return None
+    try:
+        sync_py = (config.TOOL_DIR / "sync.py").resolve()
+        launcher = source_dir / "sync.command"
+        desired = _launcher_body(sync_py)
+        if launcher.exists() and launcher.read_text(encoding="utf-8") == desired:
+            return None  # 已是最新，无需动作
+        launcher.write_text(desired, encoding="utf-8")
+        launcher.chmod(0o755)
+        if logger:
+            logger.info(f"已在原始文件目录放置双击入口：{launcher}（拖文件进来后双击即可同步）")
+        return launcher
+    except OSError as e:
+        if logger:
+            logger.warning(f"放置 sync.command 失败（不影响命令行使用）：{e}")
+        return None
+
+
 def _write_env_file(env_path: Path, source_dir, target_dir, token: str = "") -> None:
     """把首次运行向导收集到的配置写进 .env（config.load_dotenv 下次会读它）。"""
     lines = [
@@ -1207,11 +1256,16 @@ def first_run_setup() -> bool:
         token = ""
 
     _write_env_file(config.TOOL_DIR / ".env", src, tgt, token)
+    launcher = ensure_clickable_launcher(src)
 
     print("\n" + "─" * 56)
     print("✅ 配置已写入 .env。怎么用：")
     print(f"  1. 把要转换的文件拖进：{src}")
-    print("  2. 再运行一次（双击 sync.command 或 python3 sync.py）→ 自动转 Markdown")
+    if launcher:
+        print(f"  2. 双击该文件夹里的 sync.command → 自动转 Markdown")
+        print("     （命令行等价：python3 sync.py）")
+    else:
+        print("  2. 再运行一次 python3 sync.py → 自动转 Markdown")
     print(f"  3. 产出的 .md 在：{tgt}")
     print("     用 Obsidian 打开它阅读，或在 Claude 里基于它问答")
     print("  · 想重转某个文件：先删掉 vault 里对应的 .md 再运行")
@@ -1242,6 +1296,9 @@ def main() -> int:
             logger.error(f"目标目录不存在: {config.TARGET_DIR}")
             logger.error("  → 设环境变量 KB_TARGET_DIR（或在终端直接运行一次走配置向导）")
         return 1
+
+    # 兜底放置双击入口：Claude 帮配 .env 的路径不走向导，这里幂等补上（macOS）
+    ensure_clickable_launcher(config.SOURCE_DIR, logger)
 
     today = datetime.now().strftime("%Y-%m-%d")
 

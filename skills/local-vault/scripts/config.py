@@ -34,6 +34,12 @@ LOG_DIR = _env_path("KB_LOG_DIR") or (TOOL_DIR / "logs")
 
 MINERU_TOKEN = os.getenv("MINERU_TOKEN", "")
 
+# 是否在原始文件目录放一个可双击的 sync.command（仅 macOS）。
+# 默认开；在 .env 里设 KB_NO_LAUNCHER=1 关掉（不想让脚本往数据目录写入口文件时用）。
+INSTALL_CLICKABLE_LAUNCHER = (
+    os.getenv("KB_NO_LAUNCHER", "").strip().lower() not in {"1", "true", "yes", "on"}
+)
+
 MINERU_API_BASE = "https://mineru.net/api/v4"
 MINERU_LANGUAGE = "ch"
 

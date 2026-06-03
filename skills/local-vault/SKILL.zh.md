@@ -30,9 +30,10 @@
 ### 运行
 
 ```
-python3 scripts/sync.py          # 或双击 sync.command
+python3 scripts/sync.py
 ```
 
+- macOS 上,首次配置(向导)及之后每次运行,会**往用户的原始文件目录里放一个可双击的 `sync.command`**,里面硬编码 `sync.py` 的绝对路径(工具和数据分离——`/plugin install` 时脚本埋在 `~/.claude/plugins/cache/…`,离数据文件夹很远,相对路径的 launcher 走不通)。之后日常闭环就是:拖文件进原始目录 → 双击 `sync.command` → 在 vault 读 `.md`。launcher 幂等且自愈(插件升级使 `sync.py` 路径变化时自动刷新指向)。
 - **增量**:只处理 SOURCE 里 VAULT 还没有对应 `.md` 的文件。要重转先删那个 `.md` 再跑。
 - 本地路径(xlsx/csv/docx/pptx/md/txt/code + 数字 PDF)**不需要 MinerU token**;token 懒校验,只在真要调 MinerU 时才验。
 - **孤儿暂存**:原始文件被删 → 它的工具生成 `.md` 移到 `orphaned/<日期>/`(不硬删,用户可能加过笔记);用户手写的 `.md`(无 converter marker)永不碰。
