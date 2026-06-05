@@ -65,12 +65,16 @@ python3 scripts/sync.py
 ```
 
 On macOS, the first run (wizard or any normal run) also drops a clickable
-`sync.command` **into the user's SOURCE folder**, with the absolute path to
-`sync.py` baked in (tool and data live apart — under `/plugin install` the script
-sits in `~/.claude/plugins/cache/…`, far from the data folders, so a relative
-launcher can't work). After that the daily loop is: drop files into SOURCE →
-double-click `sync.command` → read the `.md` in VAULT. The launcher is
-idempotent and self-heals (re-points itself if a plugin upgrade moves `sync.py`).
+`sync.command` **into the knowledge-base root — the parent of the SOURCE folder**,
+with the absolute path to `sync.py` baked in (tool and data live apart — under
+`/plugin install` the script sits in `~/.claude/plugins/cache/…`, far from the data
+folders, so a relative launcher can't work). After that the daily loop is: drop
+files into SOURCE → double-click `sync.command` → read the `.md` in VAULT. The
+launcher is idempotent; a stale auto-generated copy left in the SOURCE folder by an
+older version is removed automatically (a user-written one is never touched). If a
+*different* `sync.command` already exists at the root, an interactive terminal
+prompts **update / skip**; non-interactively, our own out-of-date launcher self-heals
+silently while a user-customized one is left alone.
 
 First terminal run with no config → the setup wizard (above). Once `.env` exists:
 
@@ -78,9 +82,10 @@ First terminal run with no config → the setup wizard (above). Once `.env` exis
   processed. To force a re-convert, delete that `.md` first, then re-run.
 - **No MinerU token needed** for the local paths (xlsx/csv/docx/pptx/md/txt/code +
   digital PDF). Token is validated lazily, only when a file actually needs MinerU.
-- **Orphan staging**: if a source file is deleted, its tool-generated `.md` is
-  moved to an `orphaned/<date>/` folder (never hard-deleted — the user may have
-  added notes). User-written `.md` (no converter marker) is never touched.
+- **Orphan staging**: if a source file is deleted, its tool-generated `.md` —
+  together with its `attachments/<stem>/` images — is moved to an `orphaned/<date>/`
+  folder (never hard-deleted — the user may have added notes), and the now-empty
+  `attachments/` is pruned. User-written `.md` (no converter marker) is never touched.
 
 ### Routing (which tool per file type)
 
@@ -88,7 +93,7 @@ First terminal run with no config → the setup wizard (above). Once `.env` exis
 |---|---|---|
 | `.xlsx` | openpyxl dual-read | per sheet: value grid (with A/B/C + row coords) **+ formulas list** |
 | `.csv` / `.tsv` | csv → Markdown table | truncates past `CSV_MAX_ROWS` |
-| `.pdf` (digital) | pymupdf4llm | local, fast, no quota |
+| `.pdf` (digital) | pymupdf4llm | local, fast, no quota; images ≥ `PYMUPDF4LLM_IMAGE_SIZE_LIMIT` (5% of page) extracted to `attachments/` |
 | `.pdf` (scanned) | MinerU vlm (fallback) | triggered when chars/page is too low |
 | `.docx`/`.rtf`/`.odt`/`.epub` | pandoc | images extracted to `attachments/` |
 | `.pptx` | python-pptx | title/body/tables/**charts**/**notes** + images; smart OCR (see below) |
@@ -125,9 +130,11 @@ key_data: ["important numbers/facts"]
 
 ### Tuning (`scripts/config.py`)
 
-`PYMUPDF4LLM_MIN_CHARS_PER_PAGE` (scanned-PDF threshold) · `OCR_PPTX_IMAGES` /
-`OCR_MIN_IMAGE_BYTES` / `OCR_MAX_WORKERS` (PPT image OCR) ·
-`EXCEL_MAX_CELLS_PER_SHEET` · `CSV_MAX_ROWS` · `ENRICH_FRONTMATTER`.
+`PYMUPDF4LLM_MIN_CHARS_PER_PAGE` (scanned-PDF threshold) ·
+`PYMUPDF4LLM_IMAGE_SIZE_LIMIT` (digital-PDF image extraction floor, fraction of
+page area; default 0.05) · `OCR_PPTX_IMAGES` / `OCR_MIN_IMAGE_BYTES` /
+`OCR_MAX_WORKERS` (PPT image OCR) · `EXCEL_MAX_CELLS_PER_SHEET` · `CSV_MAX_ROWS` ·
+`ENRICH_FRONTMATTER`.
 
 ---
 

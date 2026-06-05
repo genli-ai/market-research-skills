@@ -6,6 +6,18 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-06-05
+
+### Added
+
+- `local-vault`: **digital PDFs now keep their images.** The pymupdf4llm path previously ran with `write_images=False`, so a text PDF with charts/figures lost every image (text-only output). It now extracts images (≥ `PYMUPDF4LLM_IMAGE_SIZE_LIMIT`, default 5% of page area — small logos/icons are skipped) into `attachments/<stem>/`, renaming them to ASCII-safe names (`img-0.png` …) so source filenames with spaces/CJK don't break the Markdown links, and rewrites the references. On a sparse→MinerU fallback the staged images are discarded.
+- `local-vault`: new tuning knob `PYMUPDF4LLM_IMAGE_SIZE_LIMIT` (`scripts/config.py`, default `0.05`) controls the digital-PDF image-extraction floor as a fraction of page area.
+
+### Changed
+
+- `local-vault`: the clickable `sync.command` is now placed in the **knowledge-base root (the parent of the SOURCE folder)** instead of inside the SOURCE folder — the double-click entry and the "drop files here" folder are no longer the same place, and it still works under `/plugin install`. A stale auto-generated launcher left in the SOURCE folder by an older version is **removed automatically** (a user-written one is never touched), resolving the duplicate-launcher confusion.
+- `local-vault`: when a *different* `sync.command` already exists at the root, an interactive terminal now **prompts update / skip** instead of silently overwriting. Non-interactively, our own out-of-date launcher self-heals silently while a user-customized one is left alone.
+
 ## [1.2.0] - 2026-06-03
 
 ### Added
@@ -186,6 +198,18 @@ If you had `light-research` installed via this plugin marketplace at v0.5.0, upg
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
 ## [未发布]
+
+## [1.3.0] - 2026-06-05
+
+### 新增
+
+- `local-vault`:**数字版 PDF 现在会保留图片。** pymupdf4llm 路径之前用 `write_images=False`,带图表/插图的文字 PDF 转完丢掉所有图(只剩文字)。现在会把图(≥ `PYMUPDF4LLM_IMAGE_SIZE_LIMIT`,默认页面面积 5%——小 logo/图标跳过)抽进 `attachments/<stem>/`,并重命名为 ascii 安全名(`img-0.png` …)以免源文件名含空格/中文破坏 Markdown 链接,同步改写引用。稀疏→MinerU fallback 时丢弃已抽的图。
+- `local-vault`:新增可调旋钮 `PYMUPDF4LLM_IMAGE_SIZE_LIMIT`(`scripts/config.py`,默认 `0.05`),按页面面积比例控制数字 PDF 抽图下限。
+
+### 变更
+
+- `local-vault`:可双击的 `sync.command` 落点从 SOURCE 文件夹内改到**知识库根目录(SOURCE 的父目录)**——双击入口和「往里拖文件」的目录不再是同一个,且对 `/plugin install` 仍成立。旧版本遗留在 SOURCE 里的自动生成 launcher 会被**自动删除**(用户手写的不碰),消除重复 launcher 的困惑。
+- `local-vault`:根目录已有一个**不同的** `sync.command` 时,交互终端现在会**提示更新 / 跳过**,不再静默覆盖。非交互时,我们自己的过期 launcher 静默自愈,用户自定义的保留不动。
 
 ## [1.2.0] - 2026-06-03
 

@@ -9,6 +9,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import zipfile
 from datetime import datetime
@@ -412,9 +413,15 @@ def process_result(src: Path, result, logger: Optional[logging.Logger] = None) -
     enrich_frontmatter(target_md, src, logger)
 
 
-def convert_with_pymupdf4llm(src: Path, logger: Optional[logging.Logger] = None) -> tuple[str, int]:
-    """用 pymupdf4llm 把 PDF 转成 Markdown 字符串。返回 (md_content, pages)。
+def convert_with_pymupdf4llm(
+    src: Path, logger: Optional[logging.Logger] = None
+) -> tuple[str, int, Optional[Path]]:
+    """用 pymupdf4llm 把 PDF 转成 Markdown 字符串。返回 (md_content, pages, img_dir)。
+
     本地、秒级、无 quota，但不做 OCR、复杂公式/表格略损。
+    开 write_images：把页面里够大的图（≥ PYMUPDF4LLM_IMAGE_SIZE_LIMIT，默认页面 5%）
+    抽到一个临时 img_dir，md 里以绝对路径引用；后续 process_pymupdf4llm_result
+    把这些图搬进 attachments/ 并改写引用。无图时 img_dir 仍返回（空目录），调用方负责清理。
     """
     import pymupdf4llm
     pages = get_pdf_page_count(src) or 0
@@ -424,23 +431,68 @@ def convert_with_pymupdf4llm(src: Path, logger: Optional[logging.Logger] = None)
             f"  → converting {src.name} ({pages} pages, {size_mb:.1f} MB) via pymupdf4llm..."
         )
     t0 = time.time()
-    md_content = pymupdf4llm.to_markdown(str(src))
+    img_dir = Path(tempfile.mkdtemp(prefix="lv_pdfimg_"))
+    md_content = pymupdf4llm.to_markdown(
+        str(src),
+        write_images=True,
+        image_path=str(img_dir),
+        image_format="png",
+        image_size_limit=config.PYMUPDF4LLM_IMAGE_SIZE_LIMIT,
+    )
     if logger:
         logger.info(
             f"  ✓ {src.name} (pymupdf4llm, {pages} pages, {time.time() - t0:.1f}s)"
         )
-    return md_content, pages
+    return md_content, pages, img_dir
+
+
+def _land_pymupdf4llm_images(
+    md_content: str, img_dir: Optional[Path], target_md: Path
+) -> tuple[str, int]:
+    """把 pymupdf4llm 抽到 img_dir 的图搬进 target_md 旁的 attachments/<stem>/，
+    重命名为 ascii 安全名（img-0.png…），并把 md 里的绝对路径引用改写成相对引用。
+    返回 (改写后的 md, 落地图片数)。img_dir 用完由调用方清理。
+
+    为什么重命名：pymupdf4llm 默认用「<原文件名>-页-序号.png」，源文件名含空格 / 中文
+    会破坏 Markdown 图片链接；统一改成 img-N.png 规避。子目录名 URL-encode，与
+    rewrite_image_paths 对 MinerU 的处理保持一致。
+    """
+    if not img_dir or not Path(img_dir).is_dir():
+        return md_content, 0
+    files = [p for p in sorted(Path(img_dir).iterdir()) if p.is_file()]
+    if not files:
+        return md_content, 0
+    safe_name = target_md.stem
+    attach_dir = target_md.parent / "attachments" / safe_name
+    attach_dir.mkdir(parents=True, exist_ok=True)
+    enc_sub = quote(safe_name)
+    n = 0
+    for i, f in enumerate(files):
+        clean = f"img-{i}{f.suffix.lower()}"
+        shutil.copy2(f, attach_dir / clean)
+        # pymupdf4llm 写进 md 的引用 = ](<img_dir>/<原名>)；按原名精确替换
+        md_content = md_content.replace(
+            f"]({img_dir}/{f.name})", f"](attachments/{enc_sub}/{clean})"
+        )
+        n += 1
+    return md_content, n
 
 
 def process_pymupdf4llm_result(
     src: Path,
     md_content: str,
     pages: int,
+    img_dir: Optional[Path] = None,
     logger: Optional[logging.Logger] = None,
 ) -> None:
-    """pymupdf4llm 转换结果落地：写 MD（含 frontmatter，converted_by 标 pymupdf4llm）。"""
+    """pymupdf4llm 转换结果落地：把抽出的图搬进 attachments/，写 MD（含 frontmatter）。"""
     target_md = compute_target_path(src, config.SOURCE_DIR, config.TARGET_DIR)
     target_md.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        md_content, n_images = _land_pymupdf4llm_images(md_content, img_dir, target_md)
+    finally:
+        if img_dir:
+            shutil.rmtree(img_dir, ignore_errors=True)
     fm = build_frontmatter(
         source_filename=src.name,
         source_type=src.suffix.lstrip(".").lower(),
@@ -452,7 +504,8 @@ def process_pymupdf4llm_result(
     )
     target_md.write_text(fm + md_content, encoding="utf-8")
     if logger:
-        logger.info(f"  → {target_md}")
+        suffix = f"（含 {n_images} 张图）" if n_images else ""
+        logger.info(f"  → {target_md}{suffix}")
     enrich_frontmatter(target_md, src, logger)
 
 
@@ -1181,13 +1234,66 @@ def _launcher_body(sync_py: Path) -> str:
     )
 
 
-def ensure_clickable_launcher(source_dir: Path, logger: Optional[logging.Logger] = None) -> Optional[Path]:
-    """在用户的原始文件目录里放/刷新一个可双击的 sync.command。
+# 用来识别「我们自己生成的」launcher（_launcher_body 注释里一定带这句）。
+_LAUNCHER_MARK = "local-vault 自动生成"
 
-    幂等：内容与当前 sync.py 绝对路径一致就不动；缺失或路径过期（插件版本 bump
-    导致 cache 目录变化）则（重新）写入。仅 macOS——.command 是 Finder 双击格式；
-    其它平台静默跳过（用户照常用 python3 sync.py）。返回写入的路径，未写则 None。
+
+def _is_our_launcher(text: str) -> bool:
+    return _LAUNCHER_MARK in text
+
+
+def _cleanup_stale_source_launcher(
+    source_dir: Path, home: Path, logger: Optional[logging.Logger] = None
+) -> None:
+    """旧版本把 launcher 放进 SOURCE(02)；现在落点改到父目录（本地知识库根）。
+    若 SOURCE 里还残留我们自己生成的 sync.command（且不是新落点本身），删掉以消除重复。
+    用户手写的（没有我们的标记）一律不碰。"""
+    try:
+        stale = source_dir / "sync.command"
+        if stale.resolve() == (home / "sync.command").resolve():
+            return
+        if stale.exists() and _is_our_launcher(stale.read_text(encoding="utf-8")):
+            stale.unlink()
+            if logger:
+                logger.info(f"已清理旧位置的重复双击入口：{stale}")
+    except OSError:
+        pass
+
+
+def _ask_launcher_update(launcher: Path) -> bool:
+    """终端交互：已有 sync.command 且与最新版不同时，问更新还是跳过。
+    返回 True=更新。空回车 / EOF / Ctrl-C 一律按跳过处理。"""
+    try:
+        ans = input(
+            f"\n检测到已存在 sync.command（与最新版不同）：\n  {launcher}\n"
+            f"更新它吗？[u]更新 / [s]跳过（默认跳过）: "
+        ).strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        return False
+    return ans in {"u", "update", "y", "yes"}
+
+
+def ensure_clickable_launcher(
+    source_dir: Path,
+    logger: Optional[logging.Logger] = None,
+    *,
+    interactive: Optional[bool] = None,
+) -> Optional[Path]:
+    """在【本地知识库根】（source_dir 的父目录）放/刷新可双击的 sync.command。
+
+    落点是父目录而非 SOURCE 本身：双击入口和「往里拖文件」的原始目录分开；对
+    /plugin install（sync.py 埋在 cache、PROJECT_ROOT 不在数据旁）也成立。
+    仅 macOS——.command 是 Finder 双击格式；其它平台静默跳过。
     .env 里 KB_NO_LAUNCHER=1 可整体关掉（见 config.INSTALL_CLICKABLE_LAUNCHER）。
+
+    存在性处理：
+      - 不存在 → 直接创建。
+      - 已存在且与最新版一致 → 不动（返回 None）。
+      - 已存在但不同 →
+          · 交互终端(TTY)：提示用户「更新 / 跳过」，由用户拍板；
+          · 非交互 + 是我们自己生成的旧 launcher：静默自愈（刷新路径，沿用插件升级自愈）；
+          · 非交互 + 用户自定义 launcher：保留不动，绝不覆盖。
+    返回写入/更新的路径，未写则 None。
     """
     if not config.INSTALL_CLICKABLE_LAUNCHER:
         return None
@@ -1195,14 +1301,40 @@ def ensure_clickable_launcher(source_dir: Path, logger: Optional[logging.Logger]
         return None
     try:
         sync_py = (config.TOOL_DIR / "sync.py").resolve()
-        launcher = source_dir / "sync.command"
         desired = _launcher_body(sync_py)
-        if launcher.exists() and launcher.read_text(encoding="utf-8") == desired:
+        home = source_dir.parent if source_dir.parent != source_dir else source_dir
+
+        _cleanup_stale_source_launcher(source_dir, home, logger)
+
+        launcher = home / "sync.command"
+        if not launcher.exists():
+            launcher.write_text(desired, encoding="utf-8")
+            launcher.chmod(0o755)
+            if logger:
+                logger.info(f"已在本地知识库根放置双击入口：{launcher}（双击即可同步）")
+            return launcher
+
+        current = launcher.read_text(encoding="utf-8")
+        if current == desired:
             return None  # 已是最新，无需动作
+
+        if interactive is None:
+            interactive = sys.stdin.isatty() and sys.stdout.isatty()
+
+        if interactive:
+            if not _ask_launcher_update(launcher):
+                if logger:
+                    logger.info(f"保留现有 sync.command（用户选择跳过）：{launcher}")
+                return None
+        elif not _is_our_launcher(current):
+            if logger:
+                logger.info(f"检测到自定义 sync.command，保留不动：{launcher}")
+            return None
+        # 走到这：交互里选了更新，或非交互且是我们自己的旧 launcher（静默自愈）
         launcher.write_text(desired, encoding="utf-8")
         launcher.chmod(0o755)
         if logger:
-            logger.info(f"已在原始文件目录放置双击入口：{launcher}（拖文件进来后双击即可同步）")
+            logger.info(f"已更新双击入口：{launcher}")
         return launcher
     except OSError as e:
         if logger:
@@ -1262,8 +1394,8 @@ def first_run_setup() -> bool:
     print("✅ 配置已写入 .env。怎么用：")
     print(f"  1. 把要转换的文件拖进：{src}")
     if launcher:
-        print(f"  2. 双击该文件夹里的 sync.command → 自动转 Markdown")
-        print("     （命令行等价：python3 sync.py）")
+        print(f"  2. 双击 {launcher} → 自动转 Markdown")
+        print("     （它在原始目录的上一层；命令行等价：python3 sync.py）")
     else:
         print("  2. 再运行一次 python3 sync.py → 自动转 Markdown")
     print(f"  3. 产出的 .md 在：{tgt}")
@@ -1377,14 +1509,14 @@ def main() -> int:
         logger.info(f"=== PDF 本地转换尝试 {len(new_pdfs)} 个 ===")
         for src in new_pdfs:
             try:
-                md_content, pages = convert_with_pymupdf4llm(src, logger)
+                md_content, pages, img_dir = convert_with_pymupdf4llm(src, logger)
             except Exception as exc:
                 logger.warning(
                     f"  ⚠ {src.name}: pymupdf4llm 出错 ({exc})，转 MinerU fallback"
                 )
                 mineru_fallback_files.append(src)
                 continue
-            # 字符密度判断：太稀 → 多半扫描件 → fallback
+            # 字符密度判断：太稀 → 多半扫描件 → fallback（丢弃已抽的图，交给 MinerU）
             density = (len(md_content) / pages) if pages else 0
             if density < config.PYMUPDF4LLM_MIN_CHARS_PER_PAGE:
                 logger.warning(
@@ -1392,10 +1524,12 @@ def main() -> int:
                     f"({int(density)} chars/page < {config.PYMUPDF4LLM_MIN_CHARS_PER_PAGE})，"
                     f"判定扫描件，fallback MinerU vlm"
                 )
+                if img_dir:
+                    shutil.rmtree(img_dir, ignore_errors=True)
                 mineru_fallback_files.append(src)
                 continue
             try:
-                process_pymupdf4llm_result(src, md_content, pages, logger)
+                process_pymupdf4llm_result(src, md_content, pages, img_dir, logger)
                 success += 1
             except Exception as exc:
                 logger.error(f"  ✗ {src.name} pymupdf4llm 落地失败: {exc}")

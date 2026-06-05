@@ -136,6 +136,10 @@ EXCEL_MAX_CELLS_PER_SHEET = 5000
 # fallback 到 MinerU vlm。典型数字 PDF 每页 1000-3000 字符。
 PYMUPDF4LLM_MIN_CHARS_PER_PAGE = 200
 
+# 数字版 PDF（pymupdf4llm 路）抽图阈值：图面积小于页面的这个比例就不抽
+# （logo / 图标 / 装饰小图无检索价值）。0.05 = 页面 5%。设 0 抽全部，设 1 基本不抽。
+PYMUPDF4LLM_IMAGE_SIZE_LIMIT = 0.05
+
 MAX_FILE_SIZE_MB = 200
 MAX_BATCH_SIZE = 200
 

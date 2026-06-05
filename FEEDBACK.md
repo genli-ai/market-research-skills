@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-06-05 · 数字 PDF 丢图 + 双击入口落点错位/重复 · local-vault
+
+**反馈**
+> 数字版 PDF 里的图希望也抽进 attachments。另外 02 原始知识库里的 sync.command 和 09 本地知识库里的 sync.command 是不是重复了？新用户使用时我希望在本地知识库根建立 sync.command，不是在 02 原始知识库下面；如果之前有了，就提醒用户是跳过还是更新。
+
+**分析**
+两件事。① 数字 PDF 走 pymupdf4llm，`to_markdown` 默认 `write_images=False` → 图被直接丢弃,只剩文字;用户带图表的 PDF 转完丢了图。② launcher 历史上落在 SOURCE(`02 原始知识库`),而用户手里又有一个手写的落在知识库根(`09 本地知识库`),两个并存造成困惑;且每次运行静默覆盖/自愈,没给用户「跳过还是更新」的选择。
+
+**方案**（v1.3.0）
+- pymupdf4llm 开 `write_images=True`,图抽进 `attachments/<stem>/`,重命名为 ascii 安全名(`img-0.png`…,规避中文/空格源名破坏链接),改写引用;沿用 `image_size_limit=0.05`(<页面 5% 不抽),暴露成 `PYMUPDF4LLM_IMAGE_SIZE_LIMIT` 可调;稀疏→MinerU fallback 时丢弃已抽的图
+- launcher 落点从 SOURCE 改到其父目录(知识库根);自动删除 SOURCE 里带标记的旧 launcher(用户手写的不碰)
+- 根目录已有不同 launcher 时:TTY 提示「更新/跳过」;非交互+我们自己的旧版静默自愈,非交互+用户自定义保留不动
+
+---
+
 ## 2026-05-13 · 时间窗口失守 · topic-brief
 
 **反馈**

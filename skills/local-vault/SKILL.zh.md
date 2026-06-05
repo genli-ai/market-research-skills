@@ -33,10 +33,10 @@
 python3 scripts/sync.py
 ```
 
-- macOS 上,首次配置(向导)及之后每次运行,会**往用户的原始文件目录里放一个可双击的 `sync.command`**,里面硬编码 `sync.py` 的绝对路径(工具和数据分离——`/plugin install` 时脚本埋在 `~/.claude/plugins/cache/…`,离数据文件夹很远,相对路径的 launcher 走不通)。之后日常闭环就是:拖文件进原始目录 → 双击 `sync.command` → 在 vault 读 `.md`。launcher 幂等且自愈(插件升级使 `sync.py` 路径变化时自动刷新指向)。
+- macOS 上,首次配置(向导)及之后每次运行,会**往知识库根目录(SOURCE 的父目录)放一个可双击的 `sync.command`**,里面硬编码 `sync.py` 的绝对路径(工具和数据分离——`/plugin install` 时脚本埋在 `~/.claude/plugins/cache/…`,离数据文件夹很远,相对路径的 launcher 走不通)。之后日常闭环就是:拖文件进原始目录 → 双击 `sync.command` → 在 vault 读 `.md`。launcher 幂等;旧版本遗留在 SOURCE 里的自动生成 launcher 会被自动清理(用户手写的不碰);若根目录已有一个**不同的** `sync.command`,交互终端会提示**更新 / 跳过**,非交互时我们自己的过期 launcher 静默自愈、用户自定义的保留不动。
 - **增量**:只处理 SOURCE 里 VAULT 还没有对应 `.md` 的文件。要重转先删那个 `.md` 再跑。
 - 本地路径(xlsx/csv/docx/pptx/md/txt/code + 数字 PDF)**不需要 MinerU token**;token 懒校验,只在真要调 MinerU 时才验。
-- **孤儿暂存**:原始文件被删 → 它的工具生成 `.md` 移到 `orphaned/<日期>/`(不硬删,用户可能加过笔记);用户手写的 `.md`(无 converter marker)永不碰。
+- **孤儿暂存**:原始文件被删 → 它的工具生成 `.md` 连同 `attachments/<stem>/` 里的图一起移到 `orphaned/<日期>/`(不硬删,用户可能加过笔记),原位置空掉的 `attachments/` 被剪除;用户手写的 `.md`(无 converter marker)永不碰。
 
 ### 路由(按文件类型)
 
@@ -44,7 +44,7 @@ python3 scripts/sync.py
 |---|---|---|
 | `.xlsx` | openpyxl 双读 | 每 sheet:带 A/B/C + 行号坐标的值表 **+ 公式清单** |
 | `.csv` / `.tsv` | csv → Markdown 表 | 超 `CSV_MAX_ROWS` 截断 |
-| `.pdf`(数字) | pymupdf4llm | 本地、秒级、无 quota |
+| `.pdf`(数字) | pymupdf4llm | 本地、秒级、无 quota;≥ `PYMUPDF4LLM_IMAGE_SIZE_LIMIT`(页面 5%)的图抽到 `attachments/` |
 | `.pdf`(扫描) | MinerU vlm(兜底) | 字符密度过低时触发 |
 | `.docx`/`.rtf`/`.odt`/`.epub` | pandoc | 图片抽到 `attachments/` |
 | `.pptx` | python-pptx | 标题/正文/表格/**图表**/**备注** + 图片;智能 OCR(见下) |
@@ -75,7 +75,7 @@ key_data: ["关键数字/事实"]
 
 ### 可调旋钮(`scripts/config.py`)
 
-`PYMUPDF4LLM_MIN_CHARS_PER_PAGE`(扫描件阈值)·`OCR_PPTX_IMAGES` / `OCR_MIN_IMAGE_BYTES` / `OCR_MAX_WORKERS`·`EXCEL_MAX_CELLS_PER_SHEET`·`CSV_MAX_ROWS`·`ENRICH_FRONTMATTER`。
+`PYMUPDF4LLM_MIN_CHARS_PER_PAGE`(扫描件阈值)·`PYMUPDF4LLM_IMAGE_SIZE_LIMIT`(数字 PDF 抽图下限,占页面面积比例,默认 0.05)·`OCR_PPTX_IMAGES` / `OCR_MIN_IMAGE_BYTES` / `OCR_MAX_WORKERS`·`EXCEL_MAX_CELLS_PER_SHEET`·`CSV_MAX_ROWS`·`ENRICH_FRONTMATTER`。
 
 ---
 
