@@ -93,13 +93,14 @@ First terminal run with no config → the setup wizard (above). Once `.env` exis
 |---|---|---|
 | `.xlsx` | openpyxl dual-read | per sheet: value grid (with A/B/C + row coords) **+ formulas list** |
 | `.csv` / `.tsv` | csv → Markdown table | truncates past `CSV_MAX_ROWS` |
-| `.pdf` (digital) | pymupdf4llm | local, fast, no quota; images ≥ `PYMUPDF4LLM_IMAGE_SIZE_LIMIT` (5% of page) extracted to `attachments/` |
+| `.pdf` (digital) | pymupdf4llm | local, fast, no quota; if `PYMUPDF4LLM_WRITE_IMAGES` (default on), images ≥ `PYMUPDF4LLM_IMAGE_SIZE_LIMIT` (12% of page) → `attachments/`, then filtered by min-bytes + de-dup |
 | `.pdf` (scanned) | MinerU vlm (fallback) | triggered when chars/page is too low |
 | `.docx`/`.rtf`/`.odt`/`.epub` | pandoc | images extracted to `attachments/` |
+| `.html`/`.htm` | pandoc (local) | style/class/id attrs + layout `div`/`section`/`span` stripped first, so only content survives; tables kept lossless. No MinerU/token needed |
 | `.pptx` | python-pptx | title/body/tables/**charts**/**notes** + images; smart OCR (see below) |
 | `.md`/`.markdown`/`.txt` | passthrough | copied verbatim; only frontmatter added, **body untouched** |
 | `.json`/`.yaml`/`.py`/… | code passthrough | wrapped in a fenced code block + frontmatter |
-| legacy `.doc`/`.ppt`, `.html`, images | MinerU (cloud) | local libs can't read these |
+| legacy `.doc`/`.ppt`, images | MinerU (cloud) | local libs can't read these |
 | anything else (mp3/numbers/zip/…) | **skipped** | reported at the end with a fix hint — never silently dropped |
 
 ### PPT smart OCR
@@ -131,10 +132,12 @@ key_data: ["important numbers/facts"]
 ### Tuning (`scripts/config.py`)
 
 `PYMUPDF4LLM_MIN_CHARS_PER_PAGE` (scanned-PDF threshold) ·
-`PYMUPDF4LLM_IMAGE_SIZE_LIMIT` (digital-PDF image extraction floor, fraction of
-page area; default 0.05) · `OCR_PPTX_IMAGES` / `OCR_MIN_IMAGE_BYTES` /
-`OCR_MAX_WORKERS` (PPT image OCR) · `EXCEL_MAX_CELLS_PER_SHEET` · `CSV_MAX_ROWS` ·
-`ENRICH_FRONTMATTER`.
+`PYMUPDF4LLM_WRITE_IMAGES` (digital-PDF image extraction on/off; `.env`:
+`KB_PDF_NO_IMAGES=1` to disable) · `PYMUPDF4LLM_IMAGE_SIZE_LIMIT` (extraction
+floor as fraction of page area; default 0.12) · `PYMUPDF4LLM_IMAGE_MIN_BYTES`
+(drop images smaller than this; default 6000) · `OCR_PPTX_IMAGES` /
+`OCR_MIN_IMAGE_BYTES` / `OCR_MAX_WORKERS` (PPT image OCR) ·
+`EXCEL_MAX_CELLS_PER_SHEET` · `CSV_MAX_ROWS` · `ENRICH_FRONTMATTER`.
 
 ---
 

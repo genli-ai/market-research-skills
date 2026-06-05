@@ -1,6 +1,7 @@
 """本地知识库同步主程序。"""
 
 import base64
+import hashlib
 import io
 import json
 import logging
@@ -63,7 +64,7 @@ def route(path: Path) -> str:
       'csv'     → csv 模块转 Markdown 表格（本地）
       'sidecar' → 纯 metadata sidecar（老 .xls）
       'pdf'     → pymupdf4llm 本地优先（稀疏 fallback MinerU）
-      'pandoc'  → pandoc（docx/rtf/odt/epub，本地）
+      'pandoc'  → pandoc（docx/rtf/odt/epub/html，本地）
       'pptx'    → python-pptx + 可选 OCR（本地）
       'passthrough' → 已是文本/Markdown，直接拷贝（仅补 frontmatter）
       'code'    → 代码/结构化文本，包进代码块（本地）
@@ -419,9 +420,9 @@ def convert_with_pymupdf4llm(
     """用 pymupdf4llm 把 PDF 转成 Markdown 字符串。返回 (md_content, pages, img_dir)。
 
     本地、秒级、无 quota，但不做 OCR、复杂公式/表格略损。
-    开 write_images：把页面里够大的图（≥ PYMUPDF4LLM_IMAGE_SIZE_LIMIT，默认页面 5%）
-    抽到一个临时 img_dir，md 里以绝对路径引用；后续 process_pymupdf4llm_result
-    把这些图搬进 attachments/ 并改写引用。无图时 img_dir 仍返回（空目录），调用方负责清理。
+    抽图开关 config.PYMUPDF4LLM_WRITE_IMAGES：开 → 把够大的图（≥ IMAGE_SIZE_LIMIT，
+    默认页面 12%）抽到临时 img_dir，md 里以绝对路径引用，后续 process_pymupdf4llm_result
+    搬进 attachments/（再过最小字节 + 去重）并改写引用；关 → 纯文字、最快，img_dir 返回 None。
     """
     import pymupdf4llm
     pages = get_pdf_page_count(src) or 0
@@ -431,19 +432,28 @@ def convert_with_pymupdf4llm(
             f"  → converting {src.name} ({pages} pages, {size_mb:.1f} MB) via pymupdf4llm..."
         )
     t0 = time.time()
-    img_dir = Path(tempfile.mkdtemp(prefix="lv_pdfimg_"))
-    md_content = pymupdf4llm.to_markdown(
-        str(src),
-        write_images=True,
-        image_path=str(img_dir),
-        image_format="png",
-        image_size_limit=config.PYMUPDF4LLM_IMAGE_SIZE_LIMIT,
-    )
+    if config.PYMUPDF4LLM_WRITE_IMAGES:
+        img_dir = Path(tempfile.mkdtemp(prefix="lv_pdfimg_"))
+        md_content = pymupdf4llm.to_markdown(
+            str(src),
+            write_images=True,
+            image_path=str(img_dir),
+            image_format="png",
+            image_size_limit=config.PYMUPDF4LLM_IMAGE_SIZE_LIMIT,
+        )
+    else:
+        img_dir = None
+        md_content = pymupdf4llm.to_markdown(str(src))
     if logger:
         logger.info(
             f"  ✓ {src.name} (pymupdf4llm, {pages} pages, {time.time() - t0:.1f}s)"
         )
     return md_content, pages, img_dir
+
+
+def _strip_image_ref(md: str, target: str) -> str:
+    """从 md 里整条删掉指向 target 的图片引用 ![alt](target)（含可选行尾换行）。"""
+    return re.sub(r"!\[[^\]]*\]\(" + re.escape(target) + r"\)\n?", "", md)
 
 
 def _land_pymupdf4llm_images(
@@ -453,6 +463,9 @@ def _land_pymupdf4llm_images(
     重命名为 ascii 安全名（img-0.png…），并把 md 里的绝对路径引用改写成相对引用。
     返回 (改写后的 md, 落地图片数)。img_dir 用完由调用方清理。
 
+    两道过滤（在尺寸阈值之外再砍噪音）：
+      · 最小字节：< PYMUPDF4LLM_IMAGE_MIN_BYTES 的图视为装饰，连引用一起删；
+      · 内容去重：同一张图（按 md5）只存一份，重复引用都指向它（治每页重复的 logo/页眉）。
     为什么重命名：pymupdf4llm 默认用「<原文件名>-页-序号.png」，源文件名含空格 / 中文
     会破坏 Markdown 图片链接；统一改成 img-N.png 规避。子目录名 URL-encode，与
     rewrite_image_paths 对 MinerU 的处理保持一致。
@@ -464,18 +477,29 @@ def _land_pymupdf4llm_images(
         return md_content, 0
     safe_name = target_md.stem
     attach_dir = target_md.parent / "attachments" / safe_name
-    attach_dir.mkdir(parents=True, exist_ok=True)
     enc_sub = quote(safe_name)
-    n = 0
-    for i, f in enumerate(files):
-        clean = f"img-{i}{f.suffix.lower()}"
-        shutil.copy2(f, attach_dir / clean)
-        # pymupdf4llm 写进 md 的引用 = ](<img_dir>/<原名>)；按原名精确替换
+    min_bytes = config.PYMUPDF4LLM_IMAGE_MIN_BYTES
+    seen: dict[str, str] = {}   # 内容 md5 → 已落地的 clean 名
+    idx = 0
+    for f in files:
+        ref = f"{img_dir}/{f.name}"
+        data = f.read_bytes()
+        if len(data) < min_bytes:            # 太小 → 装饰/噪音，整条引用删掉
+            md_content = _strip_image_ref(md_content, ref)
+            continue
+        h = hashlib.md5(data).hexdigest()
+        if h in seen:                        # 重复图 → 复用已存的那份
+            clean = seen[h]
+        else:
+            clean = f"img-{idx}{f.suffix.lower()}"
+            idx += 1
+            attach_dir.mkdir(parents=True, exist_ok=True)
+            (attach_dir / clean).write_bytes(data)
+            seen[h] = clean
         md_content = md_content.replace(
-            f"]({img_dir}/{f.name})", f"](attachments/{enc_sub}/{clean})"
+            f"]({ref})", f"](attachments/{enc_sub}/{clean})"
         )
-        n += 1
-    return md_content, n
+    return md_content, len(seen)
 
 
 def process_pymupdf4llm_result(
@@ -751,19 +775,44 @@ def process_csv(src: Path, logger: Optional[logging.Logger] = None) -> None:
 
 
 # ── Word/RTF/ODT/EPUB：pandoc → Markdown ──────────────────────────
+def _clean_html_for_pandoc(raw: str) -> str:
+    """HTML 预清洗：剥掉 style/class/id 属性 + 纯布局包裹标签（div/section/span），
+    再交 pandoc。这样既去掉「无关信息」（满屏内联样式/布局 div），又保留 raw_html
+    以免复杂表格被 pandoc 降成 [TABLE] 占位丢内容。语义标签（table/tr/td/标题/p/
+    strong/ul/li/a/img/code…）一律不动。"""
+    raw = re.sub(r'''\s+(?:style|class|id)=(?:"[^"]*"|'[^']*')''', "", raw)
+    raw = re.sub(r"</?(?:div|section|span)\b[^>]*>", "", raw)
+    return raw
+
+
 def convert_via_pandoc(src: Path, target_md: Path) -> tuple[str, int]:
-    """pandoc 把 docx/rtf/odt/epub 转成 GitHub-flavored Markdown（按扩展名自动识别输入格式），
+    """pandoc 把 docx/rtf/odt/epub/html 转成 GitHub-flavored Markdown（按扩展名自动识别输入格式），
     嵌入图片抽到 attachments/<stem>/。返回 (md_content, 图片数)。
-    pandoc 失败抛 RuntimeError，调用方决定兜底。
+    .html/.htm 先 _clean_html_for_pandoc 去样式/布局噪音再转。pandoc 失败抛 RuntimeError。
     """
     safe_name = target_md.stem
     attach_dir = target_md.parent / "attachments" / safe_name
     attach_dir.parent.mkdir(parents=True, exist_ok=True)
-    result = subprocess.run(
-        [config.PANDOC_CMD, str(src), "-t", "gfm", "--wrap=none",
-         f"--extract-media={attach_dir}"],
-        capture_output=True, text=True, timeout=config.PANDOC_TIMEOUT_SEC,
-    )
+
+    pandoc_input = str(src)
+    cleaned_tmp: Optional[Path] = None
+    if src.suffix.lower() in {".html", ".htm"}:
+        raw = src.read_text(encoding="utf-8", errors="replace")
+        fd, tmp_name = tempfile.mkstemp(suffix=".html", prefix="lv_html_")
+        os.close(fd)
+        cleaned_tmp = Path(tmp_name)
+        cleaned_tmp.write_text(_clean_html_for_pandoc(raw), encoding="utf-8")
+        pandoc_input = str(cleaned_tmp)
+
+    try:
+        result = subprocess.run(
+            [config.PANDOC_CMD, pandoc_input, "-t", "gfm", "--wrap=none",
+             f"--extract-media={attach_dir}"],
+            capture_output=True, text=True, timeout=config.PANDOC_TIMEOUT_SEC,
+        )
+    finally:
+        if cleaned_tmp is not None:
+            cleaned_tmp.unlink(missing_ok=True)
     if result.returncode != 0:
         raise RuntimeError(f"pandoc exit {result.returncode}: {result.stderr.strip()[:200]}")
     md = result.stdout
@@ -780,7 +829,7 @@ def convert_via_pandoc(src: Path, target_md: Path) -> tuple[str, int]:
 
 
 def process_pandoc(src: Path, logger: Optional[logging.Logger] = None) -> None:
-    """docx/rtf/odt/epub 本地转换落地（pandoc）。"""
+    """docx/rtf/odt/epub/html 本地转换落地（pandoc）。"""
     target_md = compute_target_path(src, config.SOURCE_DIR, config.TARGET_DIR)
     md, n_images = convert_via_pandoc(src, target_md)
     _write_local_md(
@@ -1461,7 +1510,7 @@ def main() -> int:
     orphans = find_orphaned_mds(config.TARGET_DIR, config.SOURCE_DIR)
     logger.info(
         f"  待转 — xlsx: {len(new_xlsx)}, csv: {len(new_csv)}, xls sidecar: {len(new_sidecars)}, "
-        f"PDF: {len(new_pdfs)}, pandoc(docx/rtf/odt/epub): {len(new_pandoc)}, pptx: {len(new_pptx)}, "
+        f"PDF: {len(new_pdfs)}, pandoc(docx/rtf/odt/epub/html): {len(new_pandoc)}, pptx: {len(new_pptx)}, "
         f"md/txt: {len(new_md)}, code: {len(new_code)}, "
         f"MinerU(.doc/.ppt/html/图片): {len(new_others)}, 孤儿: {len(orphans)}"
     )
@@ -1498,7 +1547,7 @@ def main() -> int:
     _run_local("Excel 内容转换 (xlsx→openpyxl)", new_xlsx, process_xlsx, "xlsx 转换")
     _run_local("CSV/TSV 表格 (→md)", new_csv, process_csv, "csv 转换")
     _run_local("Excel sidecar (.xls)", new_sidecars, process_excel_sidecar, "sidecar ")
-    _run_local("pandoc 转换 (docx/rtf/odt/epub)", new_pandoc, process_pandoc, "pandoc 转换")
+    _run_local("pandoc 转换 (docx/rtf/odt/epub/html)", new_pandoc, process_pandoc, "pandoc 转换")
     _run_local("PPT 转换 (pptx→python-pptx)", new_pptx, process_pptx, "pptx 转换")
     _run_local("Markdown/文本 直拷 (passthrough)", new_md, process_md_passthrough, "passthrough ")
     _run_local("代码/结构化文本 (code-fence)", new_code, process_code_passthrough, "code ")
@@ -1551,7 +1600,7 @@ def main() -> int:
         logger.info(f"  Excel 内容 (xlsx): {len(new_xlsx)}")
         logger.info(f"  CSV/TSV: {len(new_csv)}")
         logger.info(f"  Excel sidecar (.xls): {len(new_sidecars)}")
-        logger.info(f"  pandoc (docx/rtf/odt/epub): {len(new_pandoc)}")
+        logger.info(f"  pandoc (docx/rtf/odt/epub/html): {len(new_pandoc)}")
         logger.info(f"  PPT (pptx→python-pptx): {len(new_pptx)}")
         logger.info(f"  Markdown/文本 直拷: {len(new_md)}")
         logger.info(f"  代码/结构化文本: {len(new_code)}")

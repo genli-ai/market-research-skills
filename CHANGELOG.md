@@ -6,6 +6,17 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-06-05
+
+### Changed
+
+- `local-vault`: **`.html`/`.htm` now convert locally via pandoc instead of MinerU cloud** (no token, no quota, faster). Before conversion the HTML is cleaned — `style`/`class`/`id` attributes and layout-only `div`/`section`/`span` wrappers are stripped — so the vault gets the article content, not the inline-CSS noise. Raw HTML is kept on purpose so complex tables survive losslessly instead of degrading to a `[TABLE]` placeholder.
+- `local-vault`: **digital-PDF image extraction tightened.** The size floor went from 5% → 12% of page area (`PYMUPDF4LLM_IMAGE_SIZE_LIMIT`), and extracted images now pass two more filters: a min-bytes drop (`PYMUPDF4LLM_IMAGE_MIN_BYTES`, default 6000 — tiny decorative images are removed, reference and all) and content de-duplication (a logo/header repeated on every page is stored once). This cuts both the slowdown and the no-value-image clutter from v1.3.0.
+
+### Added
+
+- `local-vault`: master switch `PYMUPDF4LLM_WRITE_IMAGES` (`scripts/config.py`, default on; `.env`: `KB_PDF_NO_IMAGES=1`) to turn digital-PDF image extraction off entirely for a text-only, fastest run.
+
 ## [1.3.0] - 2026-06-05
 
 ### Added
@@ -198,6 +209,17 @@ If you had `light-research` installed via this plugin marketplace at v0.5.0, upg
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
 ## [未发布]
+
+## [1.4.0] - 2026-06-05
+
+### 变更
+
+- `local-vault`:**`.html`/`.htm` 改走本地 pandoc,不再用 MinerU 云**(无 token、无 quota、更快)。转换前先清洗 HTML——剥掉 `style`/`class`/`id` 属性和纯布局 `div`/`section`/`span` 包裹——让 vault 拿到的是正文内容,而不是满屏内联 CSS 噪音。刻意保留 raw HTML,使复杂表格无损保留,而不是被降成 `[TABLE]` 占位符丢内容。
+- `local-vault`:**数字 PDF 抽图收紧。** 尺寸下限从页面 5% 提到 12%(`PYMUPDF4LLM_IMAGE_SIZE_LIMIT`),抽出的图再过两道:最小字节丢弃(`PYMUPDF4LLM_IMAGE_MIN_BYTES`,默认 6000——装饰小图连引用一起删)+ 内容去重(每页重复的 logo/页眉只存一份)。同时治 v1.3.0 的变慢与无价值图泛滥。
+
+### 新增
+
+- `local-vault`:总开关 `PYMUPDF4LLM_WRITE_IMAGES`(`scripts/config.py`,默认开;`.env`:`KB_PDF_NO_IMAGES=1`)可彻底关掉数字 PDF 抽图,纯文字最快跑。
 
 ## [1.3.0] - 2026-06-05
 

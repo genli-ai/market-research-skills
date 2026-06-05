@@ -24,7 +24,7 @@
 3. **PATH 上要有 `claude` CLI** —— 管线 shell out `claude -p` 做 frontmatter 富化和 PPT 图片 OCR;没有就跳过这两步(不致命)。
 4. **配路径**——两种方式:
    - **向导(推荐给用户):** 直接在终端 `python3 scripts/sync.py`。首次运行(还没配)会弹**交互向导**:问原始文件目录 + vault 目录(+ 可选 MinerU token),自动建目录、写 `scripts/.env`、并打印用法;然后再跑一次就开始转换。
-   - **手动:** `scripts/.env.example` 复制成 `scripts/.env`,填 `KB_SOURCE_DIR` / `KB_TARGET_DIR`(绝对路径)。`MINERU_TOKEN` 可选(只在老 .doc/.ppt、.html、扫描件、图片时需要,https://mineru.net 拿)。
+   - **手动:** `scripts/.env.example` 复制成 `scripts/.env`,填 `KB_SOURCE_DIR` / `KB_TARGET_DIR`(绝对路径)。`MINERU_TOKEN` 可选(只在老 .doc/.ppt、扫描件、图片时需要,https://mineru.net 拿)。
    - **Claude 替用户配时走手动**:向导只在交互 TTY 触发,而 `claude -p` 子进程不是 TTY——所以你(Claude)应直接问两个目录再写 `scripts/.env`。
 
 ### 运行
@@ -44,13 +44,14 @@ python3 scripts/sync.py
 |---|---|---|
 | `.xlsx` | openpyxl 双读 | 每 sheet:带 A/B/C + 行号坐标的值表 **+ 公式清单** |
 | `.csv` / `.tsv` | csv → Markdown 表 | 超 `CSV_MAX_ROWS` 截断 |
-| `.pdf`(数字) | pymupdf4llm | 本地、秒级、无 quota;≥ `PYMUPDF4LLM_IMAGE_SIZE_LIMIT`(页面 5%)的图抽到 `attachments/` |
+| `.pdf`(数字) | pymupdf4llm | 本地、秒级、无 quota;`PYMUPDF4LLM_WRITE_IMAGES`(默认开)时 ≥ `PYMUPDF4LLM_IMAGE_SIZE_LIMIT`(页面 12%)的图抽到 `attachments/`,再过最小字节 + 去重 |
 | `.pdf`(扫描) | MinerU vlm(兜底) | 字符密度过低时触发 |
 | `.docx`/`.rtf`/`.odt`/`.epub` | pandoc | 图片抽到 `attachments/` |
+| `.html`/`.htm` | pandoc(本地) | 先剥 style/class/id 属性 + 布局 `div`/`section`/`span`,只留正文;表格无损保留。无需 MinerU/token |
 | `.pptx` | python-pptx | 标题/正文/表格/**图表**/**备注** + 图片;智能 OCR(见下) |
 | `.md`/`.markdown`/`.txt` | 直拷 | 逐字拷贝,只加 frontmatter,**正文不动** |
 | `.json`/`.yaml`/`.py`/… | 代码直拷 | 包进代码块 + frontmatter |
-| 老 `.doc`/`.ppt`、`.html`、图片 | MinerU(云) | 本地库读不了 |
+| 老 `.doc`/`.ppt`、图片 | MinerU(云) | 本地库读不了 |
 | 其他(mp3/numbers/zip/…) | **跳过** | 末尾醒目报告 + 处理建议,绝不静默丢 |
 
 ### PPT 智能 OCR
@@ -75,7 +76,7 @@ key_data: ["关键数字/事实"]
 
 ### 可调旋钮(`scripts/config.py`)
 
-`PYMUPDF4LLM_MIN_CHARS_PER_PAGE`(扫描件阈值)·`PYMUPDF4LLM_IMAGE_SIZE_LIMIT`(数字 PDF 抽图下限,占页面面积比例,默认 0.05)·`OCR_PPTX_IMAGES` / `OCR_MIN_IMAGE_BYTES` / `OCR_MAX_WORKERS`·`EXCEL_MAX_CELLS_PER_SHEET`·`CSV_MAX_ROWS`·`ENRICH_FRONTMATTER`。
+`PYMUPDF4LLM_MIN_CHARS_PER_PAGE`(扫描件阈值)·`PYMUPDF4LLM_WRITE_IMAGES`(数字 PDF 抽图开关,`.env` 设 `KB_PDF_NO_IMAGES=1` 关掉)·`PYMUPDF4LLM_IMAGE_SIZE_LIMIT`(抽图下限,占页面面积比例,默认 0.12)·`PYMUPDF4LLM_IMAGE_MIN_BYTES`(小于此字节的图丢弃,默认 6000)·`OCR_PPTX_IMAGES` / `OCR_MIN_IMAGE_BYTES` / `OCR_MAX_WORKERS`·`EXCEL_MAX_CELLS_PER_SHEET`·`CSV_MAX_ROWS`·`ENRICH_FRONTMATTER`。
 
 ---
 

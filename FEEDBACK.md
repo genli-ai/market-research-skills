@@ -4,6 +4,20 @@
 
 ---
 
+## 2026-06-05 · HTML 满屏样式噪音 + PDF 抽图怕慢/没价值 · local-vault
+
+**反馈**
+> html 文件你建议怎么处理？html 中有很多无关信息。pdf 所有图片都保存感觉会变慢，而且有些图片好像没有价值？
+
+**分析**
+① `.html` 当时走 MinerU 云(要 token、慢、模型也不对口),且即便转出来,内联 `style=`/布局 `div` 等"无关信息"会污染正文。② 上一版给数字 PDF 开了无差别抽图,image-heavy PDF 会变慢、vault 长一堆装饰小图/重复 logo,"有没有价值"靠尺寸只能近似判断。
+
+**方案**（v1.4.0）
+- `.html`/`.htm` 改走**本地 pandoc**(零新增依赖):转换前正则剥掉 `style/class/id` 属性 + 布局 `div`/`section`/`span`,只留正文;保留 raw_html 以免复杂表格被降成 `[TABLE]` 丢内容。去掉 MinerU-html 路由
+- PDF 抽图**保留但收紧**:阈值 5%→12%(`PYMUPDF4LLM_IMAGE_SIZE_LIMIT`);抽出后再过**最小字节**(`PYMUPDF4LLM_IMAGE_MIN_BYTES=6000`,装饰小图整条引用删)+ **内容去重**(每页重复 logo 只存一份);加全局开关 `PYMUPDF4LLM_WRITE_IMAGES`(`.env: KB_PDF_NO_IMAGES=1` 纯文字快跑)
+
+---
+
 ## 2026-06-05 · 数字 PDF 丢图 + 双击入口落点错位/重复 · local-vault
 
 **反馈**

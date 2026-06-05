@@ -67,12 +67,11 @@ MINERU_PROFILES = {
 
 # 扩展名 → MinerU profile。仅在 PDF 走 fallback、或非本地路径文件走 MinerU 时用。
 # .pdf 走动态判断（先 pymupdf4llm，失败 fallback vlm），不在此映射里。
-# .docx/.pptx/.xlsx 走本地（pandoc/python-pptx/openpyxl），不进 MinerU。
-# 只剩老二进制 .doc/.ppt（本地库读不了）+ .html + 图片 走 MinerU。
+# .docx/.pptx/.xlsx/.html 走本地（pandoc/python-pptx/openpyxl），不进 MinerU。
+# 只剩老二进制 .doc/.ppt（本地库读不了）+ 图片 走 MinerU。
 EXT_TO_PROFILE = {
     ".doc": "pipeline",
     ".ppt": "pipeline",
-    ".html": "html",
     ".png": "vlm", ".jpg": "vlm", ".jpeg": "vlm", ".jp2": "vlm",
     ".webp": "vlm", ".gif": "vlm", ".bmp": "vlm",
 }
@@ -89,7 +88,7 @@ def profile_for(path: Path) -> dict:
 
 
 # 本地转换路由集合（不进 MinerU 云）。各组对应一条本地处理路径。
-PANDOC_EXTS = {".docx", ".rtf", ".odt", ".epub"}  # → pandoc 转 Markdown（本地，按扩展名自动识别）
+PANDOC_EXTS = {".docx", ".rtf", ".odt", ".epub", ".html", ".htm"}  # → pandoc 转 Markdown（本地，按扩展名自动识别）；.html 抽正文去样式，本地无需 MinerU
 PPTX_LOCAL_EXTS = {".pptx"}      # → python-pptx 抽文字/表格/备注 + 图片（本地，可选 OCR）
 XLSX_LOCAL_EXTS = {".xlsx"}      # → openpyxl 双读（值 + 公式）（本地）
 CSV_EXTS = {".csv", ".tsv"}      # → csv 模块转 Markdown 表格（本地）
@@ -136,9 +135,16 @@ EXCEL_MAX_CELLS_PER_SHEET = 5000
 # fallback 到 MinerU vlm。典型数字 PDF 每页 1000-3000 字符。
 PYMUPDF4LLM_MIN_CHARS_PER_PAGE = 200
 
-# 数字版 PDF（pymupdf4llm 路）抽图阈值：图面积小于页面的这个比例就不抽
-# （logo / 图标 / 装饰小图无检索价值）。0.05 = 页面 5%。设 0 抽全部，设 1 基本不抽。
-PYMUPDF4LLM_IMAGE_SIZE_LIMIT = 0.05
+# 数字版 PDF（pymupdf4llm 路）是否抽图。关掉 → 纯文字、最快、vault 不长图。
+# 想要图表/示意图进 attachments 就开着；只关心文字就设 False（或 .env: KB_PDF_NO_IMAGES=1）。
+PYMUPDF4LLM_WRITE_IMAGES = (
+    os.getenv("KB_PDF_NO_IMAGES", "").strip().lower() not in {"1", "true", "yes", "on"}
+)
+# 抽图阈值：图面积小于页面的这个比例就不抽（logo / 图标 / 装饰小图无检索价值）。
+# 0.12 = 页面 12%，只留大图（图表/示意图），砍掉小装饰。设 0 抽全部，设 1 基本不抽。
+PYMUPDF4LLM_IMAGE_SIZE_LIMIT = 0.12
+# 抽出后再按字节过滤：小于这个大小的图视为装饰/噪音，丢弃（连引用一起删）。
+PYMUPDF4LLM_IMAGE_MIN_BYTES = 6000
 
 MAX_FILE_SIZE_MB = 200
 MAX_BATCH_SIZE = 200
