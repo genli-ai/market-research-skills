@@ -21,8 +21,9 @@
    python3 -m pip install --user requests python-dotenv pypdf pymupdf4llm openpyxl python-pptx
    ```
 2. **pandoc**(docx/rtf/odt/epub):`brew install pandoc`。
-3. **PATH 上要有 `claude` CLI** —— 管线 shell out `claude -p` 做 frontmatter 富化和 PPT 图片 OCR;没有就跳过这两步(不致命)。
-4. **配路径**——两种方式:
+3. **ffmpeg + mlx-whisper**(可选,仅音视频转写用):`brew install ffmpeg && python3 -m pip install --user mlx-whisper`。全本地、零 token/配额;首次下模型(~1.6GB)一次,之后离线。**mlx-whisper 仅 Apple Silicon** —— Intel/Linux 上依赖预检会优雅失败、音视频文件报为跳过带提示(不崩);要跨平台就换可移植引擎(如 faster-whisper)。
+4. **PATH 上要有 `claude` CLI** —— 管线 shell out `claude -p` 做 frontmatter 富化和 PPT 图片 OCR;没有就跳过这两步(不致命)。
+5. **配路径**——两种方式:
    - **向导(推荐给用户):** 直接在终端 `python3 scripts/sync.py`。首次运行(还没配)会弹**交互向导**:问原始文件目录 + vault 目录(+ 可选 MinerU token),自动建目录、写 `scripts/.env`、并打印用法;然后再跑一次就开始转换。
    - **手动:** `scripts/.env.example` 复制成 `scripts/.env`,填 `KB_SOURCE_DIR` / `KB_TARGET_DIR`(绝对路径)。`MINERU_TOKEN` 可选(只在老 .doc/.ppt、扫描件、图片时需要,https://mineru.net 拿)。
    - **Claude 替用户配时走手动**:向导只在交互 TTY 触发,而 `claude -p` 子进程不是 TTY——所以你(Claude)应直接问两个目录再写 `scripts/.env`。
@@ -51,8 +52,9 @@ python3 scripts/sync.py
 | `.pptx` | python-pptx | 标题/正文/表格/**图表**/**备注** + 图片;智能 OCR(见下) |
 | `.md`/`.markdown`/`.txt` | 直拷 | 逐字拷贝,只加 frontmatter,**正文不动** |
 | `.json`/`.yaml`/`.py`/… | 代码直拷 | 包进代码块 + frontmatter |
+| 音频 `.mp3`/`.m4a`/`.wav`/… + 视频 `.mp4`/`.mov`/`.m4v` | whisper(mlx-whisper,本地) | 语音转文字,**零 token/配额**;段级 `[mm:ss]` 时间戳 + 自动检测语言;视频只转音轨(ffmpeg 从容器抽)。需 ffmpeg + mlx-whisper(见安装);**清晰语音最佳——歌曲/音乐准确率低** |
 | 老 `.doc`/`.ppt`、图片 | MinerU(云) | 本地库读不了 |
-| 其他(mp3/numbers/zip/…) | **跳过** | 末尾醒目报告 + 处理建议,绝不静默丢 |
+| 其他(numbers/pages/zip/…) | **跳过** | 末尾醒目报告 + 处理建议,绝不静默丢 |
 
 ### PPT 智能 OCR
 
@@ -64,7 +66,7 @@ python3 scripts/sync.py
 ---
 source: "[[…/<file>.<ext>]]"   # 回原文件双链
 source_type: pdf | xlsx | docx | pptx | md | …
-converted_by: pymupdf4llm | pandoc | python-pptx | excel-openpyxl | csv | passthrough | "MinerU vlm" | …
+converted_by: pymupdf4llm | pandoc | python-pptx | excel-openpyxl | csv | passthrough | whisper | "MinerU vlm" | …
 # enrich（claude -p 尽力而为，失败可能缺）:
 abstract: |
   3 句话总结。

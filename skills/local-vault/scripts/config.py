@@ -104,6 +104,13 @@ CODE_FENCE_LANG = {
     ".ts": "typescript", ".sh": "bash", ".r": "r",
 }
 
+# 音视频 → 本地 whisper 转写（mlx-whisper，Apple GPU 原生，零 token/配额）。
+# 视频容器（.mp4/.mov/...）也走这里：ffmpeg 直接抽音轨喂 whisper，与音频同一条路（V1 不抽关键帧）。
+TRANSCRIBE_EXTS = {
+    ".mp3", ".m4a", ".wav", ".aac", ".flac", ".ogg",   # 音频
+    ".mp4", ".mov", ".m4v",                            # 视频（只转音轨）
+}
+
 # 直接走 sidecar（只生成 metadata MD、不转换内容）的扩展名。
 # 仅老二进制 .xls（openpyxl 读不了）；.xlsx 已改走 XLSX_LOCAL_EXTS 本地导内容。
 SIDECAR_EXTS = {".xls"}
@@ -125,6 +132,12 @@ OCR_PPTX_IMAGES = True
 OCR_TIMEOUT_SEC = 90
 OCR_MIN_IMAGE_BYTES = 30000   # < 30KB 的图视为装饰，跳过 OCR（仍抽取+引用）
 OCR_MAX_WORKERS = 4           # 并发 claude -p 数；订阅有速率限制，别开太大
+
+# 音视频转写（mlx-whisper）：纯本地、零 token/配额/API key。
+# 首次会从 HuggingFace 下模型权重（large-v3-turbo ~1.6GB）到 ~/.cache/huggingface，之后离线。
+WHISPER_MODEL = "mlx-community/whisper-large-v3-turbo"  # HF repo；中文质量好 + 快，可换
+WHISPER_LANGUAGE = None        # None = 自动检测（比 MinerU 写死 "ch" 好），检测结果写进产物 body
+TRANSCRIBE_TIMESTAMPS = True   # 正文每段加 [mm:ss] 时间戳（音视频版「页码回溯」）；False → 纯段落
 
 # Excel 单 sheet 导出的单元格上限；超过则截断 + 提示，避免万行表撑爆 vault。
 # 用户仍可点 frontmatter 的 source 双链回 02 看全表。
@@ -171,16 +184,12 @@ SUPPORTED_EXTS = (
     {".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx", ".html",
      ".png", ".jpg", ".jpeg", ".jp2", ".webp", ".gif", ".bmp"}
     | PANDOC_EXTS | PPTX_LOCAL_EXTS | XLSX_LOCAL_EXTS
-    | CSV_EXTS | PASSTHROUGH_EXTS | CODE_EXTS | SIDECAR_EXTS
+    | CSV_EXTS | PASSTHROUGH_EXTS | CODE_EXTS | SIDECAR_EXTS | TRANSCRIBE_EXTS
 )
 
 # 未转换文件的处理建议（report_skipped 用）。键是小写扩展名。
+# 注：常见音视频（mp3/m4a/wav/mp4/mov/...）已走本地 whisper 转写（见 TRANSCRIBE_EXTS）。
 UNSUPPORTED_HINTS = {
-    ".mp3": "音视频：需语音转写（如 whisper），当前未支持",
-    ".m4a": "音视频：需语音转写，当前未支持",
-    ".wav": "音视频：需语音转写（如 whisper），当前未支持",
-    ".mp4": "视频：需语音转写 + 抽帧，当前未支持",
-    ".mov": "视频：当前未支持",
     ".numbers": "Apple Numbers 专有格式：请在 Numbers 里导出为 .xlsx 再放进 02",
     ".pages": "Apple Pages 专有格式：请在 Pages 里导出为 .docx 再放进 02",
     ".key": "Apple Keynote 专有格式：请在 Keynote 里导出为 .pptx 再放进 02",
@@ -195,7 +204,7 @@ TOOL_MARKER = "MinerU"
 # excel-sidecar 保留兼容存量（旧 xlsx sidecar + 当前 .xls sidecar）。
 KNOWN_CONVERTERS = (
     "MinerU", "pymupdf4llm", "excel-sidecar",
-    "pandoc", "python-pptx", "excel-openpyxl", "passthrough", "csv",
+    "pandoc", "python-pptx", "excel-openpyxl", "passthrough", "csv", "whisper",
 )
 
 # prune_empty_dirs 保留的顶层子目录名（含其所有子孙）。

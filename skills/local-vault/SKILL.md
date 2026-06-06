@@ -3,9 +3,9 @@ name: local-vault
 description: >-
   Build and query a local Markdown knowledge base ("vault"). TWO functions —
   (1) CONVERT raw files (PDF, Word/docx, PowerPoint/pptx, Excel/xlsx, csv/tsv,
-  images, html, md/txt, json/yaml/code) into clean Markdown with
+  images, html, md/txt, json/yaml/code, audio/video) into clean Markdown with
   retrieval-friendly frontmatter; local-first (pandoc / python-pptx / openpyxl /
-  pymupdf4llm), with cloud OCR (MinerU) only as a fallback. (2) ANSWER questions
+  pymupdf4llm / whisper), with cloud OCR (MinerU) only as a fallback. (2) ANSWER questions
   over the resulting vault with retrieval discipline — self-monitor coverage,
   flag missing/lossy content, and propose Maps-of-Content (MOCs). Triggers:
   "build/sync my local knowledge base", "convert these files to markdown for
@@ -42,9 +42,15 @@ There are **two distinct jobs** — figure out which the user wants:
    python3 -m pip install --user requests python-dotenv pypdf pymupdf4llm openpyxl python-pptx
    ```
 2. **pandoc** (for docx/rtf/odt/epub): `brew install pandoc` (macOS) / distro pkg.
-3. **`claude` CLI on PATH** — the pipeline shells out to `claude -p` for frontmatter
+3. **ffmpeg + mlx-whisper** (optional, only for audio/video transcription):
+   `brew install ffmpeg && python3 -m pip install --user mlx-whisper`. Fully local,
+   no token/quota; first run downloads the model (~1.6 GB) once, then offline.
+   **mlx-whisper is Apple-Silicon-only** — on Intel/Linux this dependency check
+   fails gracefully and audio/video files are reported as skipped with a hint (no
+   crash); swap in a portable engine (e.g. faster-whisper) if you need cross-platform.
+4. **`claude` CLI on PATH** — the pipeline shells out to `claude -p` for frontmatter
    enrichment and PPT-image OCR. If absent, those steps are skipped (not fatal).
-4. **Configure paths** — two ways:
+5. **Configure paths** — two ways:
    - **Guided (recommended for the user):** just run `python3 scripts/sync.py` in a
      terminal. On first run (when paths aren't configured yet) it launches an
      interactive wizard: it asks for the raw-files folder + the vault folder
@@ -100,8 +106,9 @@ First terminal run with no config → the setup wizard (above). Once `.env` exis
 | `.pptx` | python-pptx | title/body/tables/**charts**/**notes** + images; smart OCR (see below) |
 | `.md`/`.markdown`/`.txt` | passthrough | copied verbatim; only frontmatter added, **body untouched** |
 | `.json`/`.yaml`/`.py`/… | code passthrough | wrapped in a fenced code block + frontmatter |
+| audio `.mp3`/`.m4a`/`.wav`/… + video `.mp4`/`.mov`/`.m4v` | whisper (mlx-whisper, local) | speech-to-text, **no token/quota**; per-segment `[mm:ss]` timestamps + detected language; video = audio-track only (ffmpeg pulls it from the container). Needs ffmpeg + mlx-whisper (see setup); **best on clear speech — songs/music transcribe poorly** |
 | legacy `.doc`/`.ppt`, images | MinerU (cloud) | local libs can't read these |
-| anything else (mp3/numbers/zip/…) | **skipped** | reported at the end with a fix hint — never silently dropped |
+| anything else (numbers/pages/zip/…) | **skipped** | reported at the end with a fix hint — never silently dropped |
 
 ### PPT smart OCR
 
@@ -119,7 +126,7 @@ off entirely (images are still extracted + referenced).
 ---
 source: "[[…/<file>.<ext>]]"   # backlink to the raw file
 source_type: pdf | xlsx | docx | pptx | md | …
-converted_by: pymupdf4llm | pandoc | python-pptx | excel-openpyxl | csv | passthrough | "MinerU vlm" | …
+converted_by: pymupdf4llm | pandoc | python-pptx | excel-openpyxl | csv | passthrough | whisper | "MinerU vlm" | …
 # enrich (best-effort via claude -p, may be missing on failure):
 abstract: |
   3-sentence summary.

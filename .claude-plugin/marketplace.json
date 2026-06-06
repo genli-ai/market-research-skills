@@ -9,7 +9,7 @@
       "name": "market-research-skills",
       "source": "./",
       "description": "Claude Skills collection for market research, equity research, and investment analysis. Currently includes: verifying (fact-check against primary sources), topic-brief (single-piece HTML briefing generator), analyst-research (3-mode research workflow: light 4-5p memo / medium 12-15p topic analysis, 6-10 charts / heavy flagship 30-40p, 15k+ words, 25-35+ charts), local-vault (build & query a local Markdown knowledge base: convert files into retrieval-friendly Markdown, then answer over the vault). | 市场研究 / 投研 / 行业分析 Claude Skills 合集。当前包含：verifying（信息核实）、topic-brief（主题观察简报生成器）、analyst-research（三档研究工作流：light 4-5 页备忘 / medium 12-15 页主题分析、6-10 图 / heavy 30-40 页、1.5 万字+、25-35+ 图）、local-vault（构建并查询本地 Markdown 知识库：把文件转成检索友好的 Markdown，再基于 vault 回答）。",
-      "version": "1.4.0"
+      "version": "1.5.0"
     }
   ]
 }

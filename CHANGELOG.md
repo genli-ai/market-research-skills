@@ -6,6 +6,19 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-06-06
+
+### Added
+
+- `local-vault`: **audio & video now transcribe locally via whisper** (mlx-whisper). Files like `.mp3`/`.m4a`/`.wav`/`.aac`/`.flac`/`.ogg` and `.mp4`/`.mov`/`.m4v` were previously skipped; they now route to `process_transcribe`, producing a Markdown transcript with the same source backlink + retrieval frontmatter as every other converter. **Fully local — no token, no quota, no API key** (first run downloads the model ~1.6 GB once, then offline). The transcript carries per-segment `[mm:ss]` timestamps (an audio/video equivalent of page-number traceback; `TRANSCRIBE_TIMESTAMPS`) and an auto-detected language (`WHISPER_LANGUAGE = None`). **Video is audio-track only** — ffmpeg pulls the audio stream straight from the container, so video and audio share one code path (no keyframe OCR in this version).
+- `local-vault`: new config knobs in `scripts/config.py` — `TRANSCRIBE_EXTS`, `WHISPER_MODEL` (default `mlx-community/whisper-large-v3-turbo`), `WHISPER_LANGUAGE`, `TRANSCRIBE_TIMESTAMPS`.
+- `local-vault`: fail-soft dependency preflight — when `ffmpeg` or `mlx-whisper` is missing, the whole audio/video batch is reported as skipped with a one-line install hint instead of producing repeated tracebacks.
+
+### Notes
+
+- **mlx-whisper is Apple-Silicon-only.** On Intel/Linux the preflight degrades gracefully (files skipped with hint, no crash) — swap in a portable engine (e.g. faster-whisper) for cross-platform use.
+- Transcription is **best on clear speech** (lectures, interviews, meetings, podcasts). Songs/music transcribe poorly — that's an ASR limitation, not a bug; use the `source` backlink to verify against the original.
+
 ## [1.4.0] - 2026-06-05
 
 ### Changed
@@ -209,6 +222,19 @@ If you had `light-research` installed via this plugin marketplace at v0.5.0, upg
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
 ## [未发布]
+
+## [1.5.0] - 2026-06-06
+
+### 新增
+
+- `local-vault`:**音视频现在本地 whisper 转写**(mlx-whisper)。`.mp3`/`.m4a`/`.wav`/`.aac`/`.flac`/`.ogg` 以及 `.mp4`/`.mov`/`.m4v` 之前直接跳过,现在走 `process_transcribe`,产出 Markdown transcript,带和其它转换器一样的 source 双链 + 检索 frontmatter。**全本地——零 token、零配额、零 API key**(首次下模型 ~1.6GB 一次,之后离线)。正文带段级 `[mm:ss]` 时间戳(音视频版「页码回溯」;`TRANSCRIBE_TIMESTAMPS`)+ 自动检测语言(`WHISPER_LANGUAGE = None`)。**视频只转音轨**——ffmpeg 直接从容器抽音频流,所以视频和音频共用一条路径(本版不抽关键帧 OCR)。
+- `local-vault`:`scripts/config.py` 新增旋钮——`TRANSCRIBE_EXTS`、`WHISPER_MODEL`(默认 `mlx-community/whisper-large-v3-turbo`)、`WHISPER_LANGUAGE`、`TRANSCRIBE_TIMESTAMPS`。
+- `local-vault`:依赖 fail-soft 预检——缺 `ffmpeg` 或 `mlx-whisper` 时,整批音视频报为跳过 + 一句安装提示,而不是产生一堆重复 traceback。
+
+### 说明
+
+- **mlx-whisper 仅 Apple Silicon。** Intel/Linux 上预检会优雅降级(文件跳过带提示、不崩)——跨平台请换可移植引擎(如 faster-whisper)。
+- 转写**对清晰语音最佳**(讲座/访谈/会议/播客)。歌曲/音乐准确率低——这是 ASR 的固有局限,不是 bug;用 `source` 双链回原文件校对。
 
 ## [1.4.0] - 2026-06-05
 

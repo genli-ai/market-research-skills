@@ -2,6 +2,7 @@
 
 import base64
 import hashlib
+import importlib.util
 import io
 import json
 import logging
@@ -68,6 +69,7 @@ def route(path: Path) -> str:
       'pptx'    → python-pptx + 可选 OCR（本地）
       'passthrough' → 已是文本/Markdown，直接拷贝（仅补 frontmatter）
       'code'    → 代码/结构化文本，包进代码块（本地）
+      'transcribe' → 音视频 → 本地 whisper 转写（mlx-whisper）
       'mineru'  → MinerU 云（老 .doc/.ppt、.html、图片、PDF 扫描件 fallback）
     """
     ext = path.suffix.lower()
@@ -87,6 +89,8 @@ def route(path: Path) -> str:
         return "passthrough"
     if ext in config.CODE_EXTS:
         return "code"
+    if ext in config.TRANSCRIBE_EXTS:
+        return "transcribe"
     return "mineru"
 
 
@@ -1133,6 +1137,86 @@ def process_code_passthrough(src: Path, logger: Optional[logging.Logger] = None)
     )
 
 
+# ── 音视频：本地 whisper 转写（mlx-whisper，零 token/配额）────────────
+def transcribe_deps_missing() -> Optional[str]:
+    """检查转写依赖。齐了返回 None；缺则返回一句可操作的安装提示。
+    ffmpeg：解码 mp3/m4a + 读视频音轨。mlx-whisper：转写引擎（用户级安装）。
+    """
+    need = []
+    if shutil.which("ffmpeg") is None:
+        need.append("ffmpeg（brew install ffmpeg）")
+    if importlib.util.find_spec("mlx_whisper") is None:
+        need.append("mlx-whisper（python3 -m pip install --user mlx-whisper）")
+    if not need:
+        return None
+    return "音视频转写缺依赖：" + " + ".join(need)
+
+
+def _format_timestamp(sec: float) -> str:
+    """秒 → [mm:ss]；超 1 小时 → [h:mm:ss]。给 transcript 段落做「页码回溯」。"""
+    total = int(sec)
+    h, rem = divmod(total, 3600)
+    m, s = divmod(rem, 60)
+    return f"[{h}:{m:02d}:{s:02d}]" if h else f"[{m:02d}:{s:02d}]"
+
+
+def _transcribe_raw(src: Path) -> dict:
+    """薄封装 mlx_whisper.transcribe（单抽一层纯为测试可 monkeypatch，避免真下模型/真转写）。
+    返回 whisper 的 dict：含 'text' / 'segments'(list of {start,end,text}) / 'language'。
+    """
+    import mlx_whisper
+    return mlx_whisper.transcribe(
+        str(src),
+        path_or_hf_repo=config.WHISPER_MODEL,
+        language=config.WHISPER_LANGUAGE,
+    )
+
+
+def convert_audio(src: Path) -> tuple[str, dict]:
+    """音视频 → transcript body。返回 (body, meta{language, duration})。
+    段级时间戳由 config.TRANSCRIBE_TIMESTAMPS 控制；正文顶部一行小元信息（语言/时长）便于 grep。
+    """
+    result = _transcribe_raw(src)
+    segments = result.get("segments") or []
+    language = result.get("language") or "?"
+    duration = segments[-1]["end"] if segments else 0.0
+
+    parts = [f"# {src.stem}\n"]
+    parts.append(f"> 🎙️ 语音转写 · 语言 {language} · 时长 {_format_timestamp(duration)} · 模型 {config.WHISPER_MODEL}\n")
+    if not segments:
+        # 无 segments 兜底：用整段 text（可能为空）
+        text = (result.get("text") or "").strip()
+        parts.append(text + "\n" if text else "_（未识别到语音内容）_\n")
+        return "\n".join(parts) + "\n", {"language": language, "duration": duration}
+
+    lines = []
+    for seg in segments:
+        text = (seg.get("text") or "").strip()
+        if not text:
+            continue
+        if config.TRANSCRIBE_TIMESTAMPS:
+            lines.append(f"{_format_timestamp(seg.get('start', 0.0))} {text}")
+        else:
+            lines.append(text)
+    parts.append("\n\n".join(lines) + "\n")
+    return "\n".join(parts) + "\n", {"language": language, "duration": duration}
+
+
+def process_transcribe(src: Path, logger: Optional[logging.Logger] = None) -> None:
+    """音视频本地 whisper 转写落地。"""
+    target_md = compute_target_path(src, config.SOURCE_DIR, config.TARGET_DIR)
+    body, meta = convert_audio(src)
+    _write_local_md(
+        src, target_md, body,
+        converted_by="whisper",
+        batch_id="local-whisper",
+        pages=None,
+        logger=logger,
+        icon="🎙️",
+        suffix_msg=f" ({meta['language']}, {_format_timestamp(meta['duration'])})",
+    )
+
+
 def enrich_frontmatter(
     md_path: Path,
     src: Path,
@@ -1492,10 +1576,18 @@ def main() -> int:
     # ── 路由分流（见 route()）─────────────────────────────────────
     buckets: dict[str, list[Path]] = {
         "xlsx": [], "csv": [], "sidecar": [], "pdf": [], "pandoc": [], "pptx": [],
-        "passthrough": [], "code": [], "mineru": [],
+        "passthrough": [], "code": [], "transcribe": [], "mineru": [],
     }
     for c in candidates:
         buckets[route(c)].append(c)
+
+    # 音视频转写依赖（ffmpeg + mlx-whisper）缺失：整批转 skipped（带安装提示），
+    # 而不是在 stage 里产生 N 条相同的 traceback（fail-soft，优于 pandoc 的逐文件失败）。
+    dep_hint = transcribe_deps_missing() if buckets["transcribe"] else None
+    if dep_hint:
+        for p in buckets["transcribe"]:
+            skipped.append((p, dep_hint))
+        buckets["transcribe"] = []
 
     new_xlsx = find_new_files(buckets["xlsx"], config.SOURCE_DIR, config.TARGET_DIR)
     new_csv = find_new_files(buckets["csv"], config.SOURCE_DIR, config.TARGET_DIR)
@@ -1505,13 +1597,14 @@ def main() -> int:
     new_pptx = find_new_files(buckets["pptx"], config.SOURCE_DIR, config.TARGET_DIR)
     new_md = find_new_files(buckets["passthrough"], config.SOURCE_DIR, config.TARGET_DIR)
     new_code = find_new_files(buckets["code"], config.SOURCE_DIR, config.TARGET_DIR)
+    new_transcribe = find_new_files(buckets["transcribe"], config.SOURCE_DIR, config.TARGET_DIR)
     new_others = find_new_files(buckets["mineru"], config.SOURCE_DIR, config.TARGET_DIR)
 
     orphans = find_orphaned_mds(config.TARGET_DIR, config.SOURCE_DIR)
     logger.info(
         f"  待转 — xlsx: {len(new_xlsx)}, csv: {len(new_csv)}, xls sidecar: {len(new_sidecars)}, "
         f"PDF: {len(new_pdfs)}, pandoc(docx/rtf/odt/epub/html): {len(new_pandoc)}, pptx: {len(new_pptx)}, "
-        f"md/txt: {len(new_md)}, code: {len(new_code)}, "
+        f"md/txt: {len(new_md)}, code: {len(new_code)}, 音视频转写: {len(new_transcribe)}, "
         f"MinerU(.doc/.ppt/html/图片): {len(new_others)}, 孤儿: {len(orphans)}"
     )
 
@@ -1551,6 +1644,7 @@ def main() -> int:
     _run_local("PPT 转换 (pptx→python-pptx)", new_pptx, process_pptx, "pptx 转换")
     _run_local("Markdown/文本 直拷 (passthrough)", new_md, process_md_passthrough, "passthrough ")
     _run_local("代码/结构化文本 (code-fence)", new_code, process_code_passthrough, "code ")
+    _run_local("音视频转写 (whisper)", new_transcribe, process_transcribe, "转写")
 
     # ── Stage 2: PDF（先 pymupdf4llm，稀疏则 fallback 到 MinerU vlm）
     mineru_fallback_files: list[Path] = []
@@ -1604,6 +1698,7 @@ def main() -> int:
         logger.info(f"  PPT (pptx→python-pptx): {len(new_pptx)}")
         logger.info(f"  Markdown/文本 直拷: {len(new_md)}")
         logger.info(f"  代码/结构化文本: {len(new_code)}")
+        logger.info(f"  音视频转写 (whisper): {len(new_transcribe)}")
         logger.info(f"  pymupdf4llm 直出: {len(new_pdfs) - len(mineru_fallback_files)}")
         logger.info(f"  MinerU 处理: {mineru_count}")
         logger.info(f"    其中 PDF fallback: {len(mineru_fallback_files)}")
