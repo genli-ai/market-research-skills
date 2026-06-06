@@ -6,6 +6,17 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-06-06
+
+### Added
+
+- `local-vault`: **whisper engine is now auto-selected by platform** — `mlx-whisper` (GPU-native) on Apple Silicon, `faster-whisper` (CTranslate2, cross-platform CPU/CUDA) everywhere else. Both paths normalize to one transcript shape, so the rest of the pipeline is engine-agnostic. Override with `KB_WHISPER_ENGINE` (`auto`/`mlx`/`faster`).
+- `local-vault`: **first-run consent + model-size picker.** When audio/video is detected and no model has been chosen yet, the tool (in a terminal) shows each model tier with its **download size** — tiny ~75 MB / small ~480 MB / turbo ~1.6 GB (recommended) / large-v3 ~3 GB — and lets the user pick or skip. The choice is saved to `.env` (`KB_WHISPER_MODEL`) so it never re-asks. On consent the engine is **auto-installed** (`pip install --user`). Non-interactive runs (e.g. `claude -p`) never download a multi-GB model unattended — they report a hint to run once in a terminal first.
+
+### Changed
+
+- `local-vault`: audio/video no longer requires a manual `pip install` of the transcription engine — the tool installs the right one for the platform after you consent. ffmpeg is still a prerequisite (system package; the tool prints the platform-appropriate install command if missing and skips, rather than auto-installing a system package).
+
 ## [1.5.0] - 2026-06-06
 
 ### Added
@@ -222,6 +233,17 @@ If you had `light-research` installed via this plugin marketplace at v0.5.0, upg
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
 ## [未发布]
+
+## [1.6.0] - 2026-06-06
+
+### 新增
+
+- `local-vault`:**whisper 引擎现在按平台自动选**——Apple Silicon 用 `mlx-whisper`(GPU 原生)、其它平台用 `faster-whisper`(CTranslate2,跨平台 CPU/CUDA)。两条路径归一化成同一 transcript 结构,上层管线不感知引擎。可用 `KB_WHISPER_ENGINE`(`auto`/`mlx`/`faster`)覆盖。
+- `local-vault`:**首次征得同意 + 模型大小选择。** 检测到音视频且还没选过模型时,工具(在终端里)列出每个模型档的**下载大小**——tiny ~75MB / small ~480MB / turbo ~1.6GB(推荐)/ large-v3 ~3GB——让用户选或跳过。选择写进 `.env`(`KB_WHISPER_MODEL`),之后不再追问。同意后**自动安装**引擎(`pip install --user`)。非交互运行(如 `claude -p`)绝不擅自下载 GB 级模型——会提示先在终端跑一次。
+
+### 变更
+
+- `local-vault`:音视频转写不再需要手动 `pip install` 引擎——工具会在用户同意后按平台装对应引擎。ffmpeg 仍是前置依赖(系统包;缺时工具打印平台对应安装命令并跳过,而不是擅自装系统包)。
 
 ## [1.5.0] - 2026-06-06
 

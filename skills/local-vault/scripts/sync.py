@@ -7,6 +7,7 @@ import io
 import json
 import logging
 import os
+import platform
 import re
 import shutil
 import subprocess
@@ -1137,19 +1138,140 @@ def process_code_passthrough(src: Path, logger: Optional[logging.Logger] = None)
     )
 
 
-# ── 音视频：本地 whisper 转写（mlx-whisper，零 token/配额）────────────
-def transcribe_deps_missing() -> Optional[str]:
-    """检查转写依赖。齐了返回 None；缺则返回一句可操作的安装提示。
-    ffmpeg：解码 mp3/m4a + 读视频音轨。mlx-whisper：转写引擎（用户级安装）。
+# ── 音视频：本地 whisper 转写（按平台选引擎；首次交互选模型档）─────────────
+_WHISPER_ENGINE_PKG = {"mlx": "mlx_whisper", "faster": "faster_whisper"}
+_WHISPER_ENGINE_PIP = {"mlx": "mlx-whisper", "faster": "faster-whisper"}
+
+
+def detect_whisper_engine() -> str:
+    """按平台选转写引擎：Apple Silicon → 'mlx'（GPU 原生）；其它 → 'faster'（跨平台 CPU/CUDA）。"""
+    if sys.platform == "darwin" and platform.machine() == "arm64":
+        return "mlx"
+    return "faster"
+
+
+def resolve_whisper_engine() -> str:
+    """config.WHISPER_ENGINE 为 'auto' 时按平台探测；否则用显式值（mlx/faster）。"""
+    eng = (config.WHISPER_ENGINE or "auto").strip().lower()
+    return detect_whisper_engine() if eng in ("", "auto") else eng
+
+
+def whisper_model_id(engine: str, key: str) -> str:
+    """模型档 key（tiny/small/turbo/large-v3）→ 该引擎的模型 id。未知 key 回退默认档。"""
+    spec = config.WHISPER_MODELS.get(key) or config.WHISPER_MODELS[config.WHISPER_DEFAULT_MODEL_KEY]
+    return spec["mlx" if engine == "mlx" else "faster"]
+
+
+def _ffmpeg_install_cmd() -> str:
+    """按平台给 ffmpeg 安装命令（系统包，不自动装）。"""
+    if sys.platform == "darwin":
+        return "brew install ffmpeg"
+    if sys.platform.startswith("linux"):
+        return "apt install ffmpeg / dnf install ffmpeg"
+    return "见 https://ffmpeg.org/download.html"
+
+
+def transcribe_deps_missing(engine: Optional[str] = None) -> Optional[str]:
+    """检查转写依赖。齐了返回 None；缺则返回一句可操作的安装提示（按引擎/平台给对应命令）。
+    ffmpeg：解码 mp3/m4a + 读视频音轨；引擎包：mlx-whisper 或 faster-whisper（用户级安装）。
     """
+    engine = engine or resolve_whisper_engine()
     need = []
     if shutil.which("ffmpeg") is None:
-        need.append("ffmpeg（brew install ffmpeg）")
-    if importlib.util.find_spec("mlx_whisper") is None:
-        need.append("mlx-whisper（python3 -m pip install --user mlx-whisper）")
-    if not need:
-        return None
-    return "音视频转写缺依赖：" + " + ".join(need)
+        need.append(f"ffmpeg（{_ffmpeg_install_cmd()}）")
+    pip_name = _WHISPER_ENGINE_PIP[engine]
+    if importlib.util.find_spec(_WHISPER_ENGINE_PKG[engine]) is None:
+        need.append(f"{pip_name}（python3 -m pip install --user {pip_name}）")
+    return None if not need else "音视频转写缺依赖：" + " + ".join(need)
+
+
+def install_whisper_engine(engine: str, logger: Optional[logging.Logger] = None) -> bool:
+    """pip install --user 安装转写引擎（用户已同意后调用）。成功返回 True。"""
+    pip_name = _WHISPER_ENGINE_PIP[engine]
+    if logger:
+        logger.info(f"  正在安装 {pip_name} ...（首次，稍候）")
+    try:
+        r = subprocess.run(
+            [sys.executable, "-m", "pip", "install", "--user", pip_name],
+            capture_output=True, text=True, timeout=600,
+        )
+    except Exception as exc:
+        if logger:
+            logger.error(f"  ✗ 安装 {pip_name} 失败: {exc}")
+        return False
+    if r.returncode != 0:
+        if logger:
+            logger.error(f"  ✗ 安装 {pip_name} 失败: {r.stderr.strip()[:300]}")
+        return False
+    importlib.invalidate_caches()
+    if logger:
+        logger.info(f"  ✓ {pip_name} 已安装")
+    return True
+
+
+def _upsert_env_key(env_path: Path, key: str, value: str) -> None:
+    """把 KEY=value 写进/更新 .env（记住用户的 Whisper 选择）。失败静默、不阻塞主流程。"""
+    try:
+        lines = env_path.read_text(encoding="utf-8").splitlines() if env_path.exists() else []
+        out, found = [], False
+        for ln in lines:
+            stripped = ln.lstrip()
+            if stripped.startswith(f"{key}=") or stripped.startswith(f"{key} ="):
+                out.append(f"{key}={value}")
+                found = True
+            else:
+                out.append(ln)
+        if not found:
+            out.append(f"{key}={value}")
+        env_path.parent.mkdir(parents=True, exist_ok=True)
+        env_path.write_text("\n".join(out) + "\n", encoding="utf-8")
+    except Exception:
+        pass
+
+
+def prompt_whisper_setup(n_files: int, engine: str, logger: Optional[logging.Logger] = None) -> str:
+    """终端交互：先告知各模型档的下载大小，让用户选档或跳过。返回模型档 key 或 'skip'。
+    选择写回 .env 的 KB_WHISPER_MODEL，之后不再追问。仅在交互 TTY 调用。
+    """
+    eng_label = {
+        "mlx": "mlx-whisper（检测到 Apple Silicon，GPU 加速）",
+        "faster": "faster-whisper（跨平台 CPU/GPU）",
+    }.get(engine, engine)
+    order = ["tiny", "small", "turbo", "large-v3"]
+    default_key = config.WHISPER_DEFAULT_MODEL_KEY
+    print("\n" + "=" * 60)
+    print(f"🎙️  发现 {n_files} 个音视频文件需要转写")
+    print("Whisper 是本地语音转文字引擎（零 token / 零配额 / 零 API key）。")
+    print("首次使用要下载一个模型，之后离线复用。")
+    print(f"引擎：{eng_label}")
+    print("\n请选择模型（越大越准、越慢、下载越大）：")
+    for i, k in enumerate(order, 1):
+        spec = config.WHISPER_MODELS[k]
+        star = "  ←推荐" if k == default_key else ""
+        print(f"  {i}) {k:<9} {spec['size']:<8} {spec['note']}{star}")
+    print("  n) 跳过      不转写音视频（之后可改 scripts/.env 的 KB_WHISPER_MODEL）")
+    default_idx = order.index(default_key) + 1
+    try:
+        raw = input(f"\n选择 [{default_idx}]: ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return "skip"
+    if raw in ("n", "no", "skip", "跳过"):
+        choice = "skip"
+    elif raw == "":
+        choice = default_key
+    elif raw.isdigit() and 1 <= int(raw) <= len(order):
+        choice = order[int(raw) - 1]
+    elif raw in config.WHISPER_MODELS:
+        choice = raw
+    else:
+        print(f"  无法识别 '{raw}'，按默认用 {default_key}")
+        choice = default_key
+    _upsert_env_key(config.TOOL_DIR / ".env", "KB_WHISPER_MODEL", choice)
+    config.WHISPER_MODEL_KEY = choice
+    if logger:
+        logger.info(f"  Whisper 选择：{choice}（已写入 .env，下次不再询问）")
+    return choice
 
 
 def _format_timestamp(sec: float) -> str:
@@ -1160,29 +1282,50 @@ def _format_timestamp(sec: float) -> str:
     return f"[{h}:{m:02d}:{s:02d}]" if h else f"[{m:02d}:{s:02d}]"
 
 
-def _transcribe_raw(src: Path) -> dict:
-    """薄封装 mlx_whisper.transcribe（单抽一层纯为测试可 monkeypatch，避免真下模型/真转写）。
-    返回 whisper 的 dict：含 'text' / 'segments'(list of {start,end,text}) / 'language'。
-    """
+def _transcribe_mlx(src: Path, model_id: str) -> dict:
+    """mlx-whisper（Apple Silicon GPU）。返回 whisper 原生 dict。"""
     import mlx_whisper
     return mlx_whisper.transcribe(
-        str(src),
-        path_or_hf_repo=config.WHISPER_MODEL,
-        language=config.WHISPER_LANGUAGE,
+        str(src), path_or_hf_repo=model_id, language=config.WHISPER_LANGUAGE
     )
+
+
+def _transcribe_faster(src: Path, model_id: str) -> dict:
+    """faster-whisper（跨平台 CTranslate2）。归一化成与 mlx 一致的 dict。"""
+    from faster_whisper import WhisperModel
+    model = WhisperModel(model_id, device="auto", compute_type="auto")
+    segments, info = model.transcribe(str(src), language=config.WHISPER_LANGUAGE)
+    seg_list = [{"start": s.start, "end": s.end, "text": s.text} for s in segments]
+    return {
+        "text": "".join(s["text"] for s in seg_list),
+        "segments": seg_list,
+        "language": getattr(info, "language", None),
+    }
+
+
+def _transcribe_raw(src: Path) -> dict:
+    """按解析出的引擎转写，归一化为 {'text','segments':[{start,end,text}],'language'}。
+    单抽一层纯为测试可 monkeypatch（避免真下模型/真转写）。
+    """
+    engine = resolve_whisper_engine()
+    key = config.WHISPER_MODEL_KEY or config.WHISPER_DEFAULT_MODEL_KEY
+    model_id = whisper_model_id(engine, key)
+    return _transcribe_mlx(src, model_id) if engine == "mlx" else _transcribe_faster(src, model_id)
 
 
 def convert_audio(src: Path) -> tuple[str, dict]:
     """音视频 → transcript body。返回 (body, meta{language, duration})。
-    段级时间戳由 config.TRANSCRIBE_TIMESTAMPS 控制；正文顶部一行小元信息（语言/时长）便于 grep。
+    段级时间戳由 config.TRANSCRIBE_TIMESTAMPS 控制；正文顶部一行小元信息（引擎/语言/时长）便于 grep。
     """
     result = _transcribe_raw(src)
     segments = result.get("segments") or []
     language = result.get("language") or "?"
     duration = segments[-1]["end"] if segments else 0.0
+    engine = resolve_whisper_engine()
+    model_id = whisper_model_id(engine, config.WHISPER_MODEL_KEY or config.WHISPER_DEFAULT_MODEL_KEY)
 
     parts = [f"# {src.stem}\n"]
-    parts.append(f"> 🎙️ 语音转写 · 语言 {language} · 时长 {_format_timestamp(duration)} · 模型 {config.WHISPER_MODEL}\n")
+    parts.append(f"> 🎙️ 语音转写 · 语言 {language} · 时长 {_format_timestamp(duration)} · 引擎 {engine} · 模型 {model_id}\n")
     if not segments:
         # 无 segments 兜底：用整段 text（可能为空）
         text = (result.get("text") or "").strip()
@@ -1215,6 +1358,51 @@ def process_transcribe(src: Path, logger: Optional[logging.Logger] = None) -> No
         icon="🎙️",
         suffix_msg=f" ({meta['language']}, {_format_timestamp(meta['duration'])})",
     )
+
+
+def prepare_transcribe(
+    new_transcribe: list[Path],
+    skipped: list,
+    logger: Optional[logging.Logger] = None,
+) -> list[Path]:
+    """决定哪些音视频文件真正转写：解析引擎 → 读/问模型选择 → 装引擎 → 查 ffmpeg。
+    不转的移进 skipped（带可操作原因），返回要转的文件列表。
+
+    交互逻辑（用户要求）：无论平台，首次都先问「是否转写 + 选哪个模型档」并告知下载大小；
+    选择记进 .env 不再追问；非交互（claude -p）不擅自下 GB 级模型，提示先在终端跑一次。
+    """
+    if not new_transcribe:
+        return []
+    engine = resolve_whisper_engine()
+    key = (config.WHISPER_MODEL_KEY or "").strip()
+    interactive = sys.stdin.isatty()
+
+    def _skip_all(reason: str) -> list:
+        for p in new_transcribe:
+            skipped.append((p, reason))
+        return []
+
+    if key == "skip":
+        return _skip_all("音视频转写：已选择跳过（改 scripts/.env 的 KB_WHISPER_MODEL=turbo 可启用）")
+    if not key:
+        if not interactive:
+            return _skip_all("音视频转写：首次需在终端运行一次以选择 Whisper 模型（双击 sync.command）")
+        key = prompt_whisper_setup(len(new_transcribe), engine, logger)
+        if key == "skip":
+            return _skip_all("音视频转写：已选择跳过（改 scripts/.env 的 KB_WHISPER_MODEL=turbo 可启用）")
+
+    # key 现在是有效模型档。确保 ffmpeg + 引擎包就绪。
+    config.WHISPER_MODEL_KEY = key
+    if shutil.which("ffmpeg") is None:
+        return _skip_all(f"音视频转写需要 ffmpeg（{_ffmpeg_install_cmd()}）——装好后重跑")
+    if importlib.util.find_spec(_WHISPER_ENGINE_PKG[engine]) is None:
+        if not install_whisper_engine(engine, logger):
+            pip_name = _WHISPER_ENGINE_PIP[engine]
+            return _skip_all(f"音视频转写引擎安装失败——手动 python3 -m pip install --user {pip_name} 后重跑")
+    if logger:
+        spec = config.WHISPER_MODELS.get(key, {})
+        logger.info(f"  音视频转写：引擎 {engine} · 模型档 {key}（{spec.get('size', '?')}）")
+    return new_transcribe
 
 
 def enrich_frontmatter(
@@ -1581,14 +1769,6 @@ def main() -> int:
     for c in candidates:
         buckets[route(c)].append(c)
 
-    # 音视频转写依赖（ffmpeg + mlx-whisper）缺失：整批转 skipped（带安装提示），
-    # 而不是在 stage 里产生 N 条相同的 traceback（fail-soft，优于 pandoc 的逐文件失败）。
-    dep_hint = transcribe_deps_missing() if buckets["transcribe"] else None
-    if dep_hint:
-        for p in buckets["transcribe"]:
-            skipped.append((p, dep_hint))
-        buckets["transcribe"] = []
-
     new_xlsx = find_new_files(buckets["xlsx"], config.SOURCE_DIR, config.TARGET_DIR)
     new_csv = find_new_files(buckets["csv"], config.SOURCE_DIR, config.TARGET_DIR)
     new_sidecars = find_new_files(buckets["sidecar"], config.SOURCE_DIR, config.TARGET_DIR)
@@ -1644,6 +1824,9 @@ def main() -> int:
     _run_local("PPT 转换 (pptx→python-pptx)", new_pptx, process_pptx, "pptx 转换")
     _run_local("Markdown/文本 直拷 (passthrough)", new_md, process_md_passthrough, "passthrough ")
     _run_local("代码/结构化文本 (code-fence)", new_code, process_code_passthrough, "code ")
+    # 音视频：先确认引擎/模型选择（首次交互问 + 告知下载大小）、装引擎、查 ffmpeg；
+    # 不转的（缺 ffmpeg / 用户跳过 / 非交互未选）移进 skipped，末尾 report_skipped 醒目列出。
+    new_transcribe = prepare_transcribe(new_transcribe, skipped, logger)
     _run_local("音视频转写 (whisper)", new_transcribe, process_transcribe, "转写")
 
     # ── Stage 2: PDF（先 pymupdf4llm，稀疏则 fallback 到 MinerU vlm）

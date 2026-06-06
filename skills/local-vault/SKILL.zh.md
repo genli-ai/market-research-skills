@@ -21,7 +21,7 @@
    python3 -m pip install --user requests python-dotenv pypdf pymupdf4llm openpyxl python-pptx
    ```
 2. **pandoc**(docx/rtf/odt/epub):`brew install pandoc`。
-3. **ffmpeg + mlx-whisper**(可选,仅音视频转写用):`brew install ffmpeg && python3 -m pip install --user mlx-whisper`。全本地、零 token/配额;首次下模型(~1.6GB)一次,之后离线。**mlx-whisper 仅 Apple Silicon** —— Intel/Linux 上依赖预检会优雅失败、音视频文件报为跳过带提示(不崩);要跨平台就换可移植引擎(如 faster-whisper)。
+3. **ffmpeg**(仅音视频转写用):`brew install ffmpeg`。whisper **引擎按平台自动选**——Apple Silicon 用 `mlx-whisper`(GPU)、其它平台用 `faster-whisper`(跨平台 CPU/CUDA)——并在首次运行**征得用户同意后自动安装**(无需手动 pip)。首次遇到音视频时,工具会列出模型档大小(tiny ~75MB / small ~480MB / turbo ~1.6GB / large-v3 ~3GB)让用户选或跳过;选择写进 `.env`(`KB_WHISPER_MODEL`),之后不再追问。全本地、零 token/配额;模型只下一次,之后离线。
 4. **PATH 上要有 `claude` CLI** —— 管线 shell out `claude -p` 做 frontmatter 富化和 PPT 图片 OCR;没有就跳过这两步(不致命)。
 5. **配路径**——两种方式:
    - **向导(推荐给用户):** 直接在终端 `python3 scripts/sync.py`。首次运行(还没配)会弹**交互向导**:问原始文件目录 + vault 目录(+ 可选 MinerU token),自动建目录、写 `scripts/.env`、并打印用法;然后再跑一次就开始转换。
@@ -52,7 +52,7 @@ python3 scripts/sync.py
 | `.pptx` | python-pptx | 标题/正文/表格/**图表**/**备注** + 图片;智能 OCR(见下) |
 | `.md`/`.markdown`/`.txt` | 直拷 | 逐字拷贝,只加 frontmatter,**正文不动** |
 | `.json`/`.yaml`/`.py`/… | 代码直拷 | 包进代码块 + frontmatter |
-| 音频 `.mp3`/`.m4a`/`.wav`/… + 视频 `.mp4`/`.mov`/`.m4v` | whisper(mlx-whisper,本地) | 语音转文字,**零 token/配额**;段级 `[mm:ss]` 时间戳 + 自动检测语言;视频只转音轨(ffmpeg 从容器抽)。需 ffmpeg + mlx-whisper(见安装);**清晰语音最佳——歌曲/音乐准确率低** |
+| 音频 `.mp3`/`.m4a`/`.wav`/… + 视频 `.mp4`/`.mov`/`.m4v` | whisper(本地;引擎自动选:Apple Silicon=mlx-whisper,其它=faster-whisper) | 语音转文字,**零 token/配额**;首次问选哪个模型(列大小)+ 同意后自动装引擎;段级 `[mm:ss]` 时间戳 + 自动检测语言;视频只转音轨(ffmpeg 从容器抽)。需 ffmpeg;**清晰语音最佳——歌曲/音乐准确率低** |
 | 老 `.doc`/`.ppt`、图片 | MinerU(云) | 本地库读不了 |
 | 其他(numbers/pages/zip/…) | **跳过** | 末尾醒目报告 + 处理建议,绝不静默丢 |
 

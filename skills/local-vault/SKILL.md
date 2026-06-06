@@ -42,12 +42,14 @@ There are **two distinct jobs** — figure out which the user wants:
    python3 -m pip install --user requests python-dotenv pypdf pymupdf4llm openpyxl python-pptx
    ```
 2. **pandoc** (for docx/rtf/odt/epub): `brew install pandoc` (macOS) / distro pkg.
-3. **ffmpeg + mlx-whisper** (optional, only for audio/video transcription):
-   `brew install ffmpeg && python3 -m pip install --user mlx-whisper`. Fully local,
-   no token/quota; first run downloads the model (~1.6 GB) once, then offline.
-   **mlx-whisper is Apple-Silicon-only** — on Intel/Linux this dependency check
-   fails gracefully and audio/video files are reported as skipped with a hint (no
-   crash); swap in a portable engine (e.g. faster-whisper) if you need cross-platform.
+3. **ffmpeg** (only for audio/video transcription): `brew install ffmpeg` (macOS) /
+   distro pkg. The **whisper engine is auto-selected by platform** — `mlx-whisper`
+   on Apple Silicon (GPU), `faster-whisper` elsewhere (cross-platform CPU/CUDA) — and
+   **auto-installed after the user consents** at the first-run prompt (no manual pip
+   needed). On that first run with audio/video present, the tool shows the model-size
+   options (tiny ~75 MB / small ~480 MB / turbo ~1.6 GB / large-v3 ~3 GB) and lets the
+   user pick or skip; the choice is saved to `.env` (`KB_WHISPER_MODEL`) so it never
+   re-asks. Fully local — no token/quota; the model downloads once, then offline.
 4. **`claude` CLI on PATH** — the pipeline shells out to `claude -p` for frontmatter
    enrichment and PPT-image OCR. If absent, those steps are skipped (not fatal).
 5. **Configure paths** — two ways:
@@ -106,7 +108,7 @@ First terminal run with no config → the setup wizard (above). Once `.env` exis
 | `.pptx` | python-pptx | title/body/tables/**charts**/**notes** + images; smart OCR (see below) |
 | `.md`/`.markdown`/`.txt` | passthrough | copied verbatim; only frontmatter added, **body untouched** |
 | `.json`/`.yaml`/`.py`/… | code passthrough | wrapped in a fenced code block + frontmatter |
-| audio `.mp3`/`.m4a`/`.wav`/… + video `.mp4`/`.mov`/`.m4v` | whisper (mlx-whisper, local) | speech-to-text, **no token/quota**; per-segment `[mm:ss]` timestamps + detected language; video = audio-track only (ffmpeg pulls it from the container). Needs ffmpeg + mlx-whisper (see setup); **best on clear speech — songs/music transcribe poorly** |
+| audio `.mp3`/`.m4a`/`.wav`/… + video `.mp4`/`.mov`/`.m4v` | whisper (local; engine auto-selected: mlx-whisper on Apple Silicon, else faster-whisper) | speech-to-text, **no token/quota**; first run asks which model (shows sizes) + auto-installs the engine on consent; per-segment `[mm:ss]` timestamps + detected language; video = audio-track only (ffmpeg pulls it from the container). Needs ffmpeg; **best on clear speech — songs/music transcribe poorly** |
 | legacy `.doc`/`.ppt`, images | MinerU (cloud) | local libs can't read these |
 | anything else (numbers/pages/zip/…) | **skipped** | reported at the end with a fix hint — never silently dropped |
 

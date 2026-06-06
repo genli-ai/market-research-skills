@@ -133,9 +133,20 @@ OCR_TIMEOUT_SEC = 90
 OCR_MIN_IMAGE_BYTES = 30000   # < 30KB 的图视为装饰，跳过 OCR（仍抽取+引用）
 OCR_MAX_WORKERS = 4           # 并发 claude -p 数；订阅有速率限制，别开太大
 
-# 音视频转写（mlx-whisper）：纯本地、零 token/配额/API key。
-# 首次会从 HuggingFace 下模型权重（large-v3-turbo ~1.6GB）到 ~/.cache/huggingface，之后离线。
-WHISPER_MODEL = "mlx-community/whisper-large-v3-turbo"  # HF repo；中文质量好 + 快，可换
+# 音视频转写（本地 whisper）：纯本地、零 token/配额/API key。
+# 引擎按平台自动选（可被 env 覆盖）：
+#   Apple Silicon → mlx-whisper（GPU 原生、最快）；其它平台 → faster-whisper（跨平台 CPU/CUDA）。
+WHISPER_ENGINE = os.getenv("KB_WHISPER_ENGINE", "auto")   # auto | mlx | faster
+# 用户选过的模型档（首次在终端交互选择后写回 .env）。""=还没选；"skip"=用户选择不转写音视频。
+WHISPER_MODEL_KEY = os.getenv("KB_WHISPER_MODEL", "")
+WHISPER_DEFAULT_MODEL_KEY = "turbo"                       # 菜单默认 / 推荐档
+# 模型档：key → {各引擎模型 id, 近似下载大小, 一句说明}。首次下、之后离线复用。
+WHISPER_MODELS = {
+    "tiny":     {"mlx": "mlx-community/whisper-tiny",           "faster": "tiny",           "size": "~75 MB",  "note": "最快，准确率最低（快速预览）"},
+    "small":    {"mlx": "mlx-community/whisper-small",          "faster": "small",          "size": "~480 MB", "note": "速度/精度折中"},
+    "turbo":    {"mlx": "mlx-community/whisper-large-v3-turbo", "faster": "large-v3-turbo", "size": "~1.6 GB", "note": "精度高 + 快"},
+    "large-v3": {"mlx": "mlx-community/whisper-large-v3",       "faster": "large-v3",       "size": "~3 GB",   "note": "最高精度、最慢"},
+}
 WHISPER_LANGUAGE = None        # None = 自动检测（比 MinerU 写死 "ch" 好），检测结果写进产物 body
 TRANSCRIBE_TIMESTAMPS = True   # 正文每段加 [mm:ss] 时间戳（音视频版「页码回溯」）；False → 纯段落
 
