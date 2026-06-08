@@ -101,14 +101,14 @@ First terminal run with no config → the setup wizard (above). Once `.env` exis
 |---|---|---|
 | `.xlsx` | openpyxl dual-read | per sheet: value grid (with A/B/C + row coords) **+ formulas list** |
 | `.csv` / `.tsv` | csv → Markdown table | truncates past `CSV_MAX_ROWS` |
-| `.pdf` (digital) | pymupdf4llm | local, fast, no quota; if `PYMUPDF4LLM_WRITE_IMAGES` (default on), images ≥ `PYMUPDF4LLM_IMAGE_SIZE_LIMIT` (12% of page) → `attachments/`, then filtered by min-bytes + de-dup |
+| `.pdf` (digital) | pymupdf4llm | local, fast, no quota; if `PYMUPDF4LLM_WRITE_IMAGES` (default on), images ≥ `PYMUPDF4LLM_IMAGE_SIZE_LIMIT` (12% of page) → `attachments/`, then filtered by min-bytes + de-dup. If pymupdf4llm crashes (e.g. missing-font), a local plain-text pass is tried before MinerU |
 | `.pdf` (scanned) | MinerU vlm (fallback) | triggered when chars/page is too low |
 | `.docx`/`.rtf`/`.odt`/`.epub` | pandoc | images extracted to `attachments/` |
 | `.html`/`.htm` | pandoc (local) | style/class/id attrs + layout `div`/`section`/`span` stripped first, so only content survives; tables kept lossless. No MinerU/token needed |
 | `.pptx` | python-pptx | title/body/tables/**charts**/**notes** + images; smart OCR (see below) |
 | `.md`/`.markdown`/`.txt` | passthrough | copied verbatim; only frontmatter added, **body untouched** |
 | `.json`/`.yaml`/`.py`/… | code passthrough | wrapped in a fenced code block + frontmatter |
-| audio `.mp3`/`.m4a`/`.wav`/… + video `.mp4`/`.mov`/`.m4v` | whisper (local; engine auto-selected: mlx-whisper on Apple Silicon, else faster-whisper) | speech-to-text, **no token/quota**; first run asks which model (shows sizes) + auto-installs the engine on consent; per-segment `[mm:ss]` timestamps + detected language; video = audio-track only (ffmpeg pulls it from the container). Needs ffmpeg; **best on clear speech — songs/music transcribe poorly** |
+| audio `.mp3`/`.m4a`/`.wav`/… + video `.mp4`/`.mov`/`.m4v` | whisper (local; engine auto-selected: mlx-whisper on Apple Silicon, else faster-whisper) | speech-to-text, **no token/quota**; first run asks which model (shows sizes) + auto-installs the engine on consent (a model already cached on this machine is reused without re-asking); per-segment `[mm:ss]` timestamps + detected language; video = audio-track only (ffmpeg pulls it from the container). Needs ffmpeg; **best on clear speech — songs/music transcribe poorly** |
 | legacy `.doc`/`.ppt`, images | MinerU (cloud) | local libs can't read these |
 | anything else (numbers/pages/zip/…) | **skipped** | reported at the end with a fix hint — never silently dropped |
 

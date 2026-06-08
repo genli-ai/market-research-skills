@@ -6,6 +6,17 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-06-08
+
+### Added
+
+- `local-vault`: **PDF plain-text fallback.** When `pymupdf4llm` crashes mid-extraction (commonly a missing-font error like MuPDF `no font file for digest`), the converter now falls back to a local PyMuPDF plain-text pass (`page.get_text()`) before resorting to cloud MinerU. Layout-related bugs that only break the layout-aware extractor don't touch plain text — so a font glitch no longer forces a cross-border cloud round-trip. The result is marked `converted_by: pymupdf (plain text)` so it's identifiable as a degraded artifact. Fits local-vault's "searchability >>> completeness >>> looks" priority.
+- `local-vault`: **reuse an already-downloaded whisper model without re-asking.** The model choice lives in the project-level `.env` (`KB_WHISPER_MODEL`), but the weights live in the user-global HuggingFace cache. When `.env` has no choice yet (a freshly-built vault, or a cleared `.env`) but a model's weights are already cached, the tool now auto-selects the best cached tier (turbo > large-v3 > small > tiny) and proceeds — no menu, no re-download, and it works non-interactively too. The "show download sizes + ask" prompt only appears when there is actually something to download.
+
+### Changed
+
+- `local-vault`: a `pymupdf4llm` error on a digital PDF now logs "trying plain-text fallback first" instead of going straight to MinerU.
+
 ## [1.6.0] - 2026-06-06
 
 ### Added
@@ -233,6 +244,17 @@ If you had `light-research` installed via this plugin marketplace at v0.5.0, upg
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
 ## [未发布]
+
+## [1.7.0] - 2026-06-08
+
+### 新增
+
+- `local-vault`:**PDF 纯文本兜底。** 当 `pymupdf4llm` 在提取中途崩溃(常见诱因是字体缺失,如 MuPDF `no font file for digest`),转换器现在会先用本地 PyMuPDF 纯文本提取(`page.get_text()`)兜底,而不是直接上云 MinerU。这类版式相关 bug 通常只卡带版式的提取器,纯文本不受影响——一个字体问题不再逼出一次跨境云调用。产物标 `converted_by: pymupdf (plain text)`,便于识别为降级产物。契合 local-vault「可检索性 >>> 完整性 >>> 美观」的取舍。
+- `local-vault`:**已下载的 whisper 模型直接复用、不再追问。** 模型选择存在项目级 `.env`(`KB_WHISPER_MODEL`),但权重存在用户级 HuggingFace 全局缓存。当 `.env` 还没记录选择(新建库、或 `.env` 被清空)但某模型权重已缓存时,工具现在会自动选用已缓存的最优档(turbo > large-v3 > small > tiny)并继续——不弹菜单、不重新下载,非交互也能跑。「列出下载大小 + 询问」只在确实有东西要下载时才出现。
+
+### 变更
+
+- `local-vault`:数字 PDF 上 `pymupdf4llm` 出错时,日志改为「先试纯文本兜底」,不再直接转 MinerU。
 
 ## [1.6.0] - 2026-06-06
 

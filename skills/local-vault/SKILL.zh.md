@@ -45,14 +45,14 @@ python3 scripts/sync.py
 |---|---|---|
 | `.xlsx` | openpyxl 双读 | 每 sheet:带 A/B/C + 行号坐标的值表 **+ 公式清单** |
 | `.csv` / `.tsv` | csv → Markdown 表 | 超 `CSV_MAX_ROWS` 截断 |
-| `.pdf`(数字) | pymupdf4llm | 本地、秒级、无 quota;`PYMUPDF4LLM_WRITE_IMAGES`(默认开)时 ≥ `PYMUPDF4LLM_IMAGE_SIZE_LIMIT`(页面 12%)的图抽到 `attachments/`,再过最小字节 + 去重 |
+| `.pdf`(数字) | pymupdf4llm | 本地、秒级、无 quota;`PYMUPDF4LLM_WRITE_IMAGES`(默认开)时 ≥ `PYMUPDF4LLM_IMAGE_SIZE_LIMIT`(页面 12%)的图抽到 `attachments/`,再过最小字节 + 去重。pymupdf4llm 崩溃(如字体缺失)时先试本地纯文本兜底,再上 MinerU |
 | `.pdf`(扫描) | MinerU vlm(兜底) | 字符密度过低时触发 |
 | `.docx`/`.rtf`/`.odt`/`.epub` | pandoc | 图片抽到 `attachments/` |
 | `.html`/`.htm` | pandoc(本地) | 先剥 style/class/id 属性 + 布局 `div`/`section`/`span`,只留正文;表格无损保留。无需 MinerU/token |
 | `.pptx` | python-pptx | 标题/正文/表格/**图表**/**备注** + 图片;智能 OCR(见下) |
 | `.md`/`.markdown`/`.txt` | 直拷 | 逐字拷贝,只加 frontmatter,**正文不动** |
 | `.json`/`.yaml`/`.py`/… | 代码直拷 | 包进代码块 + frontmatter |
-| 音频 `.mp3`/`.m4a`/`.wav`/… + 视频 `.mp4`/`.mov`/`.m4v` | whisper(本地;引擎自动选:Apple Silicon=mlx-whisper,其它=faster-whisper) | 语音转文字,**零 token/配额**;首次问选哪个模型(列大小)+ 同意后自动装引擎;段级 `[mm:ss]` 时间戳 + 自动检测语言;视频只转音轨(ffmpeg 从容器抽)。需 ffmpeg;**清晰语音最佳——歌曲/音乐准确率低** |
+| 音频 `.mp3`/`.m4a`/`.wav`/… + 视频 `.mp4`/`.mov`/`.m4v` | whisper(本地;引擎自动选:Apple Silicon=mlx-whisper,其它=faster-whisper) | 语音转文字,**零 token/配额**;首次问选哪个模型(列大小)+ 同意后自动装引擎(本机已缓存的模型直接复用、不再追问);段级 `[mm:ss]` 时间戳 + 自动检测语言;视频只转音轨(ffmpeg 从容器抽)。需 ffmpeg;**清晰语音最佳——歌曲/音乐准确率低** |
 | 老 `.doc`/`.ppt`、图片 | MinerU(云) | 本地库读不了 |
 | 其他(numbers/pages/zip/…) | **跳过** | 末尾醒目报告 + 处理建议,绝不静默丢 |
 

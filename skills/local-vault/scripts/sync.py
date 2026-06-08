@@ -456,6 +456,32 @@ def convert_with_pymupdf4llm(
     return md_content, pages, img_dir
 
 
+def convert_pdf_plaintext(
+    src: Path, logger: Optional[logging.Logger] = None
+) -> tuple[str, int]:
+    """用 PyMuPDF 纯文本提取 PDF（不抽图、不还原版式）。返回 (md_content, pages)。
+
+    专门作为 pymupdf4llm 崩溃时的本地兜底：常见诱因是字体缺失
+    （MuPDF 'no font file for digest'），这类版式相关 bug 通常只卡 pymupdf4llm
+    的带版式提取，page.get_text() 的纯文本不受影响。够用就够用——符合
+    local-vault「可检索性 >>> 完整性 >>> 美观」，避免为一个字体 bug 就上云 MinerU。
+    """
+    import fitz  # PyMuPDF
+    t0 = time.time()
+    parts: list[str] = []
+    with fitz.open(str(src)) as doc:
+        pages = doc.page_count
+        for page in doc:
+            parts.append(page.get_text())
+    md_content = "\n\n".join(parts).strip()
+    if logger:
+        logger.info(
+            f"  ✓ {src.name} (PyMuPDF 纯文本兜底, {pages} pages, "
+            f"{len(md_content)} chars, {time.time() - t0:.1f}s)"
+        )
+    return md_content, pages
+
+
 def _strip_image_ref(md: str, target: str) -> str:
     """从 md 里整条删掉指向 target 的图片引用 ![alt](target)（含可选行尾换行）。"""
     return re.sub(r"!\[[^\]]*\]\(" + re.escape(target) + r"\)\n?", "", md)
@@ -535,6 +561,31 @@ def process_pymupdf4llm_result(
     if logger:
         suffix = f"（含 {n_images} 张图）" if n_images else ""
         logger.info(f"  → {target_md}{suffix}")
+    enrich_frontmatter(target_md, src, logger)
+
+
+def process_pdf_plaintext_result(
+    src: Path,
+    md_content: str,
+    pages: int,
+    logger: Optional[logging.Logger] = None,
+) -> None:
+    """PDF 纯文本兜底结果落地：写 MD（含 frontmatter），无图。
+    converted_by 标 'pymupdf (plain text)'，便于事后区分这是降级产物。"""
+    target_md = compute_target_path(src, config.SOURCE_DIR, config.TARGET_DIR)
+    target_md.parent.mkdir(parents=True, exist_ok=True)
+    fm = build_frontmatter(
+        source_filename=src.name,
+        source_type=src.suffix.lstrip(".").lower(),
+        converted_at=datetime.now().strftime("%Y-%m-%d"),
+        pages=pages,
+        batch_id="local-pymupdf-text",
+        rel_source_path=_rel_source_path(src, target_md),
+        converted_by="pymupdf (plain text)",
+    )
+    target_md.write_text(fm + md_content, encoding="utf-8")
+    if logger:
+        logger.info(f"  → {target_md}（纯文本兜底，无图）")
     enrich_frontmatter(target_md, src, logger)
 
 
@@ -1229,6 +1280,44 @@ def _upsert_env_key(env_path: Path, key: str, value: str) -> None:
         pass
 
 
+def _hf_hub_cache_dir() -> Path:
+    """HuggingFace 模型权重缓存目录（whisper 权重落这里，**全用户共享、跨项目复用**）。
+    依次尊重 HF_HUB_CACHE / HF_HOME 环境覆盖，否则默认 ~/.cache/huggingface/hub。"""
+    if os.getenv("HF_HUB_CACHE"):
+        return Path(os.environ["HF_HUB_CACHE"])
+    if os.getenv("HF_HOME"):
+        return Path(os.environ["HF_HOME"]) / "hub"
+    return Path.home() / ".cache" / "huggingface" / "hub"
+
+
+def _model_repo_for(key: str, engine: str) -> str:
+    """模型档 key → HuggingFace 仓库名（用于查缓存目录）。faster 用 Systran 标准发行。"""
+    spec = config.WHISPER_MODELS.get(key, {})
+    if engine == "mlx":
+        return spec.get("mlx", "")                              # mlx-community/whisper-large-v3-turbo
+    return f"Systran/faster-whisper-{spec.get('faster', key)}"  # Systran/faster-whisper-<id>
+
+
+def _cached_model_key(engine: str) -> Optional[str]:
+    """若某模型档权重已在本地 HF 缓存（之前下过、全局共享），按「推荐优先」顺序
+    （turbo > large-v3 > small > tiny）返回最优那档 key；都没下过返回 None。
+
+    用途：**新建库 / .env 被清空**时，权重还在全局缓存里就别再逼用户走那个
+    「告知下载大小」的菜单——根本没东西要下（见 §经验 #22）。
+    """
+    hub = _hf_hub_cache_dir()
+    if not hub.is_dir():
+        return None
+    for key in ("turbo", "large-v3", "small", "tiny"):
+        repo = _model_repo_for(key, engine)
+        if not repo:
+            continue
+        d = hub / ("models--" + repo.replace("/", "--"))
+        if d.is_dir() and any(d.iterdir()):
+            return key
+    return None
+
+
 def prompt_whisper_setup(n_files: int, engine: str, logger: Optional[logging.Logger] = None) -> str:
     """终端交互：先告知各模型档的下载大小，让用户选档或跳过。返回模型档 key 或 'skip'。
     选择写回 .env 的 KB_WHISPER_MODEL，之后不再追问。仅在交互 TTY 调用。
@@ -1385,11 +1474,21 @@ def prepare_transcribe(
     if key == "skip":
         return _skip_all("音视频转写：已选择跳过（改 scripts/.env 的 KB_WHISPER_MODEL=turbo 可启用）")
     if not key:
-        if not interactive:
+        # .env 没记录：先看权重是否已在全局 HF 缓存（新建库 / .env 被清空的常见场景）。
+        # 有就直接复用——没东西可下，不必再走「告知下载大小」的菜单，非交互也能转。
+        cached = _cached_model_key(engine)
+        if cached:
+            key = cached
+            _upsert_env_key(config.TOOL_DIR / ".env", "KB_WHISPER_MODEL", key)
+            config.WHISPER_MODEL_KEY = key
+            if logger:
+                logger.info(f"  音视频转写：检测到已缓存模型档 {key}，直接复用（无需下载）；已写入 .env，下次不再询问")
+        elif not interactive:
             return _skip_all("音视频转写：首次需在终端运行一次以选择 Whisper 模型（双击 sync.command）")
-        key = prompt_whisper_setup(len(new_transcribe), engine, logger)
-        if key == "skip":
-            return _skip_all("音视频转写：已选择跳过（改 scripts/.env 的 KB_WHISPER_MODEL=turbo 可启用）")
+        else:
+            key = prompt_whisper_setup(len(new_transcribe), engine, logger)
+            if key == "skip":
+                return _skip_all("音视频转写：已选择跳过（改 scripts/.env 的 KB_WHISPER_MODEL=turbo 可启用）")
 
     # key 现在是有效模型档。确保 ffmpeg + 引擎包就绪。
     config.WHISPER_MODEL_KEY = key
@@ -1837,9 +1936,26 @@ def main() -> int:
             try:
                 md_content, pages, img_dir = convert_with_pymupdf4llm(src, logger)
             except Exception as exc:
+                # pymupdf4llm 崩了（常见：字体缺失 'no font file for digest'）。
+                # 上云 MinerU 之前，先用 PyMuPDF 纯文本兜一把——多数版式 bug 不影响纯文本。
                 logger.warning(
-                    f"  ⚠ {src.name}: pymupdf4llm 出错 ({exc})，转 MinerU fallback"
+                    f"  ⚠ {src.name}: pymupdf4llm 出错 ({exc})，先试纯文本兜底"
                 )
+                try:
+                    txt_md, txt_pages = convert_pdf_plaintext(src, logger)
+                    txt_density = (len(txt_md) / txt_pages) if txt_pages else 0
+                    if txt_density >= config.PYMUPDF4LLM_MIN_CHARS_PER_PAGE:
+                        process_pdf_plaintext_result(src, txt_md, txt_pages, logger)
+                        success += 1
+                        continue
+                    logger.warning(
+                        f"  ⚠ {src.name}: 纯文本也稀疏 "
+                        f"({int(txt_density)} chars/page)，转 MinerU fallback"
+                    )
+                except Exception as exc2:
+                    logger.warning(
+                        f"  ⚠ {src.name}: 纯文本兜底失败 ({exc2})，转 MinerU fallback"
+                    )
                 mineru_fallback_files.append(src)
                 continue
             # 字符密度判断：太稀 → 多半扫描件 → fallback（丢弃已抽的图，交给 MinerU）
