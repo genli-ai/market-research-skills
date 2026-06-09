@@ -6,6 +6,16 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+## [1.7.1] - 2026-06-09
+
+### Fixed
+
+- `verifying` & `analyst-research`: made the frontmatter `description` valid under **strict YAML parsers**. Both used a single-line unquoted scalar containing `: ` (colon-space) at `Triggers:` / `Covers five scenarios:` / `Not for:`, which strict parsers reject (`mapping values are not allowed here`). Claude Code's own loader is lenient, so all four skills always worked as a plugin — but skills.sh / `npx skills` (and other strict-YAML terminals) detected only **2 of 4**. Converted both to `>-` folded block scalars (same style as `local-vault`); the description text is byte-identical, so triggering behavior is unchanged.
+
+### Added
+
+- README: **Option 6 — `npx skills` / skills.sh** cross-terminal install (`npx skills add genli-ai/market-research-skills`). The repo is now indexed by [skills.sh](https://www.skills.sh) (GitHub topics `skills-sh` / `claude-skill`); this path resolves the latest from `main`, so there is no version to pin.
+
 ## [1.7.0] - 2026-06-08
 
 ### Added
@@ -244,6 +254,16 @@ If you had `light-research` installed via this plugin marketplace at v0.5.0, upg
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
 ## [未发布]
+
+## [1.7.1] - 2026-06-09
+
+### 修复
+
+- `verifying` 与 `analyst-research`：让 frontmatter 的 `description` 在**严格 YAML 解析器**下也能解析。两者原本是单行 unquoted 标量，里面含 `: `（冒号+空格，出现在 `Triggers:` / `Covers five scenarios:` / `Not for:`），被严格解析器拒（`mapping values are not allowed here`）。Claude Code 自己的 loader 宽松，所以四个 skill 当 plugin 一直正常——但 skills.sh / `npx skills`（及其他严格 YAML 终端）只识别出 4 个里的 **2 个**。现改为 `>-` 折叠块标量（与 `local-vault` 同款）；description 文本逐字节不变，触发行为不受影响。
+
+### 新增
+
+- README：**方式六 —— `npx skills` / skills.sh** 跨终端安装（`npx skills add genli-ai/market-research-skills`）。repo 已被 [skills.sh](https://www.skills.sh) 收录（GitHub topic `skills-sh` / `claude-skill`）；该路径每次拉取 `main` 最新版，无需锁定版本号。
 
 ## [1.7.0] - 2026-06-08
 
