@@ -147,7 +147,11 @@ WHISPER_MODELS = {
     "turbo":    {"mlx": "mlx-community/whisper-large-v3-turbo", "faster": "large-v3-turbo", "size": "~1.6 GB", "note": "精度高 + 快"},
     "large-v3": {"mlx": "mlx-community/whisper-large-v3",       "faster": "large-v3",       "size": "~3 GB",   "note": "最高精度、最慢"},
 }
-WHISPER_LANGUAGE = None        # None = 自动检测（比 MinerU 写死 "ch" 好），检测结果写进产物 body
+# 转写语言：env 可强制（如 KB_WHISPER_LANGUAGE=en / zh），未设 = 自动检测，检测结果写进产物 body。
+# ⚠️ 自动检测易被「片头音乐/无语音」骗（whisper 默认只看首 30s）→ 整文件锁错语言 → 全篇幻觉；
+# 故 mlx 路径改从音频中段采样判（见 _detect_language_mlx），faster 路径用 VAD 滤非语音后再判。
+WHISPER_LANGUAGE = os.getenv("KB_WHISPER_LANGUAGE") or None
+WHISPER_DETECT_WINDOW_SEC = 30  # 自动判语言时从音频中段取多长一窗（秒）
 TRANSCRIBE_TIMESTAMPS = True   # 正文每段加 [mm:ss] 时间戳（音视频版「页码回溯」）；False → 纯段落
 
 # Excel 单 sheet 导出的单元格上限；超过则截断 + 提示，避免万行表撑爆 vault。

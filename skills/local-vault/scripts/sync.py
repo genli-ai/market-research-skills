@@ -1371,19 +1371,49 @@ def _format_timestamp(sec: float) -> str:
     return f"[{h}:{m:02d}:{s:02d}]" if h else f"[{m:02d}:{s:02d}]"
 
 
+def _detect_language_mlx(src: Path, model_id: str) -> Optional[str]:
+    """从音频中段取一窗判语言，避开「片头音乐/无语音 → whisper 默认只看首 30s → 误判整文件」。
+    失败回 None（退回 mlx 自带的首-30s 检测，不比现状差）。
+    """
+    try:
+        import mlx_whisper
+        from mlx_whisper.audio import load_audio, SAMPLE_RATE
+        audio = load_audio(str(src))   # 16kHz mono float32，ffmpeg 解码（视频也能抽音轨）
+        win = config.WHISPER_DETECT_WINDOW_SEC * SAMPLE_RATE
+        if len(audio) > win:
+            mid = len(audio) // 2
+            audio = audio[mid - win // 2 : mid + win // 2]
+        return mlx_whisper.transcribe(
+            audio, path_or_hf_repo=model_id, language=None
+        ).get("language")
+    except Exception:
+        return None
+
+
 def _transcribe_mlx(src: Path, model_id: str) -> dict:
-    """mlx-whisper（Apple Silicon GPU）。返回 whisper 原生 dict。"""
+    """mlx-whisper（Apple Silicon GPU）。返回 whisper 原生 dict。
+    language：config 强制值优先，否则从音频中段采样判（避开片头音乐误判，见 _detect_language_mlx）。
+    condition_on_previous_text=False：单个坏窗不污染后续窗，长音频不会卡进重复幻觉循环整段崩。
+    """
     import mlx_whisper
+    language = config.WHISPER_LANGUAGE or _detect_language_mlx(src, model_id)
     return mlx_whisper.transcribe(
-        str(src), path_or_hf_repo=model_id, language=config.WHISPER_LANGUAGE
+        str(src), path_or_hf_repo=model_id, language=language,
+        condition_on_previous_text=False,
     )
 
 
 def _transcribe_faster(src: Path, model_id: str) -> dict:
-    """faster-whisper（跨平台 CTranslate2）。归一化成与 mlx 一致的 dict。"""
+    """faster-whisper（跨平台 CTranslate2）。归一化成与 mlx 一致的 dict。
+    vad_filter=True 先用 VAD 滤掉非语音（音乐/静音）→ 语言检测落在真语音上 + 不在静音段幻觉；
+    condition_on_previous_text=False 防重复幻觉循环。
+    """
     from faster_whisper import WhisperModel
     model = WhisperModel(model_id, device="auto", compute_type="auto")
-    segments, info = model.transcribe(str(src), language=config.WHISPER_LANGUAGE)
+    segments, info = model.transcribe(
+        str(src), language=config.WHISPER_LANGUAGE,
+        vad_filter=True, condition_on_previous_text=False,
+    )
     seg_list = [{"start": s.start, "end": s.end, "text": s.text} for s in segments]
     return {
         "text": "".join(s["text"] for s in seg_list),
