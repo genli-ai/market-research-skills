@@ -1,6 +1,20 @@
 ---
 name: verifying
-description: Use when verifying information (fact, number, quote, event, statement) against authoritative primary sources, or cross-checking a number via one-level metric decomposition (Z = P × Q). Triggers: "verify X", "is this true", "find the original source", "where is this number from", "two sources disagree", "is it true X never did Y". Covers five scenarios: (1) basic truthfulness check, (2) completeness / out-of-context quoting, (3) one-level reasoning verification, (4) negative-statement handling, (5) multi-source conflict side-by-side output. Dig into whitelisted primary sources only (user-supplied files, official websites & databases, authoritative industry sources); cited reports / charts / datasets must be downloaded and read locally to count as verified — if download is blocked, hand the link to the user. If nothing can be found, plainly state "cannot verify" rather than guessing, patching, or citing secondary paraphrases. Always reply in the user's question language.
+description: >-
+  Use when verifying information (fact, number, quote, event, statement)
+  against authoritative primary sources, or cross-checking a number via
+  one-level metric decomposition (Z = P × Q). Triggers: "verify X", "is this
+  true", "find the original source", "where is this number from", "two sources
+  disagree", "is it true X never did Y". Covers five scenarios: (1) basic
+  truthfulness check, (2) completeness / out-of-context quoting, (3) one-level
+  reasoning verification, (4) negative-statement handling, (5) multi-source
+  conflict side-by-side output. Dig into whitelisted primary sources only
+  (user-supplied files, official websites & databases, authoritative industry
+  sources); cited reports / charts / datasets must be downloaded and read
+  locally to count as verified — if download is blocked, hand the link to the
+  user. If nothing can be found, plainly state "cannot verify" rather than
+  guessing, patching, or citing secondary paraphrases. Always reply in the
+  user's question language.
 ---
 
 # Information Verification Skill

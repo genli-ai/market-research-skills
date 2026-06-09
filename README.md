@@ -84,6 +84,23 @@ A `.zip` file simply contains `SKILL.md` and any resources — the format is por
 
 Tool-call action verbs inside each `SKILL.md` (read full text / fetch web body / search-engine query / image recognition / database query) are described in generic semantic terms, so each terminal's LLM can map them to its own local tool set.
 
+### Option 6 — `npx skills` / skills.sh (one command, 60+ terminals)
+
+This repo is indexed by [skills.sh](https://www.skills.sh) (the open `npx skills` tool by Vercel Labs). One command installs straight from this repo — no clone, no manual copy — and always resolves the latest from `main`, so there is no version to pin:
+
+```bash
+# Install all skills into Claude Code
+npx skills add genli-ai/market-research-skills -a claude-code -s '*'
+
+# Pick one skill, and/or a different terminal (cursor / github-copilot / gemini-cli / codex / ...)
+npx skills add genli-ai/market-research-skills -s verifying -a cursor
+
+# Preview what's available without installing
+npx skills add genli-ai/market-research-skills --list
+```
+
+Update later with `npx skills update`. Omit `-a` to auto-detect installed terminals and choose interactively.
+
 ## Directory layout
 
 ```
@@ -234,6 +251,23 @@ unzip verifying.zip -d ~/.claude/skills/verifying
    - 其他终端：见各自的 plugin / skill 加载器文档
 
 每个 `SKILL.md` 里的工具调用动作（通读全文 / 抓取网页正文 / 搜索引擎检索 / 图像识别 / 数据库查询）都用通用语义动词描述，让各终端的 LLM 映射到自家工具。
+
+### 方式六：`npx skills` / skills.sh（一条命令，支持 60+ 终端）
+
+本 repo 已被 [skills.sh](https://www.skills.sh)（Vercel Labs 的开源 `npx skills` 工具）收录。一条命令直接从本 repo 安装——无需克隆、无需手动拷贝——且每次都拉取 `main` 的最新版，没有版本号要锁定：
+
+```bash
+# 全部 skill 装进 Claude Code
+npx skills add genli-ai/market-research-skills -a claude-code -s '*'
+
+# 只装某一个，或换一个终端（cursor / github-copilot / gemini-cli / codex / ...）
+npx skills add genli-ai/market-research-skills -s verifying -a cursor
+
+# 不安装，仅预览有哪些 skill
+npx skills add genli-ai/market-research-skills --list
+```
+
+之后用 `npx skills update` 更新。省略 `-a` 会自动检测已装终端并让你交互选择。
 
 ## 目录约定
 
