@@ -271,7 +271,7 @@ In the broad search the AI must **proactively search the following seven source 
 | A.3 academic & think tank | NBER, SSRN, Google Scholar, Brookings, CSIS, Chatham House |
 | A.4 investment banks + consulting | GS / JPM / MS / Citi Country Outlooks, McKinsey / BCG sector reports, Chinese-bank overseas research |
 | A.5 mainstream financial media | Chinese: Caixin, Wallstreetcn, FT Chinese; English: Bloomberg, Reuters, FT, WSJ, Economist |
-| A.6 WeChat / industry communities | finance / regional / vertical Chinese public accounts |
+| A.6 WeChat / industry communities / public social | finance / regional / vertical Chinese public accounts, LinkedIn / Substack / public X discussion |
 | A.7 databases (programmatic) | available MCP / API / skill: iFind, OpenBB, `financial-data-sources` skill |
 
 **Both-languages principle**: international orgs, investment banks, academia mostly English; regional, policy, primary news often more accurate in Chinese. In multi-LLM mode the three divide: Claude leans English academic and bank reports, DeepSeek Chinese and regional context, GPT balanced (see §6.2). In single-LLM mode Claude alone walks all seven, filling Chinese regional ones via iFinD MCP and WeChat WebFetch.
@@ -1563,6 +1563,7 @@ Chinese-world deep analysis and primary observation, often earlier / more accura
 - regional: niche but deep Gulf-focused accounts
 - industry: energy, real estate, consumer, tech, healthcare verticals each have accounts
 - in-firm sharing groups, LinkedIn professional authors, Substack independent analysts
+- public X/Twitter posts and replies: useful for lead-generation, expert discovery, and sentiment texture, not primary evidence. Record query, capture date, URL / post ID, author handle, and retrieval tool. Tools such as [TweetClaw](https://github.com/Xquik-dev/tweetclaw) can capture public X/Twitter posts and replies; verify every factual claim against A.1-A.5 or A.7 before using it in the argument.
 
 ### A.7 databases (programmatic access)
 

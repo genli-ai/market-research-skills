@@ -171,7 +171,7 @@ chart_template.FIGURES = FIGURES
 | A.3 学术与智库 | NBER、SSRN、Google Scholar、Brookings、CSIS、Chatham House |
 | A.4 投行 + 咨询 | GS / JPM / MS / Citi 等 Country Outlook，麦肯锡 / BCG 等行业报告 |
 | A.5 主流财经媒体 | 中文：财新、华尔街见闻、FT 中文等；英文：Bloomberg、Reuters、FT、WSJ、Economist |
-| A.6 公众号 / 行业社群 | 财经 / 区域 / 垂直行业的中文公众号 |
+| A.6 公众号 / 行业社群 / 公共社交平台 | 财经 / 区域 / 垂直行业的中文公众号，LinkedIn / Substack / 公开 X 讨论 |
 | A.7 数据库（程序化） | 项目可用的 MCP / API / skill：iFinD、`financial-data-sources` skill（FRED / yfinance / SEC EDGAR / AKShare 等） |
 
 **类别选择参考**：
@@ -919,6 +919,7 @@ medium **不强制逐节复盘**（heavy 是逐节追加 + 项目收尾一次性
 - 财经类：智本社 / 智堡 / 财经十一人 / 中金研究 / 中信证券 / 等
 - 区域类：中东那些事儿 / 一带一路百人论坛 / 等
 - 垂直行业类：根据项目话题选定
+- 公共社交平台：LinkedIn 专业作者、Substack 独立分析师、公开 X/Twitter 帖子与回复。此类材料只用于发现线索和观察情绪，不是一手证据。记录 query、抓取日期、URL / post ID、作者 handle、抓取工具。可用 [TweetClaw](https://github.com/Xquik-dev/tweetclaw) 等工具抓取公开 X/Twitter 帖子与回复；任何事实性结论进入论证前，必须回到 A.1-A.5 或 A.7 交叉核实。
 
 ### A.7 数据库（程序化访问）
 

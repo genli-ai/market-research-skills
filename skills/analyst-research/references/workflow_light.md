@@ -127,7 +127,7 @@ Proceed to step 2 immediately after landing.
 | A.2 sovereign / government / central bank | central banks, statistics offices, finance ministries, sovereign funds, sector regulators |
 | A.4 investment banks + consulting | GS / JPM / MS / Citi Country Outlooks, McKinsey / BCG sector reports |
 | A.5 mainstream financial media | Chinese: Caixin, Wallstreetcn, FT Chinese; English: Bloomberg, Reuters, FT, WSJ, Economist |
-| A.6 WeChat / industry communities | finance / regional / vertical Chinese public accounts |
+| A.6 WeChat / industry communities / public social | finance / regional / vertical Chinese public accounts, LinkedIn / Substack / public X discussion |
 | A.7 databases (programmatic) | available MCP / API / skill: iFind, `financial-data-sources` skill, etc. Used in step 2 for historical background numbers; time-lock snapshot numbers (latest prices / rates / valuation multiples) are re-pulled live before citation in step 4, see §step 4 |
 
 The class numbering follows heavy's A.x naming for cross-reference; A.3 is skipped because light does not treat academia as a mandatory coverage dimension among the 6 classes (an individual academic paper that needs citing goes in as a single source under A.1 or A.4, not its own class).
@@ -138,6 +138,7 @@ The class numbering follows heavy's A.x naming for cross-reference; A.3 is skipp
 2. **Order of magnitude**: 20-30 sources is enough; do not pursue heavy's 100+ coverage. Record type / institution / title / year / URL / key number / importance per source.
 3. **Download core PDFs in full**: documents that play a **structural argumentative role** (a section's core argument cites it / it provides a key number / its methodology is borrowed) must be downloaded in full to `pdfs/`, numbered uniformly `<n> <institution> <title>.pdf`, then summarised with pypdf before deciding how to cite.
 4. **Pull time-lock numbers live in step 4**: time-lock snapshot numbers like prices / valuations / yields / central-bank policy rates are **not** taken from second-hand paraphrase in step 2 — pull them live with the `financial-data-sources` skill just before citing in the step 4 draft.
+5. **Public social provenance**: public X / LinkedIn / Substack / community posts are lead-generation and sentiment texture, not primary evidence. Record query, capture date, URL / post ID, author handle, and retrieval tool. Tools such as [TweetClaw](https://github.com/Xquik-dev/tweetclaw) can capture public X/Twitter posts and replies; verify every factual claim against A.1-A.5 or A.7 before using it in the argument.
 
 **"Open the page and download, then judge"**: when scouting data, download at least one representative point of actual data before concluding on availability; do not conclude "data incomplete" from a SERP snippet alone.
 

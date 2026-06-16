@@ -269,7 +269,7 @@ AI 绝对不做：
 | A.3 学术与智库 | NBER、SSRN、Google Scholar、Brookings、CSIS、Chatham House |
 | A.4 投行 + 咨询 | GS / JPM / MS / Citi 等 Country Outlook，麦肯锡 / BCG 等行业报告，中资投行海外研究 |
 | A.5 主流财经媒体 | 中文：财新、华尔街见闻、FT 中文等；英文：Bloomberg、Reuters、FT、WSJ、Economist |
-| A.6 公众号 / 行业社群 | 财经 / 区域 / 垂直行业的中文公众号 |
+| A.6 公众号 / 行业社群 / 公共社交平台 | 财经 / 区域 / 垂直行业的中文公众号，LinkedIn / Substack / 公开 X 讨论 |
 | A.7 数据库（程序化） | 项目可用的 MCP / API / skill：iFind、OpenBB、`financial-data-sources` skill 等 |
 
 **中英文并重原则**：国际机构、投行、学术英文为主，区域、政策、一手新闻中文常更准。多 LLM 模式下三家分工：Claude 偏英文学术与投行报告，DeepSeek 偏中文与区域语境，GPT 平衡（详见 §6.2）。单 LLM 模式下 Claude 一家走遍七类，中文区域类用 iFinD MCP 与公众号 WebFetch 补足。
@@ -1559,6 +1559,7 @@ self-check 失败时回到原段修订，不在派生品上 patch。每个项目
 - 区域类：海湾札记类的小众但深入的账号
 - 行业类：能源、地产、消费、科技、医疗各有垂直号
 - 行内分享群、领英专业作者、Substack 独立分析师
+- 公开 X/Twitter 帖子与回复：适合发现线索、定位专家、观察情绪，不是一手证据。记录 query、抓取日期、URL / post ID、作者 handle、抓取工具。可用 [TweetClaw](https://github.com/Xquik-dev/tweetclaw) 等工具抓取公开 X/Twitter 帖子与回复；任何事实性结论进入论证前，必须回到 A.1-A.5 或 A.7 交叉核实。
 
 ### A.7 数据库（程序化访问）
 
