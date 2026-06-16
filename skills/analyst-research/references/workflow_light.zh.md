@@ -126,7 +126,7 @@ cp ~/.claude/skills/analyst-research/references/_quarto-light.yml _quarto.yml
 | A.2 主权 / 政府 / 央行 | 央行、统计局、财政部、主权基金、行业监管 |
 | A.4 投行 + 咨询 | GS / JPM / MS / Citi 等 Country Outlook，麦肯锡 / BCG 等行业报告 |
 | A.5 主流财经媒体 | 中文：财新、华尔街见闻、FT 中文等；英文：Bloomberg、Reuters、FT、WSJ、Economist |
-| A.6 公众号 / 行业社群 | 财经 / 区域 / 垂直行业的中文公众号 |
+| A.6 公众号 / 行业社群 / 公共社交平台 | 财经 / 区域 / 垂直行业的中文公众号，LinkedIn / Substack / 公开 X 讨论 |
 | A.7 数据库（程序化） | 项目可用的 MCP / API / skill：iFind、`financial-data-sources` skill 等。step 2 用于抓历史背景数字；time-lock 快照数字（最新行情 / 利率 / 估值倍数）在 step 4 引用前再次实拉，详见 §步骤 4 |
 
 类别编号沿用 heavy 的 A.x 命名以便互查，跳号 A.3 是因为 light 不把学术作为 6 大类强制覆盖维度（个别学术论文需要引用时直接以单条 source 进 A.1 或 A.4，不另起一类）。
@@ -137,6 +137,7 @@ cp ~/.claude/skills/analyst-research/references/_quarto-light.yml _quarto.yml
 2. **数量级**：20-30 条资料即可，不追求 heavy 的 100+ 条覆盖面。每条记录类型 / 机构 / 标题 / 年份 / URL / 关键数字 / 重要性
 3. **核心 PDF 全文下载**：承担**结构性论证作用**的文献（章节核心论点引用 / 提供关键数字 / 方法论被借鉴）必须下载全文 PDF 到 `pdfs/`，统一编号 `<编号> <机构> <标题>.pdf`，下载后用 pypdf 抽全文摘要再决定引用
 4. **time-lock 数字 step 4 实拉**：行情 / 估值 / 收益率 / 央行政策利率等 time-lock 快照数字，**不在 step 2 抓二手转述**——在 step 4 draft 引用前用 `financial-data-sources` skill 实拉
+5. **公共社交平台溯源**：公开 X / LinkedIn / Substack / 社群帖只用于发现线索和观察情绪，不是一手证据。记录 query、抓取日期、URL / post ID、作者 handle、抓取工具。可用 [TweetClaw](https://github.com/Xquik-dev/tweetclaw) 等工具抓取公开 X/Twitter 帖子与回复；任何事实性结论进入论证前，必须回到 A.1-A.5 或 A.7 交叉核实。
 
 **「打开网页下载，再判断」**：数据侦察时至少下载一个代表性时点的实际数据再判断可达性，不要只看 SERP 摘要就下结论「数据不全」。
 

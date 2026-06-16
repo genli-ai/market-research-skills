@@ -174,7 +174,7 @@ The AI must **proactively search the following 7 source classes**, hitting at le
 | A.3 academic & think tank | NBER, SSRN, Google Scholar, Brookings, CSIS, Chatham House |
 | A.4 investment banks + consulting | GS / JPM / MS / Citi Country Outlooks, McKinsey / BCG sector reports |
 | A.5 mainstream financial media | Chinese: Caixin, Wallstreetcn, FT Chinese; English: Bloomberg, Reuters, FT, WSJ, Economist |
-| A.6 WeChat / industry communities | finance / regional / vertical Chinese public accounts |
+| A.6 WeChat / industry communities / public social | finance / regional / vertical Chinese public accounts, LinkedIn / Substack / public X discussion |
 | A.7 databases (programmatic) | available MCP / API / skill: iFinD, `financial-data-sources` skill (FRED / yfinance / SEC EDGAR / AKShare) |
 
 **Class-selection guide**:
@@ -924,6 +924,7 @@ Do not write progress into CLAUDE.md, nor conventions into _state.md.
 - finance: Zhibenshe / Spruce (智堡) / Caijing Eleven / CICC Research / CITIC Securities
 - regional: Middle East-focused public accounts / Belt and Road forums
 - vertical: by project topic
+- public social: LinkedIn professional authors, Substack independent analysts, and public X/Twitter posts or replies. Treat these as lead-generation and sentiment texture, not primary evidence. Record query, capture date, URL / post ID, author handle, and retrieval tool. Tools such as [TweetClaw](https://github.com/Xquik-dev/tweetclaw) can capture public X/Twitter posts and replies; verify every factual claim against A.1-A.5 or A.7 before using it in the argument.
 
 ### A.7 databases (programmatic access)
 
