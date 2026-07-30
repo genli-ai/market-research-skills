@@ -18,15 +18,19 @@ subject_name + sections，from_dict 时兼容老字段。
 """
 from __future__ import annotations
 from dataclasses import dataclass, field, asdict
+from datetime import date
 from typing import List, Optional
 import json
-
+import re
 
 DEFAULT_DISCLAIMER = (
     "本产品中的信息是基于公众媒体或其它第三方公开披露的信息编制而成。"
     "本产品不构成买卖任何投资工具或者达成任何交易的推荐，亦不构成财务、法律、税务、"
     "投资建议、投资咨询意见或其他意见。本产品所提供信息仅供接收者参考。"
 )
+EVENT_DATE_FORMAT_MESSAGE = "event_date must use YYYY-MM-DD or YYYY-MM"
+FULL_DATE_PATTERN = re.compile(r"\d{4}-\d{2}-\d{2}")
+MONTH_PATTERN = re.compile(r"\d{4}-\d{2}")
 
 
 @dataclass
@@ -42,6 +46,7 @@ class Item:
     headline: str            # ≤30 字，含数字或明确结论
     body: str                # 100-300 字
     source: SourceRef
+    event_date: str = ""  # YYYY-MM-DD 或 YYYY-MM；旧版 regions 可为空
 
 
 @dataclass
@@ -110,6 +115,11 @@ class Briefing:
              region_items → items（summary 内）
              region_label → label（summary item 内）
         """
+        period_start = _parse_iso_date(d["period_start"], "period_start")
+        period_end = _parse_iso_date(d["period_end"], "period_end")
+        if period_start > period_end:
+            raise ValueError("period_start must not be after period_end")
+
         focus_d = d.get("focus", {})
         focus = Focus(
             title=focus_d.get("title", ""),
@@ -133,15 +143,17 @@ class Briefing:
             ],
         )
 
+        uses_legacy_regions = "sections" not in d and "regions" in d
         sec_data = d.get("sections", d.get("regions", []))
         sections = [
             Section(
                 label=sec.get("label", ""),
                 items=[
-                    Item(
-                        headline=it["headline"],
-                        body=it["body"],
-                        source=SourceRef(**it["source"]),
+                    _item_from_dict(
+                        it,
+                        period_start=period_start,
+                        period_end=period_end,
+                        allow_missing_event_date=uses_legacy_regions,
                     )
                     for it in sec.get("items", [])
                 ],
@@ -175,3 +187,62 @@ class Briefing:
             for it in sec.items:
                 out.append(it.source)
         return out
+
+
+def _parse_iso_date(value: str, field_name: str) -> date:
+    if not isinstance(value, str):
+        raise ValueError(f"{field_name} must use YYYY-MM-DD")
+    if FULL_DATE_PATTERN.fullmatch(value) is None:
+        raise ValueError(f"{field_name} must use YYYY-MM-DD")
+    try:
+        return date.fromisoformat(value)
+    except ValueError as exc:
+        raise ValueError(f"{field_name} must use YYYY-MM-DD") from exc
+
+
+def _validate_event_date(
+    value: str,
+    period_start: date,
+    period_end: date,
+) -> None:
+    if not isinstance(value, str):
+        raise ValueError(EVENT_DATE_FORMAT_MESSAGE)
+    if MONTH_PATTERN.fullmatch(value) is not None:
+        try:
+            date.fromisoformat(f"{value}-01")
+        except ValueError as exc:
+            raise ValueError(EVENT_DATE_FORMAT_MESSAGE) from exc
+        start_month = period_start.strftime("%Y-%m")
+        end_month = period_end.strftime("%Y-%m")
+        if start_month <= value <= end_month:
+            return
+    elif FULL_DATE_PATTERN.fullmatch(value) is not None:
+        try:
+            parsed = date.fromisoformat(value)
+        except ValueError as exc:
+            raise ValueError(EVENT_DATE_FORMAT_MESSAGE) from exc
+        if period_start <= parsed <= period_end:
+            return
+    else:
+        raise ValueError(EVENT_DATE_FORMAT_MESSAGE)
+    raise ValueError("event_date must fall within the briefing period")
+
+
+def _item_from_dict(
+    item: dict,
+    *,
+    period_start: date,
+    period_end: date,
+    allow_missing_event_date: bool,
+) -> Item:
+    event_date = item.get("event_date", "")
+    if not event_date and not allow_missing_event_date:
+        raise ValueError("Each sections item requires event_date")
+    if event_date:
+        _validate_event_date(event_date, period_start, period_end)
+    return Item(
+        headline=item["headline"],
+        body=item["body"],
+        source=SourceRef(**item["source"]),
+        event_date=event_date,
+    )

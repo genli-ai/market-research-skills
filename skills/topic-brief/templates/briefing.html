@@ -91,7 +91,7 @@
       <div style="margin:18px 0 22px;">
         <p style="margin:0;"><span style="color:#4a90c2; font-weight:700; margin-right:4px;">▶</span><span style="color:#2b3a4a; font-weight:700;">{{ it.headline }}</span></p>
         <p style="margin:6px 0 0; text-align:justify; text-indent:2em; color:#2b3a4a;">{{ it.body }}</p>
-        <p style="margin:4px 0 0; color:#8896a6; font-size:13px; text-align:right;">□ {{ it.source.label }}[{{ footnote_index(it.source.url) }}]</p>
+        <p style="margin:4px 0 0; color:#8896a6; font-size:13px; text-align:right;">{% if it.event_date %}{{ it.event_date }} · {% endif %}□ {{ it.source.label }}[{{ footnote_index(it.source.url) }}]</p>
       </div>
       {% endfor %}
     </td>
