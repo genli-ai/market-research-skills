@@ -6,6 +6,14 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+### Fixed
+
+- `topic-brief`: preserve each required `event_date` through parsing, JSON round trips, and HTML rendering. Current `sections` input now rejects missing or out-of-window dates while legacy `regions` samples remain compatible.
+
+### Added
+
+- `topic-brief`: document Xquik as an optional public X signal source with remote MCP setup, attribution rules, and untrusted-content boundaries.
+
 ## [1.7.1] - 2026-06-09
 
 ### Fixed
@@ -254,6 +262,14 @@ If you had `light-research` installed via this plugin marketplace at v0.5.0, upg
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
 ## [未发布]
+
+### 修复
+
+- `topic-brief`：让每条必填的 `event_date` 在解析、JSON 往返与 HTML 渲染中完整保留。当前 `sections` 输入会拒绝缺失或超出时间窗口的日期，同时继续兼容旧版 `regions` 示例。
+
+### 新增
+
+- `topic-brief`：补充 Xquik 可选公开 X 信号源说明，包括远程 MCP 设置、归因规则与不可信内容边界。
 
 ## [1.7.1] - 2026-06-09
 
