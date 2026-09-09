@@ -15,6 +15,8 @@ A collection of Claude Skills covering the full **market / equity / industry res
 | [analyst-research](skills/analyst-research/) | Three-mode end-to-end research workflow. User picks scope at trigger: **light** (4-5 page memo, 0 charts, ~15 min), **medium** (12-15p topic analysis, 6-10 charts, ~1 h), or **heavy** (flagship 30-40p / 15k+ word report, 25-35+ charts, ~2-3 h, full multi-stage workflow: framing → sourcing → analysis → drafting → review, multi-LLM optional). Reports default to English; the AI replies in the user's chat language. Battle-tested on the Saudi Vision 2030 deep-dive. | "research report" / "投研报告" / "深度分析" / "做研报" / "5-page memo" / "/analyst-research" |
 | [local-vault](skills/local-vault/) | Build & query a local Markdown knowledge base: convert PDF / Office / images / code into retrieval-friendly Markdown (local-first, cloud OCR fallback), then answer questions over the vault with retrieval discipline (coverage self-checks, lossy-content flags, MOC proposals) | "build/sync my local knowledge base" / "convert these files to markdown for AI" / "整理我的资料库" / "本地知识库" |
 
+**For web primary sources**: `local-vault` is explicitly *not for one-off web research* — but verifying and analyst-research live or die on web primary sources (filings, regulator pages, official sites). When the source is a web page rather than a local file, run it through [cue-omni-reader](https://github.com/sensedeal/cue-skills/tree/main/cue-omni-reader) first to get Markdown — web pages (including in-page video/attachments) and authorized local documents, audio, or video, with multiple local files selectable at once — then cite it under this kit's citation discipline. One-line install: `npx skills add sensedeal/cue-skills --skill cue-omni-reader` (MIT; may bill).
+
 > The list grows with each release. Full change history in [CHANGELOG.md](CHANGELOG.md).
 
 ## Installation
@@ -182,6 +184,8 @@ The `releases/` folder is `.gitignored` — the repo does not store binary artif
 | [topic-brief](skills/topic-brief/) | 主题观察简报生成器：为任意主题（区域 / 行业 / 议题 / 机构）产出可粘贴公众号的 HTML 简报 | 「做一份 XX 观察 / 简报」「`/topic-brief`」 |
 | [analyst-research](skills/analyst-research/) | 三档端到端研究工作流。用户触发时选档：**light**（4-5 页备忘、0 图、约 15 分钟）/ **medium**（12-15 页主题分析、6-10 图、约 1 小时）/ **heavy**（30-40 页 / 1.5 万字+ 旗舰报告、25-35+ 图、约 2-3 小时、完整多阶段工作流：框定 → 取数 → 分析 → 起草 → 复盘、可选多 LLM 协作）。报告默认英文，AI 按用户聊天语言回复。已在沙特 Vision 2030 深度报告项目跑通。 | 「写研报」「投研报告」「深度分析」「主题分析」「5 页 memo」「`/analyst-research`」 |
 | [local-vault](skills/local-vault/) | 本地 Markdown 知识库：把 PDF / Office / 图片 / 代码转成带检索 frontmatter 的 Markdown（本地优先、云端 OCR 兜底），再基于 vault 负责任地回答问题（覆盖度自检、有损内容标注、MOC 沉淀） | 「整理我的资料库」「把文件转成 md 给 AI 读」「本地知识库」「读我的本地 vault 回答」 |
+
+**网页一手来源呢？** `local-vault` 明确「不做一次性网页研究」，而 verifying / analyst-research 恰恰靠网页一手来源（公告、监管页、官方站点）吃饭。当来源是网页而不是本地文件时，先用 [cue-omni-reader](https://github.com/sensedeal/cue-skills/tree/main/cue-omni-reader) 收成 Markdown——网页（含页内视频/附件）+ 已授权本地文档/音频/视频，一次可选多个本地文件——再按本套件的引用纪律引用。一行安装：`npx skills add sensedeal/cue-skills --skill cue-omni-reader`（MIT，可能计费）。
 
 > 列表会随版本更新。完整变更见 [CHANGELOG.md](CHANGELOG.md)。
 
